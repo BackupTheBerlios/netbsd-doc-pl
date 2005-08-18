@@ -1,0 +1,1486 @@
+<!-- $NetBSD: chap-net-practice.xml,v 1.11 2005/05/05 12:21:22 hrs Exp $ -->
+
+<chapter id="chap-net-practice">
+  <title>Setting up TCP/IP on &os; in practice</title>
+
+  <sect1 id="chap-net-practice-kernel-options">
+    <title>A walk through the kernel configuration</title>
+
+    <para>Before we dive into configuring various aspects of network
+      setup, we want to walk through the necessary bits that have to
+      or can be present in the kernel. See <xref
+      linkend="chap-kernel" /> for more details on compiling the
+      kernel, we will concentrate on the configuration of the kernel
+      here. We will take the i386/GENERIC config file as an example
+      here. Config files for other platforms should contain similar
+      information, the comments in the config files give additional
+      hints. Besides the information given here, each kernel option
+      is also documented in the &man.options.4; manpage, and there is
+      usually a manpage for each driver too, e.g. &man.tlp.4;.</para>
+
+    <para>The first line of each config file shows the version.
+      It can be used to compare against other
+      versions via CVS, or when reporting bugs.</para>
+
+    <programlisting>options         NTP             # NTP phase/frequency locked loop</programlisting>
+
+    <para>If you want to run the Network Time Protocol
+      (<acronym>NTP</acronym>), this
+      option can be enabled for maximum precision. If the option is
+      not present, NTP will still work. See &man.ntpd.8; for more
+      information.</para>
+
+    <programlisting>file-system     NFS             # Network File System client</programlisting>
+
+    <para>If you want to use another machine's hard disk via the Network
+      File System (<acronym>NFS</acronym>), this option is
+      needed. <xref linkend="chap-net-misc-nfs" /> gives more information on NFS.</para>
+
+    <programlisting>options         NFSSERVER       # Network File System server</programlisting>
+
+    <para>This option includes the server side of the NFS remote file
+      sharing protocol. Enable if you want to allow other machines
+      to use your hard disk. <xref linkend="chap-net-misc-nfs" /> contains more
+      information on NFS.</para>
+
+    <programlisting>#options        GATEWAY         # packet forwarding</programlisting>
+
+    <para>If you want to setup a router that forwards packets between
+      networks or network interfaces, setting this option is
+      needed. If doesn't only switch on packet forwarding, but also
+      increases some buffers. See &man.options.4; for details.</para>
+
+    <programlisting>options         INET            # IP + ICMP + TCP + UDP</programlisting>
+
+    <para>This enables the TCP/IP code in the kernel. Even if you don't
+      want/use networking, you will still need this for
+      machine-internal communication of subsystems like the X Window
+      System. See &man.inet.4; for more details.</para>
+
+    <programlisting>options         INET6           # IPV6</programlisting>
+
+    <para>If you want to use IPv6, this is your option. If you don't
+      want IPv6, which is part of &os; since the 1.5 release, you
+      can remove/comment out that option. See the &man.inet6.4; manpage
+      and <xref linkend="ipv6-intro" /> for more information on the
+      next generation Internet protocol.</para>
+
+    <programlisting>#options        IPSEC           # IP security</programlisting>
+
+    <para>Includes support for the IPsec protocol, including key and
+      policy management, authentication and compression. This option
+      can be used without the previous option INET6, if you just
+      want to use IPsec with IPv4, which is possible. See &man.ipsec.4;
+      for more information.</para>
+
+    <programlisting>#options        IPSEC_ESP       # IP security (encryption part; define w/IPSEC)</programlisting>
+
+    <para>This option is needed in addition to IPSEC if encryption is
+      wanted in <acronym>IPsec</acronym>.</para>
+
+    <programlisting>#options        MROUTING        # IP multicast routing</programlisting>
+
+    <para>If multicast services like the MBone services should be routed,
+      this option needs to be included. Note that the routing itself
+      is controlled by the &man.mrouted.8; daemon.</para>
+
+    <programlisting>options         NS              # XNS
+#options        NSIP            # XNS tunneling over IP</programlisting>
+
+    <para>These options enable the Xerox Network Systems(TM) protocol
+      family. It's not related to the TCP/IP protocol stack, and in
+      rare use today. The &man.ns.4; manpage has some details.</para>
+
+    <programlisting>options         ISO,TPIP        # OSI
+#options        EON             # OSI tunneling over IP</programlisting>
+
+    <para>These options include the <acronym>OSI</acronym> protocol
+      stack, which was said
+      for a long time to be the future of networking. It's mostly
+      history these days. :-) See the &man.iso.4; manpage for more
+      information.</para>
+
+    <programlisting>options         CCITT,LLC,HDLC  # X.25</programlisting>
+
+    <para>These options enable the X.25 protocol set for transmission of
+      data over serial lines. It is/was used mostly in conjunction
+      with the OSI protocols and in WAN networking.</para>
+
+    <programlisting>options         NETATALK        # AppleTalk networking protocols</programlisting>
+
+    <para>Include support for the AppleTalk protocol stack. Userland
+      server programs are needed to make use of that. See
+      pkgsrc/net/netatalk and pkgsrc/net/netatalk-asun for such
+      packages. More information on the AppleTalk protocol and
+      protocol stack are available in the &man.atalk.4; manpage.</para>
+
+    <programlisting>options         PPP_BSDCOMP     # BSD-Compress compression support for PPP
+options         PPP_DEFLATE     # Deflate compression support for PPP
+options         PPP_FILTER      # Active filter support for PPP (requires bpf)</programlisting>
+
+    <para>These options tune various aspects of the Point-to-Point
+      protocol. The first two determine the compression algorithms
+      used and available, while the third one enables code to filter
+      some packets.</para>
+
+    <programlisting>options         PFIL_HOOKS      # &man.pfil.9; packet filter hooks
+options         IPFILTER_LOG    # &man.ipmon.8; log support</programlisting>
+
+    <para>These options enable firewalling in &os;, using IPfilter.
+      See the &man.ipf.4; and &man.ipf.8; manpages for more information on
+      operation of IPfilter, and <xref linkend="chap-net-practice-ipnat-configuring-gateway" /> for a
+      configuration example.</para>
+
+    <programlisting># Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
+#options        TCP_COMPAT_42</programlisting>
+
+    <para>This option is only needed if you have machines on the network
+      that still run 4.2BSD or a network stack derived from it. If
+      you've got one or more 4.2BSD-systems on your network, you've
+      to pay  attention to set the right broadcast-address, as
+      4.2BSD has a bug in its networking code, concerning the
+      broadcast address.  This bug forces you to  set all host-bits
+      in the broadcast-address to <quote>0</quote>. The TCP_COMPAT_42
+      option helps you ensuring this.</para>
+
+    <programlisting>options         NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM</programlisting>
+
+    <para>These options enable lookup of data via DHCP or the BOOTPARAM
+      protocol if the kernel is told to use a NFS root file
+      system. See the &man.diskless.8; manpage for more information.</para>
+
+    <programlisting># Kernel root file system and dump configuration.
+config          netbsd  root on ? type ?
+#config         netbsd  root on sd0a type ffs
+#config         netbsd  root on ? type nfs</programlisting>
+
+    <para>These lines tell where the kernel looks for its root file
+      system, and which filesystem type it is expected to have. If
+      you want to make a kernel that uses a NFS root filesystem via
+      the tlp0 interface, you can do this with <quote><literal>root on tlp0 type
+      nfs</literal></quote>. If a <literal>?</literal> is used instead of a
+      device/type, the kernel
+      tries to figure one out on its own.</para>
+
+    <programlisting># ISA serial interfaces
+com0    at isa? port 0x3f8 irq 4        # Standard PC serial ports
+com1    at isa? port 0x2f8 irq 3
+com2    at isa? port 0x3e8 irq 5</programlisting>
+
+    <para>If you want to use PPP or SLIP, you will need some serial
+      (com) interfaces. Others with attachment on USB, PCMCIA or PUC
+      will do as well.</para>
+
+    <programlisting># Network Interfaces</programlisting>
+
+    <para>This rather long list contains all sorts of network
+      drivers. Please pick the one that matches your hardware,
+      according to the comments. For most drivers, there's also a
+      manual page available, e.g. &man.tlp.4;, &man.ne.4;, etc.</para>
+
+    <programlisting># MII/PHY support</programlisting>
+
+    <para>This section lists media independent interfaces for network
+      cards. Pick one that matches your hardware. If in doubt,
+      enable them all and see what the kernel picks. See the &man.mii.4;
+      manpage for more information.</para>
+
+    <programlisting># USB Ethernet adapters
+aue*    at uhub? port ?         # ADMtek AN986 Pegasus based adapters
+cue*    at uhub? port ?         # CATC USB-EL1201A based adapters
+kue*    at uhub? port ?         # Kawasaki LSI KL5KUSB101B based adapters</programlisting>
+
+    <para>USB-ethernet adapters only have about 2MBit/s bandwidth, but
+      they are very convenient to use. Of course this needs other
+      USB related options which we won't cover here, as well as the
+      necessary hardware. See the corresponding
+      manpages for more information.</para>
+
+    <programlisting># network pseudo-devices
+pseudo-device   bpfilter        8       # Berkeley packet filter</programlisting>
+
+    <para>This pseudo-device allows sniffing packets of all sorts. It's
+      needed for tcpdump, but also rarpd and some other applications
+      that need to know about network traffic. See &man.bpf.4; for more
+      information.</para>
+
+    <programlisting>pseudo-device   ipfilter                # IP filter (firewall) and NAT</programlisting>
+
+    <para>This one enables the IPfilter's packet filtering kernel
+      interface used for firewalling, NAT (IP Masquerading) etc. See
+      &man.ipf.4; and <xref linkend="chap-net-practice-ipnat-configuring-gateway" /> for more information.</para>
+
+    <programlisting>pseudo-device   loop                    # network loopback</programlisting>
+
+    <para>This is the <quote>lo0</quote> software loopback network device
+      which is used by some programs these days, as well as for routing
+      things. It should not be omitted. See &man.lo.4; for more details.</para>
+
+    <programlisting>pseudo-device   ppp             2       # Point-to-Point Protocol</programlisting>
+
+    <para>If you want to use PPP either over a serial interface or
+      ethernet (PPPoE), you will need this option. See &man.ppp.4; for
+      details on this interface.</para>
+
+    <programlisting>pseudo-device   sl              2       # Serial Line IP</programlisting>
+
+    <para>Serial Line IP is a simple encapsulation for IP over (well :)
+      serial lines. It does not include negotiation of IP addresses
+      and other options, which is the reason that it's not in
+      widespread use today any more. See &man.sl.4;.</para>
+
+    <programlisting>pseudo-device   strip           2       # Starmode Radio IP (Metricom)</programlisting>
+
+    <para>If you happen to have one of the old Metricon Ricochet packet
+      radio wireless network devices, use this pseudo-device to use
+      it. See the &man.strip.4; manpage for detailed information.</para>
+
+    <programlisting>pseudo-device   tun             2       # network tunneling over tty</programlisting>
+
+    <para>This network device can be used to tunnel network packets to a
+      device file, <filename>/dev/tun*</filename>. Packets routed to
+      the tun0 interface can be read from
+      <filename>/dev/tun0</filename>, and data written to
+      <filename>/dev/tun0</filename> will be sent out the tun0
+      network interface. This can be used to implement e.g. QoS
+      routing in userland. See &man.tun.4; for details.</para>
+
+    <programlisting>pseudo-device   gre             2       # generic L3 over IP tunnel</programlisting>
+
+    <para>The GRE encapsulation can be used to tunnel arbitrary layer 3
+      packets over IP, e.g. to implement
+      <acronym>VPN</acronym>s. See &man.gre.4; for more.</para>
+
+    <programlisting>pseudo-device   ipip            2       # IP Encapsulation within IP (RFC 2003)</programlisting>
+
+    <para>Another IP-in-IP encapsulation device, with a different
+      encapsulation format. See the &man.ipip.4; manpage for details.</para>
+
+    <programlisting>pseudo-device   gif             4       # IPv[46] over IPv[46] tunnel (RFC 1933)</programlisting>
+
+    <para>Using the <acronym>GIF</acronym> interface allows to tunnel
+      e.g. IPv6 over IPv4, which can be used to get IPv6
+      connectivity if no IPv6-capable uplink (ISP) is
+      available. Other mixes of operations are possible, too. See
+      the &man.gif.4; manpage for some examples.</para>
+
+    <programlisting>#pseudo-device  faith           1       # IPv[46] tcp relay translation i/f</programlisting>
+
+    <para>The faith interface captures IPv6 TCP traffic, for
+      implementing userland IPv6-to-IPv4 TCP relays e.g. for
+      protocol transitions. See the &man.faith.4; manpage for more
+      details on this device.</para>
+
+    <programlisting>#pseudo-device  stf             1       # 6to4 IPv6 over IPv4 encapsulation</programlisting>
+
+    <para>This adds a network device that can be used to tunnel IPv6 over
+      IPv4 without setting up a configured tunnel before. The source
+      address of outgoing packets contains the IPv4 address, which
+      allows routing replies back via IPv4. See the &man.stf.4; manpage
+      and <xref linkend="chap-net-misc-ipv6-6to4" /> for more details.</para>
+
+    <programlisting>pseudo-device   vlan                    # IEEE 802.1q encapsulation</programlisting>
+
+    <para>This interface provides support for IEEE 802.1Q Virtual LANs,
+      which allows tagging Ethernet frames with a <quote>vlan</quote> ID.
+      Using properly configured switches (that also have to support VLAN,
+      of course), this can be used to build virtual LANs where one
+      set of machines doesn't see traffic from the other (broadcast
+      and other). The &man.vlan.4; manpage tells more about this.</para>
+  </sect1> <!-- Walk through the Kernel config  -->
+
+  <sect1 id="chap-net-practice-network-config">
+    <title>Overview of the network configuration files </title>
+
+    <para>The following is a list of the files used to configure the
+      network.  The usage of these files, some of which have already
+      been met the first chapters, will be described in the
+      following sections.</para>
+
+    <variablelist>
+      <varlistentry>
+	<term><filename>/etc/hosts</filename></term>
+
+	<listitem>
+	  <para>Local hosts database file.  Each line contains information
+	    regarding a known host and contains the internet address,
+	    the host's name and the aliases.  Small networks can be
+	    configured using only the hosts file, without a
+	    <emphasis>name server</emphasis>.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><filename>/etc/resolv.conf</filename></term>
+
+	<listitem>
+	  <para>This file specifies how the routines which provide access
+	    to the Internet Domain Name System should operate.
+	    Generally it contains the addresses of the name servers.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><filename>/etc/ifconfig.xxx</filename></term>
+
+	<listitem>
+	  <para>This file is used for the automatic configuration of the
+	    network card at boot.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><filename>/etc/mygate</filename></term>
+
+	<listitem>
+	  <para>Contains the IP address of the gateway.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><filename>/etc/nsswitch.conf</filename></term>
+
+	<listitem>
+	  <para>Name service switch configuration file.  It controls how a
+	    process looks up various databases containing information
+	    regarding hosts, users, groups, etc.  Specifically, this
+	    file defines the order to look up the databases.  For
+	    example, the line:</para>
+
+          <programlisting>hosts:    files dns</programlisting>
+
+          <para>specifies that the hosts database comes from two
+	    sources, <emphasis>files</emphasis> (the local
+	    <filename>/etc/hosts</filename> file) and
+	    <emphasis>DNS</emphasis>, (the Internet Domain Name
+	    System) and that the local files are searched before
+	    the DNS.</para>
+
+	  <para>It is usually not necessary to modify this file.</para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </sect1>
+
+  <sect1 id="chap-net-practice-modem">
+    <title>Connecting to the Internet with a modem </title>
+
+    <para>There are many types of Internet connections: this section
+      explains how to connect to a provider using a modem over a
+      telephone line using the <acronym>PPP</acronym> protocol, a
+      very common setup.
+      In order to have a working connection, the following steps must be
+      done:</para>
+
+    <procedure>
+      <step>
+        <para>Get the necessary information from the provider.</para>
+      </step>
+
+      <step>
+        <para>Edit the file <filename>/etc/resolv.conf</filename> and
+          check <filename>/etc/nsswitch.conf</filename>.</para>
+      </step>
+
+      <step>
+        <para>Create the directories <filename>/etc/ppp</filename>
+          and <filename>/etc/ppp/peers</filename> if they don't exist.</para>
+      </step>
+
+      <step>
+        <para>Create the connection script, the chat file and the
+          <application>pppd</application> options file.</para>
+      </step>
+
+      <step>
+        <para>Created the user-password authentication file.</para>
+      </step>
+    </procedure>
+
+    <para>Judging from the previous list it looks like a complicated
+      procedure that requires a lot of work.
+      Actually, the single steps are very easy: it's just a matter of
+      modifying, creating or simply checking some small text files.
+      In the following example it will be assumed that the modem is
+      connected to the second serial port
+      <filename>/dev/tty01</filename> (COM2 in DOS).</para>
+
+    <para>A few words on the difference between <emphasis>com</emphasis>,
+      <emphasis>COM</emphasis> and <emphasis>tty</emphasis>.  For
+      &os;, <quote>com</quote> is the name of the serial port driver
+      (the one that is displayed by <command>dmesg</command>) and
+      <quote>tty</quote> is the name of the port.  Since numbering
+      starts at 0, com0 is the driver for the first serial port,
+      named tty00.  In the DOS world, instead, COM1 refers to the
+      first serial port (usually located at (0x3f8), COM2 to the
+      second, and so on.  Therefore COM1 (DOS) corresponds to
+      <filename>/dev/tty00</filename> (&os;).</para>
+
+    <para>Besides external modems connected to COM ports (using
+      <filename>/dev/tty0[012]</filename> on i386,
+      <filename>/dev/tty[ab]</filename> on sparc, ...) modems on USB
+      (<filename>/dev/ttyU*</filename>) and pcmcia/cardbus
+      (<filename>/dev/tty0[012]</filename>) can be used.</para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-modem-connect-info">
+      <title>Getting the connection information</title>
+
+      <para>The first thing to do is ask the provider the necessary
+        information for the connection, which means:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>The phone number of the nearest POP.</para>
+        </listitem>
+
+        <listitem>
+          <para>The authentication method to be used.</para>
+        </listitem>
+
+        <listitem>
+          <para>The username and password for the connection.</para>
+        </listitem>
+
+        <listitem>
+          <para>The IP addresses of the name servers.</para>
+        </listitem>
+      </itemizedlist>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-modem-resolv">
+      <title><filename>resolv.conf</filename> and
+        <filename>nsswitch.conf</filename></title>
+
+      <para>The <filename>/etc/resolv.conf</filename> file must be configured
+        using the information supplied by the provider, especially the
+        addresses of the <acronym>DNS</acronym>.
+        In this example the two DNS will be <quote>194.109.123.2</quote> and
+        <quote>191.200.4.52</quote>.</para>
+
+      <example id="ex-resolv.conf">
+        <title><filename>resolv.conf</filename></title>
+
+        <programlisting>nameserver 194.109.123.2
+nameserver 191.200.4.52</programlisting>
+      </example>
+
+      <para>And now an example of the
+	<filename>/etc/nsswitch.conf</filename> file.</para>
+
+      <example id="ex-nsswitch">
+        <title><filename>nsswitch.conf</filename></title>
+
+        <programlisting># /etc/nsswitch.conf
+group:         compat
+group_compat:  nis
+hosts:         files dns
+netgroup:      files [notfound=return] nis
+networks:      files
+passwd:        compat
+passwd_compat: nis
+shells:        files</programlisting>
+      </example>
+
+      <para>The defaults of doing hostname lookups via
+        <filename>/etc/hosts</filename> followed by the DNS works
+        fine and there's usually no need to modify this. </para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-modem-pppd">
+      <title>Creating the directories for pppd</title>
+
+      <para>The directories <filename>/etc/ppp</filename> and
+        <filename>/etc/ppp/peers</filename> will contain the
+        configuration files for the PPP connection.
+        After a fresh install of &os; they don't exist and must be
+        created (chmod 700).</para>
+
+      <screen>&rprompt; <userinput>mkdir /etc/ppp</userinput>
+&rprompt; <userinput>mkdir /etc/ppp/peers</userinput> </screen>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-modem-script-n-chat-file">
+      <title>Connection script and chat file</title>
+
+      <para>The connection script will be used as a parameter on the
+        <application>pppd</application> command line; it is located in
+        <filename>/etc/ppp/peers</filename> and has usually the name of
+        the provider.
+        For example, if the provider's name is &providername; and your
+        user name for the connection to the provider is &provuser;, an
+        example connection script could be:</para>
+
+      <example id="ex-connectscript">
+        <title>Connection script</title>
+
+        <programlisting># /etc/ppp/peers/&providername2;
+connect '/usr/sbin/chat -v -f /etc/ppp/peers/&providername2;.chat'
+noauth
+user &provuser;
+remotename &provider;</programlisting>
+      </example>
+
+      <para>In the previous example, the script specifies a <emphasis>chat
+	file</emphasis> to be used for the connection.
+        The options in the script are detailed in the &man.pppd.8;
+	man page.</para>
+
+      <note>
+        <para>If you are experiencing connection problems, add the
+          following two lines to the connection script</para>
+
+	<programlisting>debug
+kdebug 4</programlisting>
+
+        <para>You will get a log of the operations performed when the system
+          tries to connect.
+          See &man.pppd.8;, &man.syslog.conf.5;.</para>
+      </note>
+
+      <para>The connection script calls the <application>chat</application>
+        application to deal with the physical connection (modem
+        initialization, dialing, ...)
+        The parameters to <application>chat</application> can be specified
+        inline in the connection script, but it is better to put them in a
+        separate file.
+        If, for example, the telephone number of the POP to call is 02
+        99999999, an example chat script could be:</para>
+
+      <example id="ex-chat-file">
+        <title>Chat file</title>
+
+        <programlisting># /etc/ppp/peers/&providername2;.chat
+ABORT BUSY
+ABORT "NO CARRIER"
+ABORT "NO DIALTONE"
+'' ATDT0299999999
+CONNECT ''</programlisting>
+      </example>
+
+      <note>
+        <para>If you have problems with the chat file, you can try connecting
+          manually to the POP with the &man.cu.1;
+          program and verify the exact strings that you are receiving.</para>
+      </note>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-modem-auth">
+      <title>Authentication</title>
+
+      <para>During authentication each of the two systems verifies the
+        identity of the other system, although in practice you are not
+        supposed to authenticate the provider, but only to be verified by
+        him, using one of the following methods:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>PAP/CHAP</para>
+        </listitem>
+
+        <listitem>
+          <para>login</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Most providers use a PAP/CHAP authentication.</para>
+
+      <sect3 id="chap-net-practice-modem-auth-pap">
+        <title>PAP/CHAP authentication</title>
+
+        <para>The authentication information (speak: password) is stored
+          in the <filename>/etc/ppp/pap-secrets</filename> for PAP
+          and in <filename>/etc/ppp/chap-secrets</filename> for
+          CHAP. The lines have the following format:</para>
+
+        <programlisting>user * password</programlisting>
+
+        <para>For example:</para>
+
+        <programlisting>&provuser; * &provpwd;</programlisting>
+
+        <para>For security reasons the <filename>pap-secrets</filename> and
+          <filename>chap-secrets</filename> files should be owned by
+          <emphasis>root</emphasis> and have permissions <quote>600</quote>.</para>
+
+        <screen>&rprompt; <userinput>chown root /etc/ppp/pap-secrets</userinput>
+&rprompt; <userinput>chown root /etc/ppp/chap-secrets</userinput>
+&rprompt; <userinput>chmod 600 /etc/ppp/pap-secrets</userinput>
+&rprompt; <userinput>chmod 600 /etc/ppp/chap-secrets</userinput></screen>
+      </sect3>
+
+      <sect3 id="chap-net-practice-modem-auth-login">
+        <title>Login authentication</title>
+
+        <para>This type of authentication is not widely used today; if the provider
+          uses login authentication, user name and password must be supplied
+          in the chat file instead of the PAP/CHAP files, because the
+	  chat file simulates an interactive login.
+          In this case, set up appropriate permissions for the chat file.</para>
+
+        <para>The following is an example chat file with login authentication:</para>
+
+        <example id="ex-chat-login">
+          <title>Chat file with login</title>
+
+          <programlisting># /etc/ppp/peers/&providername2;.chat
+ABORT BUSY
+ABORT "NO CARRIER"
+ABORT "NO DIALTONE"
+'' ATDT0299999999
+CONNECT ''
+TIMEOUT 50
+ogin: &provuser;
+ssword: &provpwd;</programlisting>
+        </example>
+      </sect3>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-modem-pppd-options">
+      <title>pppd options</title>
+
+      <para>The only thing left to do is the creation of the
+	<command>pppd</command> options file, which is
+	<filename>/etc/ppp/options</filename> (chmod 644).</para>
+
+      <example id="ex-ppp-options">
+        <title><filename>/etc/ppp/options</filename></title>
+
+        <programlisting>/dev/tty01
+lock
+crtscts
+57600
+modem
+defaultroute
+noipdefault</programlisting>
+      </example>
+
+      <para>Check the &man.pppd.8; man page for the meaning of the options.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-modem-testing">
+      <title>Testing the modem</title>
+
+      <para>Before activating the link it is a good idea to make a quick
+	modem test, in order to verify that the physical connection and
+	the communication with the modem works.  For the test the
+	&man.cu.1; program can be used, as in the
+	following example.</para>
+
+      <orderedlist>
+	<listitem>
+	  <para>Create the file <filename>/etc/uucp/port</filename>
+	    with the following lines:</para>
+
+          <programlisting>type modem
+port modem
+device /dev/tty01
+speed 115200</programlisting>
+
+          <para>(substitute the correct device in place of
+            <filename>/dev/tty01</filename>).</para>
+	</listitem>
+
+	<listitem>
+	  <para>Write the command <command>cu -p modem</command> to start
+	    sending commands to the modem.  For example:</para>
+
+          <screen>&rprompt; <userinput>cu -p modem</userinput>
+Connected.
+<userinput>ATZ</userinput>
+OK
+<userinput>~.</userinput>
+
+Disconnected.
+&rprompt;</screen>
+
+          <para>In the previous example the reset command (ATZ) was sent to
+	    the modem, which replied with OK: the communication works.
+	    To exit &man.cu.1;, write <literal>~</literal>
+	    (tilde) followed by <literal>.</literal> (dot), as in the
+	    example.</para>
+	</listitem>
+      </orderedlist>
+
+      <para>If the modem doesn't work, check that it is connected to the
+	correct port (i.e. you are using the right port with
+	&man.cu.1;. Cables are a frequent cause of trouble, too.</para>
+
+      <para>When you start &man.cu.1; and a message saying
+        <quote>Permission denied</quote> appears, check who is the
+        owner of the
+        <filename>/dev/tty<replaceable>##</replaceable></filename>
+        device, it must be "uucp".
+        For example:</para>
+
+      <screen>&uprompt; <userinput>ls -l /dev/tty00</userinput>
+crw-------  1 uucp  wheel  8, 0 Mar 22 20:39 /dev/tty00</screen>
+
+      <para>If the owner is root, the following happens:</para>
+
+      <screen>&uprompt; <userinput>ls -l /dev/tty00</userinput>
+crw-------  1 root  wheel  8, 0 Mar 22 20:39 /dev/tty00
+&uprompt; <userinput>cu -p modem</userinput>
+cu: open (/dev/tty00): Permission denied
+cu: All matching ports in use</screen>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-modem-activate">
+      <title>Activating the link</title>
+
+      <para>At last everything is ready to connect to the provider with the
+        following command:</para>
+
+      <screen>&rprompt; <userinput>pppd call &providername2;</userinput></screen>
+
+      <para>where <filename>&providername2;</filename> is the name of the already
+        described connection script.
+        To see the connection messages of <command>pppd</command>, give the
+        following command:</para>
+
+      <screen>&rprompt; <userinput>tail -f /var/log/messages</userinput></screen>
+
+      <para>To disconnect, do a <command>kill -HUP</command> of
+        <command>pppd</command>.</para>
+
+      <screen> &rprompt; <userinput>pkill -HUP pppd</userinput> </screen>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-modem-using-script">
+      <title>Using a script for connection and disconnection</title>
+
+      <para>When the connection works correctly, it's time to write a
+        couple of
+        scripts to avoid repeating the commands every time.
+        These two scripts can be named, for example,
+        <filename>ppp-start</filename> and
+	<filename>ppp-stop</filename>.</para>
+
+      <para><filename>ppp-start</filename> is used to connect to
+	the provider:</para>
+
+      <example id="ex-ppp-start">
+        <title><filename>ppp-start</filename></title>
+
+        <programlisting>#!/bin/sh
+MODEM=tty01
+POP=&providername2;
+if [ -f /var/spool/lock/LCK..$MODEM ]; then
+echo ppp is already running...
+else
+pppd call $POP
+tail -f /var/log/messages
+fi</programlisting>
+      </example>
+
+      <para><filename>ppp-stop</filename> is used to close
+	the connection:</para>
+
+      <example id="ex-ppp-stop">
+        <title><filename>ppp-stop</filename></title>
+
+        <programlisting>#!/bin/sh
+MODEM=tty01
+if [ -f /var/spool/lock/LCK..$MODEM ]; then
+echo -f killing pppd...
+kill -HUP `cat /var/spool/lock/LCK..$MODEM`
+echo done
+else
+echo ppp is not active
+fi</programlisting>
+      </example>
+
+      <para>The two scripts take advantage of the fact that when
+        <command>pppd</command> is active, it creates the file
+        <filename>LCK..tty01</filename> in the
+        <filename>/var/spool/lock</filename> directory.
+        This file contains the process ID (<emphasis>pid</emphasis>)
+        of the <command>pppd</command> process.</para>
+
+      <para>The two scripts must be executable:</para>
+
+      <screen>&rprompt; <userinput>chmod u+x ppp-start ppp-stop</userinput></screen>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-modem-commands-after-dialin">
+      <title>Running commands after dialin</title>
+
+      <para>If you find yourself to always run the same set of commands
+        each time you dial in, you can put them in a script
+        <filename>/etc/ppp/ip-up</filename> which will be called by
+        &man.pppd.8; after successful dial-in. Likewise, before the
+        connection is closed down,
+        <filename>/etc/ppp/ip-down</filename> is executed.
+        Both scripts are expected to be executable. See &man.pppd.8;
+        for more details.</para>
+    </sect2>
+
+  </sect1> <!-- Connecting to the Internet -->
+
+  <sect1 id="chap-net-practice-small-net">
+    <title>Creating a small home network </title>
+
+    <para>Networking is one of the main strengths of Unix and &os; is no
+      exception: networking is both powerful and easy to set up and
+      inexpensive too, because there is no need to buy additional software to
+      communicate or to build a server.
+      <xref linkend="chap-net-practice-ipnat" /> explains how
+      to configure a &os; machine
+      to act as a gateway for a network: with <acronym>IPNAT</acronym> all
+      the hosts of the network can reach the Internet with a single
+      connection to a provider made by the gateway machine.
+      The only thing to be checked before creating the network is to buy
+      network cards supported by &os; (check the
+      <filename>INSTALL.*</filename> files for a list of supported
+      devices). </para>
+
+    <para>First, the network cards must be installed and connected to a hub,
+      switch or directly (see <xref linkend="fig-net1" />).</para>
+
+    <para>Next, check that the network cards are recognized by the kernel,
+      studying the output of the <command>dmesg</command> command.
+      In the following example the kernel recognized correctly
+      an NE2000 clone:</para>
+
+    <screen>...
+ne0 at isa0 port 0x280-0x29f irq 9
+ne0: NE2000 Ethernet
+ne0: Ethernet address 00:c2:dd:c1:d1:21
+...</screen>
+
+    <para>If the card is not recognized by the kernel, check that it is
+      enabled in the kernel configuration file and then that the
+      card's IRQ matches the one that the kernel expects.
+      For example, this is the isa NE2000 line in the configuration
+      file; the kernel expects the card to be at IRQ 9.</para>
+
+    <screen>...
+ne0 at isa? port 0x280 irq 9 # NE[12]000 ethernet cards
+...</screen>
+
+    <para>If the card's configuration is different, it will probably not be
+      found at boot.
+      In this case, either change the line in the kernel configuration
+      file and compile a new kernel or change the card's setup (usually
+      through a setup disk or, for old cards, a jumper on the card).</para>
+
+    <para>The following command shows the network card's
+      current configuration:</para>
+
+    <screen>&rprompt; <userinput>ifconfig ne0</userinput>
+ne0: flags=8822&lt;BROADCAST,NOTRAILERS,SIMPLEX,MULTICAST&gt; mtu 1500
+      address: 00:50:ba:aa:a7:7f
+      media: Ethernet autoselect (10baseT)
+      inet6 fe80::250:baff:feaa:a77f%ne0 prefixlen 64 scopeid 0x1 </screen>
+
+    <para>The software configuration of the network card is very easy.
+      The IP address <quote>192.168.1.1</quote> is assigned to the
+      card. </para>
+
+    <screen>&rprompt; <userinput>ifconfig ne0 inet 192.168.1.1 netmask 0xffffff00</userinput></screen>
+
+    <para>Note that the networks 10.0.0.0/8 and 192.168.0.0/16 are
+      reserved for private networks, which is what we're setting up
+      here.</para>
+
+    <para>Repeating the previous command now gives a different
+      result: </para>
+
+    <screen>&rprompt; <userinput>ifconfig ne0</userinput>
+ne0: flags=8863&lt;UP,BROADCAST,NOTRAILERS,RUNNING,SIMPLEX,MULTICAST&gt; mtu 1500
+      address: 00:50:ba:aa:a7:7f
+      media: Ethernet autoselect (10baseT)
+      inet 192.168.1.1 netmask 0xffffff00 broadcast 192.168.1.255
+      inet6 fe80::250:baff:feaa:a77f%ne0 prefixlen 64 scopeid 0x1 </screen>
+
+    <para>The output of <command>ifconfig</command> has now changed: the
+      IP address is now printed and there are two new flags,
+      <quote>UP</quote> and <quote>RUNNING</quote>
+      If the interface isn't <quote>UP</quote>, it will not be used by the
+      system to send packets.</para>
+
+    <para>The host was given the IP address 192.168.1.1, which belongs to
+      the set of addresses reserved for internal networks which are not
+      reachable from the Internet.
+      The configuration is finished and must now be tested; if
+      there is another active host on the network, a
+      <emphasis>ping</emphasis> can be tried.
+      For example, if 192.168.1.2 is the address of the active host:</para>
+
+    <screen>&rprompt; <userinput>ping 192.168.1.2</userinput>
+PING &myhost; (192.168.1.2): 56 data bytes
+64 bytes from 192.168.1.2: icmp_seq=0 ttl=255 time=1.286 ms
+64 bytes from 192.168.1.2: icmp_seq=1 ttl=255 time=0.649 ms
+64 bytes from 192.168.1.2: icmp_seq=2 ttl=255 time=0.681 ms
+64 bytes from 192.168.1.2: icmp_seq=3 ttl=255 time=0.656 ms
+^C
+----&myhost; PING Statistics----
+4 packets transmitted, 4 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 0.649/0.818/1.286/0.312 ms</screen>
+
+    <para>With the current setup, at the next boot it will be necessary to
+      repeat the configuration of the network card.
+      In order to avoid repeating the card's configuration at each
+      boot, add the following lines to
+      <filename>/etc/rc.conf</filename>: </para>
+
+    <programlisting>auto_ifconfig=yes
+ifconfig_ne0="inet 192.168.1.1 netmask 0xffffff00" </programlisting>
+
+    <para>In this example the variable <varname>ifconfig_ne0</varname>
+      was set because the network card was recognized as
+      <emphasis>ne0</emphasis> by the kernel; if you are using a
+      different adapter, substitute the appropriate name in place of
+      ne0.</para>
+
+    <para>At the next boot the network card will be configured
+      automatically.</para>
+
+    <para>If you have a router that is connected to the internet, you
+      can use it as default router, which will handle all your
+      packets. To do so, set <varname>defaultroute</varname> to the
+      router's IP address in <filename>/etc/rc.conf</filename>:</para>
+
+    <screen>defaultroute=192.168.0.254</screen>
+
+    <para>Be sure to use the default router's IP address instead of
+      name, in case your DNS server is beyond the default router. In
+      that case, the DNS server couldn't be reached to resolve the
+      default router's hostname and vice versa, creating a
+      chicken-and-egg problem.</para>
+
+    <para>To reach hosts on your local network, and assuming you really
+      have very few hosts, adjust <filename>/etc/hosts</filename> to
+      contain the addresses of all the hosts belonging to the
+      internal network.  For example:</para>
+
+    <example id="ex-hosts">
+      <title><filename>/etc/hosts</filename></title>
+
+      <programlisting>#
+# Host Database
+# This file should contain the addresses and aliases
+# for local hosts that share this file.
+# It is used only for "ifconfig" and other operations
+# before the nameserver is started.
+#
+#
+127.0.0.1             localhost
+::1                   localhost
+#
+# RFC 1918 specifies that these networks are "internal".
+# 10.0.0.0    10.255.255.255
+# 172.16.0.0  172.31.255.255
+# 192.168.0.0 192.168.255.255
+
+192.168.1.1   &myfqdn; &myhost;
+192.168.1.2   &otherfqdn; &otherhost;
+192.168.1.0   &mynet;</programlisting>
+    </example>
+
+    <para>If you are dialed in via an Internet Service Provider, or if
+      you have a local Domain Name Server (DNS) running, you may
+      want to use it to resolve hostnames to IP addresses, possibly
+      in addition to <filename>/etc/hosts</filename>, which would
+      only know your own hosts. To configure a machine as DNS
+      client, you need to edit
+      <filename>/etc/resolv.conf</filename>, and enter the DNS
+      server's address, in addition to an optional domain name that
+      will be appended to hosts with no domain, in order to create a
+      FQDN for resolving. Assuming your DNS server's IP address is
+      192.168.1.2 and it is setup to serve for "home.net", put the
+      following into <filename>/etc/resolv.conf</filename>:</para>
+
+    <programlisting># /etc/resolv.conf
+domain home.net
+nameserver 192.168.1.2</programlisting>
+
+    <para>The <filename>/etc/nsswitch.conf</filename> file should be
+      checked as explained in <xref linkend="ex-nsswitch" />. </para>
+
+    <para>Summing up, to configure the network the following must be done:
+      the network adapters must be installed and physically connected.
+      Next they must be configured (with <command>ifconfig</command>)
+      and, finally, the file <filename>/etc/rc.conf</filename> must
+      be modified to configure the interface and possibly default
+      router, and <filename>/etc/resolv.conf</filename> and
+      <filename>/etc/nsswitch.conf</filename>should be adjusted if
+      DNS should be used.
+      This type of network management is sufficient for small
+      networks without sophisticated needs. </para>
+  </sect1> <!-- Creating a small home network -->
+
+  <sect1 id="chap-net-practice-ipnat">
+    <title>Setting up an Internet gateway with IPNAT</title>
+
+    <para>The mysterious acronym <acronym>IPNAT</acronym> hides the
+      Internet Protocol Network Address Translation, which enables the
+      routing of an internal network (e.g. your home network as
+      described in <xref linkend="chap-net-practice-small-net" />) on
+      a real network (Internet).  This means that with only one
+      <quote>real</quote> IP, static or dynamic, belonging to a
+      gateway running IPNAT, it is possible to create simultaneous
+      connections to the Internet for all the hosts of the internal
+      network.  </para>
+
+    <para>Some usage examples of IPNAT can be found in the subdirectory
+      <filename>/usr/share/examples/ipf</filename>: look at the files
+      <filename>BASIC.NAT</filename> and
+      <filename>nat-setup</filename>.</para>
+
+    <para>The setup for the example described in this section is detailed
+      in <xref linkend="fig-net1" />:
+      <emphasis>host 1</emphasis> can connect to the Internet calling
+      a provider with a modem and getting a dynamic IP address.
+      <emphasis>host 2</emphasis> and <emphasis>host 3</emphasis> can't
+      communicate with the Internet with a normal setup: IPNAT allows
+      them to do it: host 1 will act as a Internet gateway for hosts
+      2 and 3. Using host 1 as default router, hosts 2 and 3 will be
+      able to access the Internet. </para>
+
+    <figure id="fig-net1">
+      <title>Network with gateway</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/net1.gif" format="GIF" />
+        </imageobject>
+
+        <imageobject>
+          <imagedata fileref="&imagesdir;/net1.eps" format="EPS" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <!--
+    <screen>
+(Local network (internal))
+[pc C]    [pc B] <192.168.1.2>
+   |         |
++..+.........+......+
+                    |
+             [pc A: firewall] <192.168.1.1>
+                    |
+                  modem
+                    |
+                Internet
+(External network)
+    </screen>
+    -->
+
+    <!-- TODO - una figura sarebbe meglio -->
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-ipnat-configuring-gateway">
+      <title>Configuring the gateway/firewall</title>
+
+      <para>To use IPNAT, the <quote>pseudo-device ipfilter</quote> must
+        be compiled into the kernel, and IP packet forwarding must be
+        enabled in the kernel.  To check, run:</para>
+
+      <programlisting>&rprompt; <userinput>sysctl net.inet.ip.forwarding</userinput>
+net.inet.ip.forwarding = 1</programlisting>
+
+      <para>If the result is <quote>1</quote> as in the previous example, the
+        option is enabled, otherwise, if the result is <quote>0</quote>
+	the option is disabled.  You can do two things:</para>
+
+      <orderedlist>
+        <listitem>
+          <para>Compile a new kernel, with the GATEWAY option enabled.</para>
+        </listitem>
+
+        <listitem>
+          <para>Enable the option in the current kernel with the
+            following command:</para>
+
+          <screen>&rprompt; <userinput>sysctl -w net.inet.ip.forwarding=1</userinput></screen>
+
+          <para>You can add sysctl settings to
+            <filename>/etc/sysctl.conf</filename> to have them set
+            automatically at boot. In this case you would want to add</para>
+
+          <programlisting>net.inet.ip.forwarding=1</programlisting>
+        </listitem>
+      </orderedlist>
+
+      <para>The rest of this section explains how to create an IPNAT
+        configuration that is automatically started every time that a
+        connection to the provider is activated with the PPP link.
+        With this configuration all the host of a home network (for
+        example) will be able to connect to the Internet through the
+        gateway machine, even if they don't use &os;.</para>
+
+      <para>For the setup, first, create the
+        <filename>/etc/ipnat.conf</filename> file containing the
+        following rules: </para>
+
+      <programlisting>map ppp0 192.168.1.0/24 -> 0/32 proxy port ftp ftp/tcp
+map ppp0 192.168.1.0/24 -> 0/32 portmap tcp/udp 40000:60000
+map ppp0 192.168.1.0/24 -> 0/32</programlisting>
+
+      <para>192.168.1.0/24 are the network addresses that should be mapped.
+        The first line of the configuration file is optional: it enables
+        active FTP to work through the gateway.
+        The second line is used to handle correctly tcp and udp packets;
+        the portmapping is necessary because of the many to one
+        relationship).
+        The third line is used to enable ICMP, ping, etc.</para>
+
+      <para>Next, create the <filename>/etc/ppp/ip-up</filename> file;
+        it will be called automatically every time that the PPP link
+        is activated:</para>
+
+      <programlisting>#!/bin/sh
+# /etc/ppp/ip-up
+/etc/rc.d/ipnat forcestart</programlisting>
+
+      <para>Create the file <filename>/etc/ppp/ip-down</filename>; it will be
+        called automatically when the PPP link is closed:</para>
+
+      <programlisting>#!/bin/sh
+# /etc/ppp/ip-down
+/etc/rc.d/ipnat forcestop</programlisting>
+
+      <para>Both <filename>ip-up</filename> and
+	<filename>ip-down</filename> must be executable:</para>
+
+      <screen>&rprompt; <userinput>chmod u+x ip-up ip-down</userinput></screen>
+
+      <para>The gateway machine is now ready.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-ipnat-configuring-clients">
+      <title>Configuring the clients</title>
+
+      <para>Create a <filename>/etc/resolv.conf</filename> file like the one
+        on the gateway machine, to make the clients access the same
+        DNS server as the gateway.</para>
+
+      <para>Next, make all clients use the gateway as their default
+        router. Use the following command:</para>
+
+      <screen>&rprompt; <userinput>route add default 192.168.1.1</userinput></screen>
+
+      <para>192.168.1.1 is the address of the gateway machine configured in
+        the previous section.</para>
+
+      <para>Of course you don't want to give this command every time, so it's
+	better to define the <quote>defaultroute</quote> entry in the
+	<filename>/etc/rc.conf</filename> file: the default route will be
+	set automatically during system initialization, using the
+	defaultroute option as an argument to the
+	<command>route add default</command> command.</para>
+
+      <para>If the client machine is not using &os;, the configuration will
+        be different.
+        On Windows PC's you need to set the gateway property of the
+        TCP/IP protocol to the IP address of the &os; gateway.</para>
+
+      <para>That's all that needs to be done on the client machines.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-ipnat-useful-commands">
+      <title>Some useful commands</title>
+
+      <para>The following commands can be useful for
+	diagnosing problems:</para>
+
+      <variablelist>
+	<varlistentry>
+	  <term><command>ping</command></term>
+
+	  <listitem>
+	    <para></para>
+	  </listitem>
+	</varlistentry>
+
+        <varlistentry>
+          <term><command>netstat -r</command></term>
+
+          <listitem>
+            <para>Displays the routing tables (similar to
+              <command>route show</command>).</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><command>traceroute</command></term>
+
+          <listitem>
+            <para>On the client it shows the route followed by the packets to
+	      their destination.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><command>tcpdump</command></term>
+
+          <listitem>
+            <para>Use on the gateway to monitor TCP/IP traffic.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </sect2>
+  </sect1> <!-- IPNAT -->
+
+  <sect1 id="chap-net-practice-lan-setup">
+    <title>A common LAN setup</title>
+
+    <para>The small home network discussed in the previous section
+      contained many items that were configured manually. In bigger
+      LANs that are centrally managed, one can expect Internet
+      connectivity being available via some router, a DNS server
+      being available, and most important, a DHCP server which hands
+      out IP addresses to clients on request. To make a &os; client
+      run in such an environment, it's usually enough to set</para>
+
+    <programlisting>dhclient=yes</programlisting>
+
+    <para>in <filename>/etc/rc.conf</filename>, and the IP address will
+      be set automatically, <filename>/etc/resolv.conf</filename>
+      will be created and routing setup to the default router. </para>
+  </sect1> <!-- A common LAN setup -->
+
+  <sect1 id="chap-net-practice-p2p-via-serial">
+    <title>Connecting two PCs through a serial line </title>
+
+    <para>If you need to transfer files between two PCs which are not networked
+      there is a simple solution which is particularly handy when
+      copying the files to a floppy is not practical: the two machines
+      can be networked with a serial cable (a <emphasis>null modem</emphasis>
+      cable).
+      The following sections describe some configurations.</para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-p2p-via-serial-bsd-and-linux">
+      <title>Connecting &os; with BSD or Linux</title>
+
+      <para>The easiest case is when both machines run &os;: making a
+        connection with the <acronym>SLIP</acronym> protocol is very easy.
+        On the first machine write the following commands:</para>
+
+      <screen>&rprompt; <userinput>slattach /dev/tty00</userinput>
+&rprompt; <userinput>ifconfig sl0 inet 192.168.1.1 192.168.1.2</userinput></screen>
+
+      <para>On the second machine write the following commands:</para>
+
+      <screen>&rprompt; <userinput>slattach /dev/tty00</userinput>
+&rprompt; <userinput>ifconfig sl0 inet 192.168.1.2 192.168.1.1</userinput></screen>
+
+      <para>Now you can test the connection with <command>ping</command>; for
+        example, on the second PC write:</para>
+
+      <screen>&rprompt; <userinput>ping 192.168.1.1</userinput></screen>
+
+      <para>If everything worked there is now an active network connection
+        between the two machines and <application>ftp</application>,
+        <application>telnet</application> and other similar commands can
+        be executed.
+        The textual aliases of the machines can be written in the
+        <filename>/etc/hosts</filename> file.</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>In the previous example both PC's used the first serial port
+            (<filename>/dev/tty0</filename>).
+            Substitute the appropriate device if you are using another
+            port.</para>
+        </listitem>
+
+        <listitem>
+          <para>IP addresses like 192.168.x.x are reserved for
+	    <quote>internal</quote> networks.
+	    The first PC has address 192.168.1.1 and the second
+	    192.168.1.2.</para>
+        </listitem>
+
+        <listitem>
+          <para>To achieve a faster connection the <option>-s</option>
+            <parameter>speed</parameter> option to <command>slattach</command>
+            can be specified.</para>
+        </listitem>
+
+        <listitem>
+          <para><command>ftp</command> can be used to transfer files only if
+            <application>inetd</application> is active and the
+            <application>ftpd</application> server is enabled.</para>
+        </listitem>
+      </itemizedlist>
+
+      <note>
+        <title>Linux</title>
+
+        <para>If one of the two PC's runs Linux, the commands are slightly
+          different (on the Linux machine only).
+          If the Linux machine gets the 192.168.1.2 address, the
+          following commands are needed:</para>
+
+        <screen>&rprompt; <userinput>slattach -p slip -s 115200 /dev/ttyS0 &amp;</userinput>
+&rprompt; <userinput>ifconfig sl0 192.168.1.2 pointopoint 192.168.1.1 up</userinput>
+&rprompt; <userinput>route add 192.168.1.1 dev sl0</userinput></screen>
+
+        <para>Don't forget the <quote>&amp;</quote> in the first command.</para>
+      </note>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-p2p-via-serial-bsd-and-winnt">
+      <title>Connecting &os; and Windows NT</title>
+
+      <para>&os; and Windows NT can be (almost) easily networked with a serial
+        <emphasis>null modem</emphasis> cable.
+        Basically what needs to be done is to create a <quote>Remote
+	  Access</quote> connection under Windows NT and to start
+        <application>pppd</application> on &os;.</para>
+
+      <para>Start <application>pppd</application> as root after having
+        created a <filename>.ppprc</filename> in <filename>/root</filename>.
+        Use the following example as a template.</para>
+
+      <programlisting>connect '/usr/sbin/chat -v CLIENT CLIENTSERVER'
+local
+tty00
+115200
+crtscts
+lock
+noauth
+nodefaultroute
+:192.168.1.2</programlisting>
+
+      <para>The meaning of the first line will be explained later in this
+        section; 192.168.1.2 is the IP address that will be assigned by
+        &os; to the Windows NT host; <filename>tty00</filename> is the
+        serial port used for the connection (first serial port).</para>
+
+      <!--
+      <note>
+        <para>se sulla macchina &os; viene attivato IPNAT su ppp0, si
+          potrebbero avere dei problemi con ftp e telnet da NT;
+          pertanto conviene disabilitare IPNAT per la durata della
+          connessione.</para>
+      </note>
+      -->
+
+      <para>On the NT side a <emphasis>null modem</emphasis> device must be
+        installed from the Control Panel (Modem icon) and a Remote Access
+        connection using this modem must be created.
+        The null modem driver is standard under Windows NT 4 but it's not
+        a 100% null modem: when the link is activated, NT sends the
+        string CLIENT and expects to receive the answer CLIENTSERVER.
+        This is the meaning of the first line of the <filename>.ppprc</filename>
+        file: <command>chat</command> must answer to NT when the
+        connection is activated or the connection will fail.</para>
+
+      <para>In the configuration of the Remote Access connection the
+        following must be specified: use the null modem, telephone number
+        <quote>1</quote> (it's not used, anyway), PPP server, enable only
+        TCP/IP protocol, use IP address and nameservers from the server
+        (&os; in this case).
+        Select the hardware control flow and set the port to 115200 8N1.</para>
+
+      <para>Now everything is ready to activate the connection.</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Connect the serial ports of the two machines with the null
+            modem cable.</para>
+        </listitem>
+
+        <listitem>
+          <para>Launch <command>pppd</command> on &os;.
+            To see the messages of pppd:
+            <command>tail -f /var/log/messages</command>).</para>
+        </listitem>
+
+        <listitem>
+          <para>Activate the Remote Access connection on Windows NT.</para>
+        </listitem>
+      </itemizedlist>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-practice-p2p-via-serial-bsd-and-win95">
+      <title>Connecting &os; and Windows 95</title>
+
+      <para>The setup for Windows 95 is similar to the one for Windows NT:
+        Remote Access on Windows 95 and the PPP server on &os; will be
+        used.
+        Most (if not all) Windows 95 releases don't have the
+        <emphasis>null modem</emphasis> driver, which makes things a
+        little more complicated.
+        The easiest solution is to find one of the available null modem
+        drivers on the Internet (it's a small <filename>.INF</filename>
+        file) and repeat the same steps as for Windows NT.
+        The only difference is that the first line of the
+        <filename>.ppprc</filename> file (the one that calls
+        <command>chat</command>) can be removed.</para>
+
+      <para>If you can't find a real null modem driver for Windows 95 it's
+        still possible to use a little trick:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Create a Remote Access connection like the one described in
+            <xref linkend="chap-net-practice-p2p-via-serial-bsd-and-winnt" /> but using the <quote>Standard
+            Modem</quote>.</para>
+        </listitem>
+
+        <listitem>
+          <para>In <filename>.ppprc</filename> substitute the line that calls
+            <command>chat</command> with the following line</para>
+
+          <programlisting>connect '/usr/sbin/chat -v ATH OK AT OK ATE0V1 OK AT OK ATDT CONNECT'</programlisting>
+        </listitem>
+
+        <listitem>
+          <para>Activate the connection as described in <xref
+	      linkend="chap-net-practice-p2p-via-serial-bsd-and-winnt" />.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>In this way the <command>chat</command> program, called when the
+        connection is activated, emulates what Windows 95 thinks is a
+        standard modem, returning to Windows 95 the same answers that a
+        standard modem would return.
+        Whenever Windows 95 sends a modem command string,
+        <command>chat</command> returns OK.</para>
+    </sect2>
+  </sect1> <!-- Connecting two PCs through a serial line -->
+
+  <!-- sect1>
+    <@title> More stuff (TODO)</title>
+
+      @HF: maybe add a section on DSL/PPPoE setup here (from hubertf's
+      BSDtoday article? Thorsten Lindloff (TLindloff@t-online.de)
+      wanted to do something on DSL, too)
+
+  <@/sect1> -->
+</chapter> <!-- Practice -->

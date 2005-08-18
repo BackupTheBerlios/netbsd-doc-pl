@@ -1,0 +1,222 @@
+<!-- $NetBSD: ap-ack.xml,v 1.22 2005/05/14 12:58:10 hubertf Exp $ -->
+
+<appendix id="ap-ack">
+  <title>Acknowledgements</title>
+
+  <para>The &os; Guide was originally written by Federico Lupi who managed
+    the sources, coordinated updates, and merged all contributions on
+    his own. Since then, it has been updated and maintained by the &os;
+    www team. The Guide has progressed thanks to the contributions of many
+    people who have volunteered their time and effort, supplied material
+    and sent in suggestions and corrections.</para>
+
+  <sect1 id="ap-ack-original">
+    <title>Original acknowledgements</title>
+
+    <para>Federico's original credits are:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Paulo Aukar</para>
+      </listitem>
+
+      <listitem>
+        <para>Grant Beattie, converted to XML DocBook.</para>
+      </listitem>
+
+      <listitem>
+        <para>Manolo De Santis, Audio Chapter</para>
+      </listitem>
+
+      <listitem>
+        <para>Eric Delcamp, Boot Floppies</para>
+      </listitem>
+
+      <listitem>
+        <para>Hubert Feyrer, who contributed the Introduction to TCP/IP
+  	Networking in <xref linkend="chap-net-intro" /> including Next
+  	generation Internet protocol - IPv6 and the section on
+  	getting IPv6 Connectivity &amp; Transition via 6to4 in <xref
+  	linkend="chap-net-misc-ipv6-6to4" />. He also helped with the
+  	SGML to XML transition.</para>
+      </listitem>
+
+      <listitem>
+        <para>Jason R. Fink</para>
+      </listitem>
+
+      <listitem>
+        <para>Daniel de Kok, audio and linux chapters fixes.</para>
+      </listitem>
+
+      <listitem>
+        <para>Reinoud Koornstra, CVS chapter and rebuilding
+	  <filename>/dev</filename> in the Misc chapter.</para>
+      </listitem>
+
+      <listitem>
+        <para>Brian A. Seklecki <email>lavalamp@burghcom.com</email> who
+          contributed the CCD Chapter.</para>
+      </listitem>
+
+      <listitem>
+        <para>Guillain Seuillot</para>
+      </listitem>
+
+      <listitem>
+        <para>Martti Kuparinen, RAIDframe documentation.</para>
+      </listitem>
+
+      <listitem>
+        <para>David Magda</para>
+      </listitem>
+    </itemizedlist>
+  </sect1>
+
+  <sect1 id="ap-ack-current">
+    <title>Current acknowledgements</title>
+
+    <para>This document is currently maintained by the &os; www team.
+      Thanks to their efforts, the document is kept up to date
+      and available online at all times.
+      In addition, special thanks go to (in alphabetical order):</para>
+
+    <itemizedlist>
+      <listitem>
+	<para>Hubert Feyrer, for getting the guide up to speed for
+	  &os; 2.0, and for making numerous improvements to all
+	  chapters.</para>
+      </listitem>
+
+      <listitem>
+        <para>Jason R. Fink, for maintaining this document and integrating
+	  changes.</para>
+      </listitem>
+
+      <listitem>
+        <para>Andreas Hallman, for his information in
+	  <xref linkend="chap-net-misc-ipv6-6to4-ipf" />.</para>
+      </listitem>
+
+      <listitem>
+        <para>Daniel de Kok, for constant contributions of new chapters,
+	  maintenance of existing chapters and his translation work.</para>
+      </listitem>
+
+      <listitem>
+        <para>Hiroki Sato, for allowing us to build PDF and PS versions of
+	  this document.</para>
+      </listitem>
+
+      <listitem>
+        <para>Jan Schaumann, for maintenance work and www/htdocs
+	  managment.</para>
+      </listitem>
+
+      <listitem>
+        <para>Lubomir Sedlacik, for some details on using CGD for
+          swap in <xref linkend="chap-cgd-suggestions" />.</para>
+      </listitem>
+
+      <listitem>
+        <para>
+	  Dag-Erling Sm&oslash;rgrav, for the article on
+	  <xref linkend="chap-pam" />.
+	  See <xref linkend="ap-ack-licenses-pam" /> for the license
+	  accompanying license.
+	</para>
+      </listitem>
+
+      <listitem>
+        <para>Florian St&ouml;hr, for <xref linkend="cryptocds"
+          />.</para>
+      </listitem>
+    </itemizedlist>
+  </sect1>
+
+  <sect1 id="ap-ack-licenses">
+    <title>Licenses</title>
+
+    <sect2 id="ap-ack-licenses-flupi">
+    <title>Federico Lupi's original license of this guide</title>
+
+    <para>Redistribution and use in source and binary forms, with or without
+      modification, are permitted provided that the following conditions
+      are met:</para>
+
+    <orderedlist>
+      <listitem>
+        <para>Redistributions of source code must retain the above copyright
+          notice, this list of conditions and the following disclaimer.</para>
+      </listitem>
+
+      <listitem>
+        <para>Redistributions in binary form must reproduce the above copyright
+          notice, this list of conditions and the following disclaimer in the
+          documentation and/or other materials provided with the distribution.</para>
+      </listitem>
+
+      <listitem>
+        <para>All advertising materials mentioning features or use of this software
+          must display the following acknowledgement:
+          This product includes software developed by Federico Lupi for
+          the &os; Project.</para>
+      </listitem>
+
+      <listitem>
+        <para>The name of the author may not be used to endorse or promote products
+          derived from this software without specific prior written permission.</para>
+      </listitem>
+    </orderedlist>
+
+    <para>THIS SOFTWARE IS PROVIDED BY THE AUTHOR <quote>AS IS</quote> AND
+      ANY EXPRESS OR
+      IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+      OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+      IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+      INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+      NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+      DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+      THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+      (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+      THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</para>
+    </sect2>
+
+    <sect2 id="ap-ack-licenses-pam">
+      <title>Networks Associates Technology's license on the PAM article</title>
+
+
+      <literallayout>Copyright (c) 2001-2003 Networks Associates Technology, Inc.
+All rights reserved.
+
+This software was developed for the FreeBSD Project by ThinkSec AS and
+Network Associates Laboratories, the Security Research Division of
+Network Associates, Inc.  under DARPA/SPAWAR contract N66001-01-C-8035
+("CBOSS"), as part of the DARPA CHATS research program.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the author may not be used to endorse or promote
+   products derived from this software without specific prior written
+   permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.</literallayout>
+    </sect2>
+  </sect1>
+</appendix>

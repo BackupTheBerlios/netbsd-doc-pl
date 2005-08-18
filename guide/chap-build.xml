@@ -1,0 +1,969 @@
+<!-- $NetBSD: chap-build.xml,v 1.17 2005/08/04 03:15:54 rpaulo Exp $ -->
+
+<chapter id="chap-build">
+  <title>Crosscompiling &os; with <filename>build.sh</filename></title>
+
+  <para>When targeting a product for an embedded platform, it's not
+    feasible to have all the development tools available on that same
+    platform. Instead, some method of crosscompiling is usually used
+    today.
+    &os; 1.6 and forward comes with a framework to build both the
+    operating system's kernel and the whole userland for either the
+    same platform that the compiler runs on, or for a different
+    platform, using crosscompiling. Crosscompiling requires assembler,
+    linker, compiler etc. to be available and built for the target
+    platform. The new build scheme will take care of creating these
+    tools for a given platform, and make them available ready to use
+    to do development work.</para>
+
+  <para>In this chapter, we will show how to use
+    <filename>build.sh</filename> to first create a crosscompiling
+    toolchain, including cross-compiler, cross-assembler, cross-linker
+    and so on.
+    While native kernel builds are covered in <xref
+    linkend="chap-kernel" />, these tools are then used to
+    manually configure and crosscompile a kernel for a different
+    platform, and then show how to use <filename>build.sh</filename>
+    as a convenient alternative. After that works,
+    the whole &os; userland will be compiled and packed up in the
+    format of a &os; release. In the examples, we will use the Sun
+    UltraSPARC ("sparc64") 64-bit platform as target
+    platform, any other platform supported by &os; can be targetted as
+    well specifying its name (see
+    <filename>/usr/src/sys/arch</filename>).</para>
+
+  <para>Before starting, take note that it is assumed that the &os;
+    sources from the "netbsd-2-0" branch are available in
+    <filename>/usr/src</filename> as described in
+    <xref linkend="chap-fetch" />.</para>
+
+  <para>A more detailed description of the <filename>build.sh</filename>
+    framework can be found in Luke Mewburn and Matthew Green's
+    <ulink url="http://www.mewburn.net/luke/papers/build.sh.pdf">paper</ulink>
+    and their
+    <ulink url="http://www.mewburn.net/luke/talks/bsdcon-2003/index.html">presentation</ulink>
+    from BSDCon 2003 as well as in
+    <filename>/usr/src/BUILDING</filename>.</para>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-build-tools">
+    <title>Building the crosscompiler</title>
+
+    <para>The first step to do cross-development is to get all the
+      necessary tools available. In NetBSD terminology, this is called
+      the "toolchain", and it includes BSD-compatible make(1), C/C++
+      compilers, linker, assembler, config(8), as well as a fair
+      number of tools that are only required when crosscompiling a
+      full NetBSD release, which we won't cover here.</para>
+
+    <para>The command to create the crosscompiler is quite simple, using
+      &os;'s new <filename>src/build.sh</filename> script. Please note
+      that all the commands here can be run as normal (non-root) user:</para>
+
+    <screen>&cprompt; <userinput>cd /usr/src</userinput>
+&cprompt; <userinput>./build.sh -m sparc64 tools</userinput></screen>
+
+    <para>If the tools have been built previously and they only need
+      updated, then the update option "-u" can be used to only rebuild
+      tools that have changed:</para>
+
+    <screen>&cprompt; <userinput>./build.sh -u -m sparc64 tools</userinput></screen>
+
+    <para>When the tools are built, information about them
+      and several environment variables is printed out:</para>
+
+    <screen>...
+===> build.sh started: Thu Dec  2 22:18:11 CET 2004
+===> build.sh ended:   Thu Dec  2 22:28:22 CET 2004
+===> Summary of results:
+         build.sh command: ./build.sh -m sparc64 tools
+         build.sh started: Thu Dec  2 22:18:11 CET 2004
+         No nonexistent/bin/nbmake, needs building.
+         Bootstrapping nbmake
+         MACHINE:          sparc64
+         MACHINE_ARCH:     sparc64
+         TOOLDIR path:     /usr/src/tooldir.NetBSD-2.0-i386
+         DESTDIR path:     /usr/src/destdir.sparc64
+         RELEASEDIR path:  /usr/src/releasedir
+         Created /usr/src/tooldir.NetBSD-2.0-i386/bin/nbmake
+         makewrapper:      /usr/src/tooldir.NetBSD-2.0-i386/bin/nbmake-sparc64
+         Updated /usr/src/tooldir.NetBSD-2.0-i386/bin/nbmake-sparc64
+         Tools built to /usr/src/tooldir.NetBSD-2.0-i386
+         build.sh started: Thu Dec  2 22:18:11 CET 2004
+         build.sh ended:   Thu Dec  2 22:28:22 CET 2004
+===> . </screen>
+
+    <para>During the build, object directories are used consistently,
+      i.e. special directories are kept that keep the
+      platform-specific object files and compile results. In our
+      example, they will be kept in directories named "obj.sparc64" as
+      we build for UltraSPARC as target platform.</para>
+
+    <para>The toolchain itself is part of this, but as it's hosted and
+      compiled for a i386 system, it will get placed in its own
+      directory indicating where to cross-build from. Here's where our
+      crosscompiler tools are located:</para>
+
+    <screen>&cprompt; <userinput>pwd</userinput>
+/usr/src
+&cprompt; <userinput>ls -d tooldir.*</userinput>
+tooldir.NetBSD-2.0-i386</screen>
+
+    <para>So the general rule of thumb is for a given "host" and "target"
+      system combination, the crosscompiler will be placed in the
+      "src/tooldir.host" directory by default. A full
+      list of all tools created for crosscompiling the whole &os;
+      operating system includes:</para>
+
+    <screen>&cprompt; <userinput>ls tooldir.NetBSD-2.0-i386/bin/</userinput>
+nbasn1_compile          nbmakefs                nbzic
+nbcap_mkdb              nbmakeinfo              sparc64--netbsd-addr2li
+nbcat                   nbmakewhatis            sparc64--netbsd-ar
+nbcksum                 nbmenuc                 sparc64--netbsd-as
+nbcompile_et            nbmkcsmapper            sparc64--netbsd-c++
+nbconfig                nbmkdep                 sparc64--netbsd-c++filt
+nbcrunchgen             nbmkesdb                sparc64--netbsd-cpp
+nbctags                 nbmklocale              sparc64--netbsd-dbsym
+nbdb                    nbmknod                 sparc64--netbsd-g++
+nbeqn                   nbmktemp                sparc64--netbsd-g77
+nbfgen                  nbmsgc                  sparc64--netbsd-gcc
+nbfile                  nbmtree                 sparc64--netbsd-gcc-3.3
+nbgencat                nbnroff                 sparc64--netbsd-gccbug
+nbgroff                 nbpax                   sparc64--netbsd-gcov
+nbhexdump               nbpic                   sparc64--netbsd-ld
+nbhost-mkdep            nbpwd_mkdb              sparc64--netbsd-lint
+nbindxbib               nbrefer                 sparc64--netbsd-mdsetim
+nbinfo                  nbrpcgen                sparc64--netbsd-nm
+nbinfokey               nbsoelim                sparc64--netbsd-objcopy
+nbinstall               nbstat                  sparc64--netbsd-objdump
+nbinstall-info          nbsunlabel              sparc64--netbsd-ranlib
+nbinstallboot           nbtbl                   sparc64--netbsd-readelf
+nblex                   nbtexi2dvi              sparc64--netbsd-size
+nblorder                nbtexindex              sparc64--netbsd-strings
+nbm4                    nbtsort                 sparc64--netbsd-strip
+nbmake                  nbuudecode
+nbmake-sparc64          nbyacc </screen>
+
+    <para>As you can see, most of the tools that are available native on
+      NetBSD are present with some program prefix to identify
+      the target platform for tools that are specific to a certain
+      target platform.</para>
+
+    <para>One important tool that should be pointed out here is
+      "nbmake-sparc64". This is a shell wrapper for a BSD compatible
+      &man.make.1; command that's setup to use all the right commands from
+      the crosscompiler toolchain. Using this wrapper instead of
+      /usr/bin/make allows crosscompiling programs that were written
+      using the NetBSD Makefile infrastructure (see src/share/mk). We
+      will use this &man.make.1; wrapper in a second to cross compile the
+      kernel!</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-boot-cross-config-kernel">
+    <title>Configuring the kernel manually</title>
+
+    <para>Now that we have a working crosscompiler available, the "usual"
+      steps for building a kernel are needed - create a kernel config
+      file, run &man.config.8;, then build. As
+      the &man.config.8; program used to create header files and Makefile
+      for a kernel build is platform specific, we need to use the
+      "nbconfig" program that's part of our new toolchain. That aside,
+      the procedure is just as like compiling a "native" NetBSD
+      kernel. Commands involved here are:</para>
+
+    <screen>&cprompt; <userinput>cd /usr/src/sys/arch/sparc64/conf</userinput>
+&cprompt; <userinput>cp GENERIC <replaceable>MYKERNEL</replaceable></userinput>
+&cprompt; <userinput>vi <replaceable>MYKERNEL</replaceable></userinput>
+&cprompt; <userinput>/usr/src/tooldir.NetBSD-2.0-i386/bin/nbconfig <replaceable>MYKERNEL</replaceable></userinput></screen>
+
+    <para>That's all. This command has created a directory
+      <filename>../compile/<replaceable>MYKERNEL</replaceable></filename>
+      with a number of header files defining information about devices
+      to compile into the kernel, a Makefile that is setup to build
+      all the needed files for the kernel, and link them together.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-boot-cross-compiling-kernel">
+    <title>Crosscompiling the kernel manually</title>
+
+    <para>We have all the files and tools available to crosscompile our
+      UltraSPARC-based kernel from our Intel-based host system, so
+      let's get to it! After changing in the directory created in the
+      previous step, we need to use the crosscompiler toolchain's
+      <filename>nbmake-sparc64</filename> shell wrapper, which just
+      calls make(1) with all the necessary settings for crosscompiling
+      for a sparc64 platform:</para>
+
+    <screen>&cprompt; <userinput>cd ../compile/MYKERNEL/</userinput>
+&cprompt; <userinput>/usr/src/tooldir.NetBSD-2.0-i386/bin/nbmake-sparc64 depend</userinput>
+&cprompt; <userinput>/usr/src/tooldir.NetBSD-2.0-i386/bin/nbmake-sparc64</userinput></screen>
+
+    <para>This will churn away a bit, then spit out a kernel:</para>
+
+    <screen>...
+   text    data     bss     dec     hex filename
+5016899  163728  628752 5809379  58a4e3 netbsd
+&cprompt; <userinput>ls -l netbsd</userinput>
+-rwxr-xr-x  1 feyrer  666  5874663 Dec  2 23:17 netbsd
+&cprompt; <userinput>file netbsd</userinput>
+netbsd: ELF 64-bit MSB executable, SPARC V9, version 1 (SYSV), statically linked, not stripped </screen>
+
+    <para>Now the kernel in the file <filename>netbsd</filename> can
+      either be transferred to a UltraSPARC machine (via NFS, FTP,
+      scp, etc.) and booted from a possible harddisk, or directly from
+      our cross-development machine using NFS.</para>
+
+    <para>After configuring and crosscompiling the kernel, the next
+      logical step is to crosscompile the whole system, and bring it
+      into a distribution-ready format. Before doing so, an
+      alternative approach to crosscompiling a kernel will be shown
+      in the next section, using the <filename>build.sh</filename>
+      script to do configuration and crosscompilation of the kernel
+      in one step.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-boot-cross-build-kernel">
+    <title>Crosscompiling the kernel with <filename>build.sh</filename></title>
+
+    <para>A cross compiled kernel can be done manually as described in
+      the previous sections,  or by the easier method of using
+      <filename>build.sh</filename>, which will be shown here.</para>
+
+    <para>Preparation of the kernel config file is the same as
+        described above:</para>
+
+    <screen>&cprompt; <userinput>cd /usr/src/sys/arch/sparc64/conf</userinput>
+&cprompt; <userinput>cp GENERIC <replaceable>MYKERNEL</replaceable></userinput>
+&cprompt; <userinput>vi <replaceable>MYKERNEL</replaceable></userinput> </screen>
+
+    <para>Then edit <replaceable>MYKERNEL</replaceable> and once finished,
+      all that needs to be done is
+      to use <filename>build.sh</filename> to build the kernel
+      (it will also configure it, running the steps shown above):</para>
+
+    <screen>&cprompt; <userinput>cd /usr/src</userinput>
+&cprompt; <userinput>./build.sh -u -m sparc64 kernel=<replaceable>MYKERNEL</replaceable></userinput></screen>
+
+    <para>Notice that update ("-u") was specified, the tools are
+      already built, there
+      is no reason to rebuild all of the tools. Once the kernel is built,
+      <filename>build.sh</filename> will print out the location
+      of it along with other information:</para>
+
+    <screen>...
+===> Summary of results:
+         build.sh command: ./build.sh -u -m sparc64 kernel=<replaceable>MYKERNEL</replaceable>
+         build.sh started: Thu Dec  2 23:30:02 CET 2004
+         No nonexistent/bin/nbmake, needs building.
+         Bootstrapping nbmake
+         MACHINE:          sparc64
+         MACHINE_ARCH:     sparc64
+         TOOLDIR path:     /usr/src/tooldir.NetBSD-2.0-i386
+         DESTDIR path:     /usr/src/destdir.sparc64
+         RELEASEDIR path:  /usr/src/releasedir
+         Created /usr/src/tooldir.NetBSD-2.0-i386/bin/nbmake
+         makewrapper:      /usr/src/tooldir.NetBSD-2.0-i386/bin/nbmake-sparc64
+         Updated /usr/src/tooldir.NetBSD-2.0-i386/bin/nbmake-sparc64
+         Building kernel without building new tools
+         Building kernel:  <replaceable>MYKERNEL</replaceable>
+         Build directory:  /usr/src/sys/arch/sparc64/compile/obj.sparc64/GENERIC
+         Kernels built from <replaceable>MYKERNEL</replaceable>:
+          /usr/src/sys/arch/sparc64/compile/obj.sparc64/<replaceable>MYKERNEL</replaceable>/netbsd
+         build.sh started: Thu Dec  2 23:30:02 CET 2004
+         build.sh ended:   Thu Dec  2 23:38:22 CET 2004
+===> . </screen>
+
+    <para>The path to the kernel built is of interest here:
+      <filename>/usr/src/sys/arch/sparc64/compile/obj.sparc64/<replaceable>MYKERNEL</replaceable>/netbsd</filename>,
+      it can be used the same way as described above.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-build-release">
+    <title>Crosscompiling the userland</title>
+
+    <para>By now it is probably becoming clear that the toolchain actually
+      works in stages. First the crosscompiler is built, then a
+      kernel. Since <filename>build.sh</filename> will attempt to
+      rebuild the tools at every invocation, using <quote>update</quote>
+      saves time. It is probably also clear that outside of a few options,
+      the <filename>build.sh</filename> semantics are basically
+      <filename>build.sh</filename> <replaceable>command</replaceable>.
+      So, it stands to reason that
+      building the whole userland and/or a release is a matter of
+      using the right commands.</para>
+
+    <para>It should be no surprise that building and creating a release
+      would look like the following:</para>
+
+    <screen>&cprompt; <userinput>./build.sh -U -u -m sparc64 build</userinput>
+&cprompt; <userinput>./build.sh -U -u -m sparc64 release</userinput></screen>
+
+    <para>These commands will compile the full &os; userland and put it
+      into a destination directory, and then build a release from it
+      in a release directory.  The <quote>-U</quote> switch is added here for an
+      <quote>unprivileged</quote> build, i.e. one that's running as normal user and
+      not as root.  As no further switches to
+      <filename>build.sh</filename> were given nor any environment
+      variables were set, the defaults of
+      <varname>DESTDIR=/usr/src/destdir.sparc64</varname> and
+      <varname>RELEASEDIR=/usr/src/releasedir</varname> are used, as
+      shown in the <filename>build.sh</filename>-output above.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-build-xsrc">
+    <title>Crosscompiling the X Window System</title>
+
+    <para>The NetBSD project has its own copy of the X Window System's
+      source which is currently based on XFree86 version 4, and
+      which contains changes to make X going on as many of the
+      platforms supported by NetBSD as possible. Due to this, it is
+      desirable to use the X Window System version available from
+      and for NetBSD, which can also be crosscompiled much like the
+      kernel and base system. To do so, the  "xsrc" sources
+      must be checked out from CVS into
+      <filename>/usr/xsrc</filename> just as "src" and "pkgsrc" were
+      as described in <xref linkend="chap-fetch" />.</para>
+
+    <para>After this, X can be crosscompiled for the target platform by
+      adding the "-x" switch to build.sh, e.g. when creating a full
+      release:</para>
+
+    <screen>&cprompt; <userinput>./build.sh -U -x -u -m sparc64 release</userinput></screen>
+
+    <para>The <option>-U</option>
+      flag for doing unprivileged (non-root) builds and the
+      <option>-u</option> flag for not removing old files before
+      building as well
+      as the <option>-m <replaceable>arch</replaceable></option>
+      option to define
+      the target architecture have already been introduced, and the
+      <option>-x</option> option to also (cross)compile
+      "xsrc" is another option.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-build-environment">
+    <title>Changing build behaviour</title>
+
+    <para>Similar to the old, manual building method, the new
+      toolchain has a lot of variables that can be used to direct
+      things like where certain files go, what (if any) tools are used
+      and so on. A look in <filename>src/BUILDING</filename> covers
+      most of them. In this section some examples of changing default
+      settings are given, each following its own ways.</para>
+
+    <sect2 id="chap-build-environment-change-destdir">
+      <title>Changing the Destination Directory</title>
+
+      <para>Many people like to track NetBSD-current and perform cross
+        compiles of architectures that they use. The logic for this is
+        simple, sometimes a new feature or device becomes available
+        and someone may wish to use it. By keeping track of changes
+        and building every now and again, one can be assured that
+        these architectures can build their own release.</para>
+
+      <para>It is reasonable to assume that if one is tracking and
+        building for more than one architecture, they might want to
+        keep the builds in a different location than the
+        default. There are two ways to go about this, either use a
+        script to set the new DESTDIR, or simply do so
+        interactively. In any case, it can be set the same way as any
+        other variable (depending on your shell of course).</para>
+
+      <para>For bash, the Bourne or Korn shell, this is:</para>
+
+      <screen>&cprompt; <userinput>export DESTDIR=/usr/builds/sparc64</userinput></screen>
+
+      <para>For tcsh and the C shell, the command is:</para>
+
+      <screen>&cprompt; <userinput>setenv DESTDIR /usr/builds/sparc64</userinput></screen>
+
+      <para>Simple enough. When the build is run, the binaries and
+        files will be sent to <filename>/usr/builds</filename>.</para>
+    </sect2>
+
+    <sect2 id="chap-build-environment-static-build">
+      <title>Static Builds</title>
+
+      <para>The &os; toolchain builds and links against shared libraries
+        by default. Many users still prefer to be able to link
+        statically. Sometimes a small system can be created without
+        having shared libraries, which is a good example of doing a
+        full static build. If a particular build machine will always
+        need one environment variable set in a particular way, then it
+        is easiest to simply add the changed setting to
+        <filename>/etc/mk.conf</filename>.</para>
+
+      <para>To make sure a build box always builds statically, simply
+        add the following line to
+        <filename>/etc/mk.conf</filename>:</para>
+
+      <programlisting>LDSTATIC=-static</programlisting>
+    </sect2>
+
+    <sect2 id="chap-build-environment-options">
+      <title>Using <filename>build.sh</filename> options</title>
+
+      <para>Besides variables in environment and
+        <filename>/etc/mk.conf</filename>, the build process can be
+        influenced by a number of switches to the
+        <filename>build.sh</filename> script itself, as we have
+        already seen when forcing unprivileged (non-root) builds,
+        selecting the target architecture or preventing deletion of
+        old files before the build. All these options can  be
+        listed by running <command>build.sh -h</command>:</para>
+
+      <screen>&cprompt; <userinput>cd /usr/src</userinput>
+&cprompt; <userinput>build.sh -h</userinput>
+Usage: build.sh [-EnorUux] [-a arch] [-B buildid] [-D dest] [-j njob]
+		[-M obj] [-m mach] [-N noisy] [-O obj] [-R release] [-T tools]
+		[-V var=[value]] [-w wrapper] [-X x11src] [-Z var]
+		operation [...]
+
+ Build operations (all imply "obj" and "tools"):
+    build               Run "make build".
+    distribution        Run "make distribution" (includes DESTDIR/etc/ files).
+    release             Run "make release" (includes kernels & distrib media).
+
+ Other operations:
+    help                Show this message and exit.
+    makewrapper         Create nbmake-${MACHINE} wrapper and nbmake.
+                        Always performed.
+    obj                 Run "make obj".  [Default unless -o is used]
+    tools               Build and install tools.
+    install=idir        Run "make installworld" to `idir' to install all sets
+			except `etc'.  Useful after "distribution" or "release"
+    kernel=conf         Build kernel with config file `conf'
+    releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR.
+    sets                Create binary sets in RELEASEDIR/MACHINE/binary/sets.
+			DESTDIR should be populated beforehand.
+    sourcesets          Create source sets in RELEASEDIR/source/sets.
+    params              Display various make(1) parameters.
+
+ Options:
+    -a arch     Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
+    -B buildId  Set BUILDID to buildId.
+    -D dest     Set DESTDIR to dest.  [Default: destdir.MACHINE]
+    -E          Set "expert" mode; disables various safety checks.
+                Should not be used without expert knowledge of the build system.
+    -j njob     Run up to njob jobs in parallel; see make(1) -j.
+    -M obj      Set obj root directory to obj; sets MAKEOBJDIRPREFIX.
+                Unsets MAKEOBJDIR.
+    -m mach     Set MACHINE to mach; not required if NetBSD native.
+    -N noisy	Set the noisyness (MAKEVERBOSE) level of the build:
+		    0	Quiet
+		    1	Operations are described, commands are suppressed
+		    2	Full output
+		[Default: 2]
+    -n          Show commands that would be executed, but do not execute them.
+    -O obj      Set obj root directory to obj; sets a MAKEOBJDIR pattern.
+                Unsets MAKEOBJDIRPREFIX.
+    -o          Set MKOBJDIRS=no; do not create objdirs at start of build.
+    -R release  Set RELEASEDIR to release.  [Default: releasedir]
+    -r          Remove contents of TOOLDIR and DESTDIR before building.
+    -T tools    Set TOOLDIR to tools.  If unset, and TOOLDIR is not set in
+                the environment, nbmake will be (re)built unconditionally.
+    -U          Set MKUNPRIVED=yes; build without requiring root privileges,
+    		install from an UNPRIVED build with proper file permissions.
+    -u          Set MKUPDATE=yes; do not run "make clean" first.
+		Without this, everything is rebuilt, including the tools.
+    -V v=[val]  Set variable `v' to `val'.
+    -w wrapper  Create nbmake script as wrapper.
+                [Default: ${TOOLDIR}/bin/nbmake-${MACHINE}]
+    -X x11src   Set X11SRCDIR to x11src.  [Default: /usr/xsrc]
+    -x          Set MKX11=yes; build X11R6 from X11SRCDIR
+    -Z v        Unset ("zap") variable `v'. </screen>
+
+
+      <para>As can be seen, a number of switches can be set to change the
+        standard build behaviour. A number of them has already been
+        introduced, others can be set as appropriate.</para>
+    </sect2>
+
+    <sect2 id="chap-build-make-variables">
+      <title>&man.make.1; variables used during build</title>
+
+      <para>Several variables control the behaviour of &os; builds. Unless otherwise
+	specified, these variables may be set in either the process environment
+	or in the &man.make.1; configuration file specified by
+	<varname>MAKECONF</varname>. For a definitive list of these options, see
+	<filename>BUILDING</filename> in the toplevel source directory.</para>
+
+      <variablelist>
+        <varlistentry>
+	  <term>BUILDID</term>
+	  <listitem>
+	    <para>Identifier for the build.  The identifier will be appended to
+	      object directory names, and can be consulted in the &man.make.1;
+	      configuration file in order to set additional build parameters,
+	      such as compiler flags.  </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>DESTDIR</term>
+	  <listitem>
+	    <para>Directory to contain the built &os; system. If set, special
+	      options are passed to the compilation tools to prevent their
+	      default use of the host system's
+	      <filename>/usr/include</filename>,
+	      <filename>/usr/lib</filename>, and so forth. This pathname
+	      should not end with a slash (/) character (For installation
+	      into the system's root directory, set <varname>DESTDIR</varname>
+	      to an empty string). The directory must reside on a filesystem
+	      which supports long filenames and hard links.</para>
+
+	    <para>Defaults to an empty string if <varname>USETOOLS</varname> is
+	      <quote>yes</quote>; unset otherwise. Note:
+	      <filename>build.sh</filename> will provide a default
+	      (destdir.MACHINE in the top-level <varname>.OBJDIR</varname>)
+	      unless run in <quote>expert</quote> mode.</para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>MAKEVERBOSE</term>
+	  <listitem>
+	    <para>The verbosity of build messages. Supported values:</para>
+
+	    <informaltable>
+	      <tgroup cols="2">
+		<colspec align="center" colwidth="1in" />
+		<colspec align="left"   colwidth="1in" />
+
+		<tbody>
+		  <row>
+		    <entry>0</entry>
+		    <entry>No descriptive messages are shown.</entry>
+		  </row>
+		  <row>
+		    <entry>1</entry>
+		    <entry>Descriptive messages are shown.</entry>
+		  </row>
+		  <row>
+		    <entry>2</entry>
+		    <entry>Descriptive messages are shown (prefixed with a
+		      '#') and command output is not suppressed. </entry>
+		  </row>
+		</tbody>
+	      </tgroup>
+	    </informaltable>
+
+	    <para>Default: 2</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKCATPAGES</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether preformatted plaintext manual pages will be created during
+	      a build.</para>
+
+	    <para>Default: <quote>yes</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKCRYPTO</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether cryptographic code will be included in a build; provided
+	      for the benefit of countries that do not allow strong
+	      cryptography. Will not affect the standard low-security password
+	      encryption system, &man.crypt.3;.</para>
+
+	    <para>Default: <quote>yes</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKDOC</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether system documentation destined for
+	      <varname>DESTDIR</varname><filename>/usr/share/doc</filename> will
+	      be installed during a build.</para>
+
+	    <para>Default: <quote>yes</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKHOSTOBJ</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. If set to
+	      <quote>yes</quote>, then for programs intended to be run on the
+	      compile host, the name, release and architecture of the host
+	      operating system will be suffixed to the name of the object
+	      directory created by <quote>make obj</quote>. This allows for
+	      multiple host stystems to compile &os; for a single target. If
+	      set to <quote>no</quote>, then programs built to be run on the
+	      compile host will use the same object directory names as programs
+	      built to be run on the target.</para>
+
+	    <para>Default: <quote>no</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKINFO</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether GNU info files, used for the documentation of most of the
+	      compilation tools, will be created and installed during a build.
+	    </para>
+
+	    <para>Default: <quote>yes</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKLINT</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether &man.lint.1; will be run against portions of the &os;
+	      source code during the build, and whether lint libraries will
+	      be installed into
+	      <varname>DESTDIR</varname><filename>/usr/libdata/lint</filename></para>
+
+	    <para>Default: <quote>yes</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKMAN</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether manual pages will be installed during a build.</para>
+
+	    <para>Default: <quote>yes</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKNLS</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether Native Language System locale zone files will be
+	      compiled and installed during a build.</para>
+
+	    <para>Default: <quote>yes</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKOBJ</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether object directories will be created when running
+	      <quote>make obj</quote>. If set to <quote>no</quote>, then all
+	      built files will be located inside the regular source tree.</para>
+
+	    <para>Default: <quote>yes</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKPIC</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether shared objects and libraries will be created and
+	      installed during a build. If set to <quote>no</quote>, the
+	      entire build will be statically linked.</para>
+
+	    <para>Default: Platform dependent. As of this writing, all
+	      platforms except sh3 default to <quote>yes</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKPICINSTALL</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether the &man.ar.1; format libraries
+	      (<filename>lib*_pic.a</filename>), used to generate shared
+	      libraries, are installed during a build.</para>
+
+	    <para>Default: <quote>yes</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKPROFILE</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether profiled libraries (<filename>lib*_p.a</filename>)
+	      will be built and installed during a build.</para>
+
+	    <para>Default: <quote>yes</quote>; however, some platforms turn off
+	      <varname>MKPROFILE</varname> by default at times due to toolchain
+	      problems with profiled code.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKSHARE</term>
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether files destined to reside in
+	      <varname>DESTDIR</varname><filename>/usr/share</filename> will be
+	      built and installed during a build. If set to <quote>no</quote>,
+	      then all of <varname>MKCATPAGES</varname>,
+	      <varname>MKDOC</varname>, <varname>MKINFO</varname>,
+	      <varname>MKMAN</varname> and <varname>MKNLS</varname> will be set
+	      to <quote>no</quote> unconditionally.</para>
+
+	    <para>Default: <quote>yes</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKTTINTERP</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. For X
+	      builds, decides if the TrueType bytecode interpreter is
+	      turned on. See <ulink url="http://freetype.org/patents.html">
+	      freetype.org</ulink> for details.</para>
+
+	    <para>Default: <quote>no</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKUNPRIVED</term>
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether an unprivileged install will occur. The user, group,
+	      permissions and file flags will not be set on the installed items;
+	      instead the information will be appended to a file called
+	      <filename>METALOG</filename> in <varname>DESTDIR</varname>. The
+	      contents of <varname>METALOG</varname> are used during the
+	      generation of the distribution tar files to ensure that the
+	      appropriate file ownership is stored.</para>
+
+	    <para>Default: <quote>no</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKUPDATE</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether all install operations intended to write to
+	      <varname>DESTDIR</varname> will compare file timestamps before
+	      installing, and skip the install phase if the destination files
+	      are up-to-date. This also has implications on full builds (See
+	      below).</para>
+
+	    <para>Default: <quote>no</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKX11</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether X11R6 is built from <varname>X11SRCDIR</varname>.</para>
+
+	    <para>Default: <quote>yes</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>TOOLDIR</term>
+
+	  <listitem>
+	    <para>Directory to hold the host tools, once built. This directory
+	      should be unique to a given host system and &os; source tree.
+	      (However, multiple targets may share the same
+	      <varname>TOOLDIR</varname>; the target-dependent files have unique
+	      names). If unset, a default based on the &man.uname.1; information
+	      of the host platform will be created in the
+	      <varname>.OBJDIR</varname> of <filename>src</filename>.</para>
+
+	    <para>Default: Unset.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>USETOOLS</term>
+
+	  <listitem>
+	    <para>Indicates whether the tools specified by
+	      <varname>TOOLDIR</varname> should be used as part of a build in
+	      progress. Must be set to <quote>yes</quote> if cross-compiling.</para>
+	    <informaltable>
+	      <tgroup cols="2">
+		<colspec align="center" colwidth="1in" />
+		<colspec align="left"   colwidth="1in" />
+
+		<tbody>
+		  <row>
+		    <entry>yes</entry>
+		    <entry>Use the tools from <varname>TOOLDIR</varname>.
+		      </entry>
+		  </row>
+		  <row>
+		    <entry>no</entry>
+		    <entry>Do not use the tools from
+		      <varname>TOOLNAME</varname>, but refuse to build native
+		      compilation tool components that are version-specific for
+		      that tool.</entry>
+		  </row>
+		  <row>
+		    <entry>never</entry>
+		    <entry>Do not use the tools from
+		      <varname>TOOLNAME</varname>, even when building native
+		      tool components. This is similar to the traditional &os;
+		      build method, but does not verify that the compilation
+		      tools in use are up-to-date enough in order to build the
+		      tree succesfully. This may cause build or runtime problems
+		      when building the whole &os; source tree. </entry>
+		  </row>
+		</tbody>
+	      </tgroup>
+	    </informaltable>
+
+	    <para>Default: <quote>yes</quote> if building all or part of a whole
+	      &os; source tree (detected automatically); <quote>no</quote>
+	      otherwise (to preserve traditional semantics of the <filename>
+	      bsd.*.mk</filename> &man.make.1; include files).</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>X11SRCDIR</term>
+
+	  <listitem>
+	    <para>Directory containing the X11R6 source. The main X11R6 source is
+	      found in
+	      <varname>X11SRCDIR</varname><filename>/xfree/xc</filename>.</para>
+
+	    <para>Default: <quote>usr/xsrc</quote></para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+
+      <para>The following variables only affect the top level
+	<filename>Makefile</filename> and do not affect manually building
+	subtrees of the &os; source code.</para>
+
+      <variablelist>
+	<varlistentry>
+	  <term>INSTALLWORLDDIR</term>
+
+	  <listitem>
+	    <para>Location for the <quote>make installworld</quote> target to
+	      install to.</para>
+
+	    <para>Default: <quote>/</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKOBJDIRS</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. Indicates
+	      whether object directories will be created automatically (via a
+	      <quote>make obj</quote> pass) at the start of a build.</para>
+
+	    <para>Default: <quote>no</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>MKUPDATE</term>
+
+	  <listitem>
+	    <para>Can be set to <quote>yes</quote> or <quote>no</quote>. If set,
+	      then addition to the effects described for
+	      <varname>MKUPDATE=yes</varname> above, this implies the effect of
+	      <varname>NOCLEANDIR</varname> (i.e., <quote>make cleandir</quote>
+	      is avoided).</para>
+
+	    <para>Default: <quote>no</quote></para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>NOCLEANDIR</term>
+	  <listitem>
+	    <para>If set, avoids the <quote>make cleandir</quote> phase of a full
+	      build. This has the effect of allowing only changed files in a
+	      source tree to recompiled. This can speed up builds when updating
+	      only a few files in the tree.</para>
+
+	    <para>Default: Unset</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>NODISTRIBDIRS</term>
+
+	  <listitem>
+	    <para>If set, avoids the <quote>make distrib-dirs</quote> of a full
+	      build. This skips running &man.mtree.8; on
+	      <varname>DESTDIR</varname>, useful on systems where building as an
+	      unprivileged user, or where it is known that the system wide mtree
+	      files have not changed.</para>
+
+	    <para>Default: Unset</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>NOINCLUDES</term>
+
+	  <listitem>
+	    <para>If set, avoids the <quote>make includes</quote> phase of a full
+	      build. This has the effect of preventing &man.make.1; from
+	      thinking that some programs are out-of-date simply because system
+	      include files have changed. However, this option should not be
+	      trusted when updating the entire &os; source tree arbitrarily; it
+	      is suggested to use <varname>MKUPDATE=yes</varname> in that case.</para>
+
+	    <para>Default: Unset</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>RELEASEDIR</term>
+
+	  <listitem>
+	    <para>If set, specifies the directory to which a &man.release.7; layout
+	      will be written at the end of a <quote>make release</quote>.</para>
+
+	    <para>Default: Unset</para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+    </sect2>
+  </sect1>
+</chapter>

@@ -1,0 +1,739 @@
+<!-- $NetBSD: chap-pack.xml,v 1.19 2005/07/15 18:11:04 jschauma Exp $ -->
+
+<!--
+  -   There should be a "Users' guide to the NetBSD Packages Collection"
+  -   <part> in pkgsrc.xml, and it should contain all the files from
+  -   the pkgsrc guide's "Users' guide"!
+  -->
+
+<chapter id="chap-pack">
+  <title> Kolekcja pakietów - pkgsrc</title>
+
+  <para><emphasis> Rozdzia³ ten zawiera niekompletn± dokumentacjê. Zajrzyj do Podrêcznika 
+    pkgsrc, który zawiera³ najbardziej aktualne informacje o systemie 
+    pakietów NetBSD. </emphasis></para>
+
+  <para>
+    Kolekcja pakietów NetBSD jest zbiorem narzêdzi, które znacznie 
+    upraszczaj± kompilacjê i instalacjê ogromnej ilo¶ci wolnego 
+    oprogramowania dla systemów Unix'owych.
+    Tylko dwie, trzy komendy s± potrzebne do instalacji idealnie 
+    skonfigurowanego i dzia³aj±cego pakietu. </para>
+
+  <para>
+    Pierwszy kontakt z systemem pakietów NetBSD mo¿e wywo³aæ  lekki 
+    zamêt: istniej± ró¿ne komendy, które robi± to samo.
+Kwestia jest bardzo prosta: s± <emphasis> dwa sposoby </emphasis> na zainstalowanie wybranego programu. 
+    Mo¿esz:</para>
+
+  <itemizedlist>
+    <listitem>
+      <para>
+	skompilowaæ pakiet  ze ¼róde³ dla swojego systemu.
+	Jest to znakomite u¿ycie kolekcji pakietów pkgsrc, która 
+	automatycznie pobierze ¼ród³a z Internetu, skompiluje je, 
+	zainstaluje i skonfiguruje program przy pomocy jedynie dwóch 
+	komend.
+	Kolekcja pakietów pkgsrc zawiera zbiór plików Makefile i plików 
+	konfiguracyjnych, które u¿ywaj± narzêdzi zainstalowanych w base 
+	sysem.
+	Kolejn± mi³± cech± pkgsrc jest automatyczne sprawdzanie, 
+	¶ci±ganie i instalowanie wymaganych zale¿no¶ci. Kolekcja pakietów 
+	pkgsrc nie jest instalowana wraz z podstawowym systemem poniewa¿ wymaga 
+	czêstych uaktualnieñ: kolejne podrozdzia³y wyja¶ni± jak pobraæ i 
+	zainstalowaæ pkgsrc w systemie.
+	Strona NetBSD zawiera dok³adny techniczny opis systemu 
+	pakietów.
+	</para>
+    </listitem>
+
+    <listitem>
+      <para>
+	zainstalowaæ prekompilowan± i prekonfigurowan± wersjê programu.
+	Wraz z <emphasis>pkgtools</emphasis>
+	Ta metoda jest szybsza ale mniej elastyczna ni¿ poprzednia.
+	pkgtools s± równie¿ u¿ywane do zarz±dzania zainstalowanymi 
+	programami (zarówno tymi ze ¼róde³ jak i prekompilowanych), które 
+	znajduj± siê w bazie danych: mo¿esz na przyk³ad wylistowaæ 
+	zainstalowane pakiety, usun±æ wybrany pakiet itd.</para>
+
+      <para>
+	Je¶li chcesz tylko instalowaæ programy prekompilowane, nie 
+	musisz pobieraæ i instalowaæ pkgsrc.</para>
+    </listitem>
+  </itemizedlist>
+
+  <para>
+    Obie wy¿ej wspomniane metody wymagaj± aby kto¶ <quote> stworzy³ 
+    pakiet</quote> np. sportowa³ i skonfigurowa³ go dla NetBSD.
+    Mimo ze pkgsrc zawiera ponad 3500 programów, mo¿e zdarzyæ siê tak, 
+    ¿e nie bêdzie w¶ród nich wymaganego przez ciebie.
+    W takim przypadku mo¿esz skompilowaæ go sam i stworzyæ pakiet, 
+    który bêdzie dodany do kolekcji pakietów pkgsrc: inni na tym 
+    skorzystaj±.</para>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-pack-install">
+    <title> Instalowanie kolekcji pakietów pkgsrc</title>
+
+    <para> Przed instalacja programu ze ¼róde³, powiniene¶ pobraæ pkgsrc 
+	ze strony NetBSD lub z serwera lustrzanego.
+    Operacjê t± mo¿na opisaæ w kilku krokach.</para>
+
+    <procedure>
+      <step>
+	<para> Pobierz najnowsza wersje pkgsrc, która zawiera potrzebne 
+	pliki Makefile i konfiguracyjne, z
+          <ulink url="ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-current/tar_files/">ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-current/tar_files/</ulink>.
+
+         Plikiem do pobrania jest<filename>pkgsrc.tar.gz</filename>.</para> 
+      </step>
+
+      <step>
+        <para> Usuñ z dysku istniej±c± kolekcje pkgsrc (je¶li masz takow±) 
+		za pomoc± poleceñ: </para>
+
+        <screen>&rprompt; <userinput>cd /usr</userinput>
+&rprompt; <userinput>rm -rf pkgsrc</userinput></screen>
+      </step>
+
+      <step>
+        <para> Zainstaluj pkgsrc które pobra³e¶</para>
+
+	<screen>&rprompt; <userinput>tar -xzvpf pkgsrc.tar.gz -C /usr</userinput></screen>
+
+        <para> Wykonanie powy¿szej komendy mo¿e zaj±æ kilka minut, 
+	poniewa¿ rozpakowywane jest wiele (ma³ych) plików. Na koniec 
+	mamy gotowa podstawê do instalacji nowych programów.
+          
+	<note>
+            <para> poprzednie polecenia zainstalowa³y pliki konfiguracyjne 
+	wymagane do automatycznej instalacji programów w twoim 
+	systemie, ale jak dot±d ¿adnego programu nie zainstalowa³e¶!
+	Zasadniczo, system posiada teraz listê dostêpnych pakietów i 
+	instrukcje do pobrania, skompilowania i instalacji ich. </para>
+          </note>
+        </para>
+      </step>
+    </procedure>
+
+    <para> Kiedy masz ju¿ zainstalowan± kolekcjê pakietów pkgsrc mo¿esz je 
+	    przegl±daæ Lynx'em czy Netscapem oraz przeczytaæ szczegó³y i opisy 
+	    wszystkich pakietów i kategorii na które s± podzielone. Dla przyk³adu:</para>
+
+    <screen>&uprompt; <userinput>cd /usr/pkgsrc</userinput>
+&uprompt; <userinput>lynx README.html</userinput></screen>
+
+    <sidebar>
+      <title> Nie zgub archiwów ze ¼ród³ami</title>
+
+      <para> Kiedy usuwasz istniej±cy pkgsrc z dysku by zainstalowaæ 
+	nowa wersjê, nie zapomnij zrobiæ kopii bezpieczeñstwa  
+	<filename>/usr/pkgsrc/distfiles</filename> 
+	katalogu zanim usuniesz <filename>/usr/pkgsrc</filename>. 
+	
+	Katalog ten jest u¿ywany do przechowywania pobranych archiwów 
+	ze ¼ród³ami programów. Je¶li usuniesz ten katalog, twój system bêdzie 
+	musia³ pobieraæ ¼ród³a ponownie gdy bêd± wymagane przez 
+	pkgsrc.
+	Je¶li chcesz tego unikn±æ mo¿esz poleciæ systemowi aby u¿ywa³ 
+	innego katalogu, który znajduje siê poza <filename>/usr/pkgsrc</filename>.
+	Na przyk³ad utwórz katalog: </para>
+
+    <screen>&rprompt; <userinput>mkdir /usr/pkgsrc_distfiles</userinput></screen>
+
+	<para> Dodaj tê linijkê do <filename>/etc/mk.conf</filename>:</para>
+
+      <programlisting>DISTDIR=/usr/pkgsrc_distfiles</programlisting>
+      
+      <para> Oczywi¶cie mo¿e to byæ dowolna inna ¶cie¿ka, 
+	    niekoniecznie
+      
+	<filename>/usr/pkgsrc_distfiles</filename>.</para>
+      
+      <para> Mo¿esz ustawiæ równie¿ wiele innych opcji pkgsrc w pliku
+	<filename>/etc/mk.conf</filename>.
+	
+	Mo¿esz znale¼æ dodatkowe  informacje na temat zmiennych,  które 
+	chcia³by¶ ustawiæ w pliku:
+
+	<filename>/usr/pkgsrc/mk/defaults/mk.conf</filename>
+	&man.mk.conf.5;.</para>
+    </sidebar>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-pack-update">
+ 
+ <title>Aktualizacja kolekcji pakietów pkgsrc</title>
+
+    <para> Kolekcja pakietów pkgsrc jest czêsto uaktualniana: na ftp'ie mo¿esz 
+	znale¼æ nowe pkgsrc pojawiaj±ce siê prawie co tydzieñ. 
+	Aby zaktualizowaæ pkgsrc postêpuj tak jak przy pierwszej 
+	instalacji.</para>
+
+    <para> Czasami podczas aktualizacji pkgsrc bêdzie wymagana równie¿ 
+	aktualizacja <quote>pkgtools.</quote>
+	W takim wypadku system powiadomi ciê o tym przy instalacji  
+	jakiegokolwiek programu z pkgsrc. </para>
+	
+    <screen>&rprompt; <userinput>make</userinput>
+===> Validating dependencies for gqmpeg-0.6.3
+Your package tols ned to be updated to 2000/02/02 versions.
+The installed package tols were last updated on 1999/01/01.
+Please make and install the pkgsrc/pkgtools/pkg_install package.
+*** Error code 1</screen>
+    
+    <para> Naj³atwiejszym sposobem aktualizacji jest: </para>
+    
+    <screen>&rprompt; <userinput>cd /usr/pkgsrc/pkgtools/pkg_install</userinput>
+&rprompt; <userinput>make install</userinput></screen>
+    
+    <para> Nastêpnie mo¿esz powróciæ do instalacji pakietu przy którym 
+	    wystêpowa³ b³±d</para>
+	    
+    <note>
+      <para> Mo¿esz ustawiæ odpowiednia wersje pkgsrc w pliku
+
+	<filename>pkgsrc/mk/bsd.pkg.mk</filename>, wyszukuj±c linie:</para>
+
+      <programlisting>pkgtools_REQD = 20000202</programlisting>
+
+      <para>(Data 20000202 jest tylko przyk³adem)
+	Oznacza to ¿e wersja pkgsrc której potrzebujesz znajduje siê w 
+	pliku
+	
+	<filename>pkg_install-20000202.tar.gz</filename>
+	
+	który mo¿esz znale¼æ na ftp'ie NetBSD w
+	
+	<filename>packages/distfiles/LOCAL_PORTS</filename>.
+	
+	<filename>pkg_install</filename> mo¿e byæ zainstalowany jak ka¿dy inny pakiet.</para>
+    </note>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-pack-install-from-source">
+    <title> Przyk³ad: instalacja programu ze ¼róde³</title> 
+	    
+    <para> W tej czê¶ci opisana jest instalacja przyk³adowego programu:
+    
+      <application>cdrecord</application>.
+      
+    Najpierw wejdz <command>cd</command> do katalogu 
+<filename>/usr/pkgsrc/sysutils/cdrecord</filename>.</para>
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-pack-install-from-source-download">
+      <title> Pobieranie ¼róde³</title>
+
+      <para> Je¶li masz dostêp do Internetu, <filename>Makefile</filename> 
+	sam pobierze ¼ród³a, a ty nie musisz ju¿ dalej czytaæ tej 
+	czê¶ci.</para>
+
+      <sidebar>
+        <title> Pobieranie ¼róde³ na innej maszynie</title>
+		
+	<para> Popularne jest pobieranie ¼róde³ na innej maszynie z 
+	    szybkim dostêpem do Internetu (np. w pracy) i instalowanie ich w 
+	    twoim systemie NetBSD (np. w domu)</para>
+      </sidebar>
+
+      <para> W innym przypadku powiniene¶ sam zadbaæ o ¼ród³a. Musisz znaæ 
+	nazwy programów aby ¶ci±gn±æ w³a¶ciwe pliki. Wyedytuj 
+	<filename>Makefile</filename> i znajd¼ linie</para>
+
+      <programlisting>DISTNAME = cdrtols-2.0</programlisting>
+
+      <para> Pe³na nazwa pliku ze ¼ród³ami bêdzie nastêpuj±ca
+      
+        <filename>cdrtols-2.0.tar.gz</filename>.</para>
+
+      <para> Mo¿esz osi±gn±æ ten s±m rezultat w prostszy sposób za pomoc± 
+nastêpuj±cych poleceñ:</para>
+
+      <screen>&rprompt; <userinput>cd /usr/pkgsrc/sysutils/cdrecord</userinput>
+&rprompt; <userinput>make fetch-list</userinput></screen>
+
+	<para> które tak¿e poka¿± listê stron, z których ¼ród³a mog± byæ 
+	    pobrane.</para>
+    
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-pack-install-from-source-compile">
+      <title> Kompilacja i instalacja</title>
+
+      <para> Aby skompilowaæ pakiet napisz</para>
+
+      <screen>&rprompt; <userinput>cd /usr/pkgsrc/sysutils/cdrecord</userinput>
+&rprompt; <userinput>make</userinput></screen>
+
+      <para> Powy¿sze polecenie pobierze spakowane ¼ród³a (je¶li nie ma ich  
+	jeszcze w katalogu <quote>distfiles</quote>).</para>
+
+      <para> Aby zainstalowaæ skompilowany program u¿yj</para>
+
+      <screen>&rprompt; <userinput>make install</userinput></screen>
+
+      <para> Nowo zainstalowany program jest zarejestrowany w twoim 
+	systemie. Mo¿esz to ³atwo sprawdziæ u¿ywaj±c polecenia <command>pkg_info 
+	-a</command>.</para>
+
+      <para> Teraz <emphasis>cdrecord</emphasis> jest gotowy do u¿ycia. Aby 
+	zrobiæ porz±dek mo¿esz usun±æ pliki tymczasowe jakie pozostawi³ 
+	kompilator: </para>
+
+      <screen>&rprompt; <userinput>make clean</userinput>
+&rprompt; <userinput>make clean-depends</userinput></screen>
+
+      <para> Drugie polecenie jest potrzebne do czyszczenia zale¿no¶ci, 
+	które zosta³y zainstalowane. 
+	Ten sam rezultat otrzymamy wpisuj±c komendê</para>
+
+      <screen>&rprompt; <userinput>make clean CLEANDEPENDS=1</userinput></screen>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-pack-install-from-binary">
+    <title> Przyk³ad: instalacja gotowego pakietu (binarnego)</title>
+
+    <para> Na pocz±tku rozdzia³u zosta³o wyja¶nione ze system pakietów mo¿e 
+	byæ instalowany ze ¼róde³ jak i gotowy pakiet binarny przygotowany  
+	przez kogo¶ dla NetBSD.
+	Druga metoda instalacji jest szybsza poniewa¿ nie wymaga kompilacji, a 
+	tak¿e binarne pakiety s± przewa¿nie mniejsze i krócej siê je pobiera.
+	Aby zainstalowaæ gotowy pakiet binarny, pkgsrc nie jest potrzebne,
+	tylko <quote>pkgtools</quote>.</para>
+
+    <para> Pakiety binarne przewa¿nie maja rozszerzenie 
+    <filename>.tgz</filename> a spakowane ¼ród³a <filename>.tar.gz</filename>. </para>
+
+    
+    <note>
+      <para> nie wszystkie archiwa ze ¼ród³ami koñcz± siê <filename>.tar.gz</filename>.
+	Mog± posiadaæ równie¿ inne rozszerzenia np.: 
+	<filename>.zip</filename>, <filename>.bz2</filename>, itd.</para>
+    
+    </note>
+
+    <para> Nie jest konieczne pobieranie pakietów przed ich instalacja: mo¿na
+      bezpo¶rednio u¿yæ ftp://-URLi
+    Na przyk³ad:</para>
+
+    <para><literal>ftp://ftp.NetBSD.org/pub/NetBSD/packages/1.4.2/i386/All/tcsh-6.09.00.tgz</literal></para>
+
+    <para> Je¶li nie wiesz jaka wersja pakietu jest dostêpna na FTP, 
+	<command>pkg_add</command> pobierze najnowsza dostêpn± na 
+	serwerze FTP.
+	Na przyk³ad:</para>
+
+    <screen>&rprompt; <userinput>pkg_add ftp://ftp.NetBSD.org/pub/NetBSD/packages/1.4.2/i386/All/tcsh</userinput></screen>
+
+    <para> Jest mo¿liwe ustawienie PKG_PATH, listy ¶cie¿ek i URLi 
+	oddzielonych <emphasis>;</emphasis> i pominiecie tej czê¶ci przy 
+	wpisywaniu pkg_add:</para>
+
+    <screen>&rprompt; <userinput>PKG_PATH="/cdrom;/usr/pkgsrc/packages/All;ftp://ftp.NetBSD.org/pub/NetBSD/packages/1.4.2/i386/All"</userinput>
+export PKG_PATH
+&rprompt; <userinput>pkg_add tcsh</userinput></screen>
+
+    <para> Powy¿sza komenda zainstaluje pierwszy napotkany binarny pakiet 
+    tcsh z dostêpnej listy adresów</para>
+
+    <para>Jako przyk³ad zainstalujjmy <application>texinfo</application></para>
+
+    <procedure>
+      <step>
+        <para> Skopiuj <filename>gtexinfo-3.12.tgz</filename> do 
+	katalogu tymczasowego.</para>
+      </step>
+
+      <step>
+	<para> Wykonaj nastêpuj±ce polecenie</para>
+
+        <screen>&rprompt; <userinput>pkg_add -v gtexinfo-3.12.tgz</userinput></screen>
+      </step>
+
+      <step>
+        <para> Sprawd¼ czy pakiet poprawnie siê zainstalowa³ za pomoc± 
+	kokmendy</para>
+
+        <screen>&rprompt; <userinput>pkg_info</userinput></screen>
+      </step>
+
+      <step>
+	<para>Usun plik<filename>gtexinfo-3.12.tgz</filename> z
+          tymczasowego katalogu.</para>
+      </step>
+    </procedure>
+
+    <para> Prekompilowane pakiety s± bardzo praktyczne w u¿yciu, poniewa¿ 
+    wymagaj± minimalnego wysi³ku i nak³adu czasu, ale pakiety kompilowane 
+    daj± wiêksz± kontrolê (mo¿liwo¶æ wyboru opcji podczas kompilacji).
+    Instalacja jest d³u¿sza, ze wzglêdu na kompilacjê i to mo¿e przes±dzaæ 
+    o wyborze sposobu (szczególnie na starszych maszynach).</para>
+
+    <para> Przed instalacja prekompilowanego pakietu za pomoc±
+      <command>pkg_add</command>, dobrze jest sprawdziæ go komenda
+      <command>pkg_info</command>.
+      Na przyk³ad:</para>
+
+    <screen>&rprompt; <userinput>pkg_info -f jpeg-6b.tgz</userinput></screen>
+
+    <para> Warto sprawdziæ gdzie pakiet zosta³ zainstalowany.
+    
+      Podstawowymi katalogami s± <filename>/usr/pkg</filename> i 
+	<filename>/usr/X11R6</filename>.
+	
+      Je¶li podstawowy katalog nie jest miejscem gdzie chcia³by¶ 
+	zainstalowaæ program, mo¿esz to zmieniæ przy pomocy opcji 
+	<option>-p</option> komendy <command>pkg_add</command>.
+	
+      Na przyk³ad pakiet <filename>jpeg-6b.tgz</filename> jest 
+	domy¶lnie instalowany do <filename>/usr/pkg</filename>, ale mo¿esz go 
+	zainstalowaæ do <filename>/usr/X11R6</filename> je¶li wykonasz 
+	nastêpuj±ce polecenie.</para>
+
+    <screen>&rprompt; <userinput>pkg_add -p /usr/X11R6 -v jpeg-6b.tgz</userinput></screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-pack-management">
+    <title> Komendy zarz±dzaj±ce pakietami</title>
+
+    <para> Najwa¿niejszymi komendami s³u¿±cymi do zarz±dzania 
+	    pakietami s±:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>pkg_add</term>
+
+	<listitem>
+          <para> instaluje prekompilowane pakiety.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>pkg_delete</term>
+
+        <listitem>
+          <para> usuwa zainstalowane pakiety.
+	    Nazwa pakietu mo¿e byæ podana z lub bez wersji; je¶li 
+	    podamy nazwê bez wersji, pkg_delete wyszuka jaka wersja jest 
+	    zainstalowana.
+	    Znaki wieloznaczno¶ci mog± byæ u¿yte (lecz musza byæ 
+	    wziête w cudzys³ów);
+	    na przyk³ad:</para>
+
+          <screen>&rprompt; <userinput>pkg_delete "*emacs*"</userinput></screen>
+
+          <para> Opcja <option>-r</option> jest bardzo potê¿na: usuwa 
+	    wszystkie pakiety które wymagaj± pakietu usuwanego, i jako ostatni 
+	    pakiet usuwany.
+	    Na przyk³ad</para>
+
+          <screen>&rprompt; <userinput>pkg_delete -r jpeg</userinput></screen>
+
+          <para> usunie jpeg i wszystkie pakiety które tego wymagaj¹; 
+	    pozwala to zaktualizowaæ pakiet jpeg.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>pkg_info</term>
+
+        <listitem>
+          <para>
+	    <!-- TODO - agiungere elenco delle opzioni piu' utili -->
+	  pokazuje informacje o pakietach, zainstalowanych i 
+	    niezainstalowanych. </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>pkg_create</term>
+
+        <listitem>
+          <para> Tworzy nowy pakiet z kolekcji pakietów pkgsrc. Jest 
+	    u¿ywany do tworzenie pakietów. Komenda wywo³ywana przez system automatycznie, wiec 
+	    nie ma potrzeby u¿ywania jej "z palca".</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>pkg_admin</term>
+
+        <listitem>
+          <para> wykonuje ró¿ne komendy s³u¿±ce administracji pakietami.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-pack-quickstart">
+    <sect1info>
+      <author>
+	<firstname>Jason</firstname>
+	<surname>Fink</surname>
+	<othername role="mi">R</othername>
+        <contrib> Podrozdzia³ ten opracowany zosta³ przez</contrib>
+      </author>
+    </sect1info>
+
+    <title>Pisanie Portow - Szybki Start</title>
+
+    <para>W tej czê¶ci zostanie opisana metoda pisania wzglêdnie ma³ych 
+	portów dla systemu NetBSD. Aby poznaæ wiêcej szczegó³ów i zawi³o¶ci 
+	siêgnij do  <ulink url="../../Documentation/pkgsrc/"> dokumentacji 
+	pkgsrc</ulink>.</para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-pack-quickstart-tols">
+      <title> Narzêdzia</title>
+
+      <para> Istniej± trzy podstawowe narzêdzia do szybkiej budowy ma³ego 
+	portu pod NetBSD</para>
+
+      <simplelist>
+	<member>url2pkg</member>
+
+	<member> przyk³adowy pakiet</member>
+
+	<member>pkglint</member>
+      </simplelist>
+
+      <sect3 id="chap-pack-quickstart-tols-url2pkg">
+	<title>url2pkg</title>
+
+	<para>Aplikacja <application>url2pkg</application> mo¿e byæ 
+	    zainstalowana z pkgsrc. Pozwala ona pisz±cemu port 
+	    uzupe³niæ i przetestowaæ podstawowe aspekty budowy portu.</para>
+      </sect3>
+
+      <sect3 id="chap-pack-quickstart-tols-template">
+	<title> Przyk³adowy pakiet</title>
+
+	<para> Przyk³adowy pakiet (powiedzmy bison) dostarcza informacji 
+	   zawartych w <ulink url="../../Documentation/pkgsrc/">doumentcji 				
+	   pkgsrc</ulink>.</para>
+      </sect3>
+
+      <sect3 id="chap-pack-quickstart-tols-pkglint">
+	<title>pkglint</title>
+
+	<para>Program <application>pkglint</application> mo¿e byæ zainstalowany 
+	   z pkgsrc. Narzêdzie to sprawdza poprawno¶æ portu.</para>
+      </sect3>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-pack-quickstart-starting">
+      <title> Zaczynamy</title>
+
+      <para> Pocz±tek jest do¶æ prosty. Wa¿ne jest aby twórca portu (np. ty) 
+	przetestowa³ budowê pakietu ze ¼róde³ na systemie NetBSD. W innym 
+	przypadku budowa pakietu mo¿e byæ bardzo problematyczna. Dlatego mo¿na 
+	dorzucaæ do portu swoje patch'e na ¼ród³a, aby wyeliminowaæ wszelkie 
+	b³êdy. Ta tematyka jest opisana bardziej szczegó³owo w <ulink         
+	url="../../Documentation/pkgsrc/">dokumentacji pkgsrc</ulink>.</para>
+
+      <sect3 id="chap-pack-quickstart-starting-url2pkg">
+	<title> U¿ywanie url2pkg</title>
+
+	<para> Kolejnym krokiem jest uczycie url2pkg.</para>
+
+	<para> Postêpuj±c wed³ug nastêpuj±cych kroków, utworzysz  pliki 
+wymagane przez nowy pakiet:</para>
+
+	<procedure>
+	  <step>
+	    <para> Utwórz katalog w odpowiednim miejscu w pkgsrc dla 
+		nowego portu. Nic w nim jeszcze nie umieszczaj.</para>
+	  </step>
+
+	  <step>
+	    <para> wejd¼ do nowo utworzonego katalogu</para>
+	  </step>
+
+	  <step>
+	    <para> wpisz</para>
+
+            <screen>&uprompt; <userinput>url2pkg</userinput></screen>
+	  </step>
+
+	  <step>
+	    <para> Zostaniesz poproszony o wpisanie URL'a. Wpisz go i 
+		wcisnijj &lt;Return&gt;.</para>
+	  </step>
+
+	  <step>
+	    <para> Rozpocznie siê sesja z edytorem vi
+
+	      <note>
+		<para>w NetBSD domy¶lnie jest u¿ywany nvi. Je¶li u¿ywasz 
+		    innego klonu vi np. vim mog± powstaæ b³êdy 							<filename>.exrc</filename></para>
+	      </note>
+
+	      Sesja z vi jest potrzebna do  utworzenia pliku 
+		<filename>Makefile</filename> dla nowego portu.
+		Musisz wpisaæ nazwê portu, email twórcy portu i 
+		kategorie w, której port bêdzie rozwijany.</para>
+	  </step>
+
+	  <step>
+	    <para> Zachowaj pliki i wyjd¼.</para>
+	  </step>
+
+	  <step>
+	    <para>url2pkg automatycznie pobierze pakiet i umie¶ci go w 
+		tymczasowym podkatalogu.</para>
+	  </step>
+
+	  <step>
+	    <para> Nastepnie url2pkg wygeneruje sumy md5</para>
+	  </step>
+	</procedure>
+
+	<para> To koniec dzia³ania url2pkg. Zauwa¿ ze url2pkg nie dopisuje 
+	    nic do innych plików poza plikiem <filename>Makefile</filename>.
+	    Utworzy tak¿e pusty plik <filename>PLIST</filename>.</para>
+      </sect3>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-pack-quickstart-rest">
+      <title> Uzupe³nianie reszty</title>
+
+      <para> Teraz gdy mamy ju¿ <filename>Makefile</filename>, musimy 
+	utworzyæ pozosta³e pliki. Teraz u¿ywaj±c przyk³adowego 
+	pakietu, skopiuj z niego:</para>
+
+      <variablelist>
+	<varlistentry>
+	  <term>DESCR</term>
+
+	  <listitem>
+	    <para> Kilkulinijkowy opis programu którego port tworzymy. 
+		Powinien równie¿ zawieraæ "zaszczyty" (credits)</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>COMMENTS</term>
+
+	  <listitem>
+	    <para> Jednoliniowy opis programu. Nie ma potrzeby  umieszczaæ 
+		w nim nazwy pakietu, gdy¿ bêdzie ona dodana automatycznie przez 
+		narzêdzia pkg_*</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>PLIST</term>
+
+	  <listitem>
+	    <para> Plik ten zawiera informacje o po³o¿eniu w systemie 
+		plików, które bêd± zainstalowane. Dla niewielkiego pakietu (np. 
+		jedna binarka i dwie strony man) zerkniecie do pliku 
+		<filename>Makefile</filename>, skryptu instalujacego 
+		itp. powinno daæ obraz gdzie zainstalowaæ jakie pliki.</para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-pack-quickstart-pkglint">
+      <title> Sprawdzenie przy pomocy pkglint</title>
+
+      <para> Kiedy wszystkie pliki s± ju¿ gotowe nale¿y sprawdziæ port 
+	programem <application>pkglint</application>. Warto go u¿ywaæ, aby 
+	wiedzieæ dok³adnie jakie zmiany potrzeba przeprowadziæ, stosuj±c siê 
+	do komunikatów pkglint:</para>
+
+      <screen>&uprompt; <userinput>pkglint</userinput>
+OK: checking pkg/COMMENT.
+OK: checking pkg/DESCR.
+OK: checking Makefile.
+OK: checking files/md5.
+OK: checking patches/patch-a.
+loks fine.</screen>
+
+      <para> Je¶li pojawi siê jaki¶ b³±d, jest on zazwyczaj prosty do 
+	usuniêcia, oto przyk³ad</para>
+
+      <screen>extract suffix not required</screen>
+
+      <para> Niepotrzebnie zdefiniowano rozszerzenie archiwum w pliku 
+	    <filename>Makefile</filename>.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-pack-quickstart-checking">
+      <title> Uruchamianie i sprawdzenie budowy/instalacji</title>
+
+      <para> Je¶li przeszli¶my pozytywnie sprawdzenie pkglint, sprawdzamy 
+	pobieranie, budowê i instalacjê. Aby tego dokonaæ nale¿y usun±æ 
+	katalog tymczasowy (work) oraz wszytkie ¼ród³a z 
+	<filename>/usr/pkgsrc/distfiles</filename>. Wtedy mo¿emy byæ 
+	pewni, ze bêdzie przeprowadzony pe³ny i kompletny test.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-pack-quickstart-submiting">
+      <title> Wysy³anie portu z u¿yciem send-pr</title>
+
+      <para> Najpierw utwórz archiwum katalogu swojego portu (w³±cznie z 
+podkatalogiem <filename>pkg/work</filename>) np. w ten sposób:</para>
+
+      <screen>&uprompt; <userinput>tar -czf packagename.tgz package_dir</userinput></screen>
+
+      <para> Potem wy¶lij archiwum do miejsca, z którego bêdzie mog³o byæ 
+	pobrane przez twórców portów. Je¶li nie masz takiej mo¿liwo¶ci, 
+	skontaktuj siê z NetBSD i spytaj czy nie mo¿esz zrobiæ tego w inny 
+	sposób.</para>
+
+      <para> Preferowan± metod± zawiadamiania twórców pakietów NetBSD o 
+	swoim porcie jest u¿ycie narzêdzia send-pr. W zawiadomieniu umie¶æ 
+	kategorie w jakim ma byæ umieszczony port, nazwê i wersjê 
+	programu, krótki opis i URL do sporz±dzonego wcze¶niej pliku tar.</para>
+
+      <para> Mo¿esz u¿yæ jednego z dwóch 
+	<application>send-pr</application>,tego w twoim systemie lub 
+	znajduj±cego siê pod adresem <ulink url="htp://www.NetBSD.org/cgi-bin/sendpr.cgi?gndb=netbsd"></ulink>, 
+	je¶li nie mo¿esz u¿yæ tego pierwszego.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-pack-quickstart-finalnote">
+      <title> Nota koñcowa</title>
+
+      <para> Jak ju¿ wspomniano, ten niewielki podrêcznik jest tylko 
+	przydatny do budowy ma³ych pakietów zawieraj±cych kilka plików. Nie 
+	uwzglêdniono w nim nak³adania ³at oraz dodawania zale¿no¶ci.</para>
+
+      <para> Aby uzyskaæ informacje bardziej zawansowane zagl±dnij do
+	<ulink url="../../Documentation/pkgsrc/">pe³nej dokumentacji 
+	pkgsrc</ulink>.</para>
+    </sect2>
+  </sect1>
+</chapter>
+

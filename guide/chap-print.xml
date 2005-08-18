@@ -1,0 +1,433 @@
+<!-- $NetBSD: chap-print.xml,v 1.13 2005/05/05 12:21:22 hrs Exp $ -->
+
+<chapter id="chap-print">
+  <title>Drukowanie</title>
+
+  <para>Ten rozdzia³ przedstawia prost± konfiguracjê czynno¶ci drukowania, 
+    u¿ywaj±c HP Deskjet 690C po³±czonej do pierwszego portu równoleg³ego i 
+    systemu drukowania lpd, który pochodzi jako przyk³ad z &os;.
+    Po pierwsze system powinien byæ skonfigurowany do drukowania dokumentów 
+    tekstowych, a nastêpna konfiguracja powinna byæ rozszerzona do drukowania 
+    dokumentów PostScript u¿ywaj±c do tego celu programu Ghostscript. Proszê 
+    zauwa¿yæ, ¿e s± jeszcze inne alternatywne systemu drukowania w systemie 
+    pakietów, takie jak lprng i Common Unix Printing System (CUPS), które 
+    tutaj nie s± uwzglêdnione.</para>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-print-daemon">
+    <title>Uruchomienie demona drukarki</title>
+
+    <para>Jeszcze nie jest mo¿liwe drukowanie po instalacji, poniewa¿ 
+      <command>lpd</command> printer spooler daemon nie jest uruchomiony.
+      ¯eby uruchomiæ  <command>lpd</command> jedna linia w 
+      <filename>/etc/rc.conf</filename> musi byæ zmieniona z:</para>
+
+    <programlisting>lpd=NO</programlisting>
+
+    <para>na</para>
+
+    <programlisting>lpd=YES</programlisting>
+
+    <para>Zmiana bêdzie dopiero widoczna po ponownym uruchomieniu komputera, 
+      ale daemon mo¿e zostaæ teraz uruchomiony manualnie:</para>
+
+    <screen>&rprompt; <userinput>sh /etc/rc.d/lpd start</userinput></screen>
+
+    <para>¯eby sprawdziæ czy <command>lpd</command> jest aktywny, wpisz 
+      nastêpuj±c± komendê:</para>
+
+    <screen>&rprompt; <userinput>ps ax | grep lpd</userinput>
+  179 ??  Is     0:00.01 lpd </screen>
+
+    <para>Je¿eli nie widziesz wpisów dla lpd w wyniku polecenia, to znaczy ¿e 
+      daemon nie jest uruchomiony.</para>
+
+     <para>System lpd jest konfigurowany przez 
+       <filename>/etc/printcap. </filename>Przed konfiguracj± 
+       <filename>/etc/printcap</filename> dobrym pomys³em jest zrobienie testu 
+       drukarki, ¿eby sprawdziæ fizyczne po³±czenie pomiêdzy twoim 
+       komputerem, a drukark±.
+       Test wysy³a, niektóre dane bezpo¶rednio do urz±dzenia drukarki. 
+       Przyjmuj±c, ¿e u¿ywasz drukarkê pod³±czon± do portu równoleg³ego, to 
+       jest <filename>/dev/lpt0</filename>; je¿eli u¿ywasz drukarki USB 
+       spróbuj <filename>/dev/ulpt0</filename>. Proszê sprawd¼ strony 
+       podrêcznika systemowego dla tych urz±dzeñ (&man.lpt.4;, &man.ulpt.4;) 
+       aby dowiedzieæ siê wiêcej!</para>
+
+    <para>W naszym przyk³adzie mamy pod³±czon± drukarkê do portu równoleg³ego, 
+      czyli uruchamiamy to:</para>
+
+    <screen>&rprompt; <userinput>lptest 70 5 &gt; /dev/lpt0</userinput></screen>
+
+    <para>¯eby zobaczyæ jak wygl±da wynik, spróbuj to samo polecenie bez 
+      wysy³ania wyniku do drukarki:</para>
+
+    <screen>&rprompt; <userinput>lptest 70 5</userinput>
+!"#$%&amp;'()*+,-./0123456789:;&lt;=&gt;?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdef
+"#$%&amp;'()*+,-./0123456789:;&lt;=&gt;?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefg
+#$%&amp;'()*+,-./0123456789:;&lt;=&gt;?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefgh
+$%&amp;'()*+,-./0123456789:;&lt;=&gt;?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghi
+%&amp;'()*+,-./0123456789:;&lt;=&gt;?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghij </screen>
+
+    <para>Czêstym problemem jest to, ¿e wynik na drukarce nie jest poprawnie 
+      wyrównany w kolumnach, tylko ma <quote>schodki</quote>. To znaczy, ¿e 
+      drukarka jest skonfigurowana aby zacz±æ now± linijkê w lewym marginesie 
+      po otrzymaniu &lt;CR&gt; (powrot transportu, ASCII 13) charakteru i 
+      &lt;LF&gt; (doprowadzenie lini, ASCII 10) charakteru.
+      &os; wysy³a tylko charakter &lt;LF&gt;.
+      Mo¿esz sprawdziæ ten problem na dwa sposoby:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>przez zmianê konfiguracji drukarki</para>
+      </listitem>
+
+      <listitem>
+        <para>przez u¿ycie prostego filtra drukarki (opisany poni¿ej)</para>
+      </listitem>
+    </itemizedlist>
+
+    <note>
+      <para>W poprzednim przyk³adzie <application>lpd</application> spooler 
+        nie jest zaanga¿owany, poniewa¿ wynik jest wysy³any bezpo¶rednio 
+	do urz±dzenia drukarki (<filename>/dev/lpt0</filename>) buforowany.
+      </para>
+
+    </note>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-print-printcap">
+    <title>Konfiguracja <filename>/etc/printcap</filename></title>
+
+    <para>Ta sekcja t³umaczy jak skonfigurowaæ przyk³adow± drukarkê do 
+      drukowania dokumentów tekstowych.</para>
+
+    <para>Drukarka musi mieæ wpis w pliku 
+      <filename>/etc/printcap</filename>; wpis posiada id drukarki (nazwa 
+      drukarki> i deskrypcje drukarki. Id <emphasis>lp</emphasis> jest 
+      standardowo u¿ywana przez wiele programów. Tutaj jest przyk³adowy wpis:
+    </para>
+
+    <example id="ex-printcap1">
+      <title><filename>/etc/printcap</filename></title>
+
+      <programlisting>lp|local printer|HP DeskJet 690C:\
+        :lp=/dev/lpa0:sd=/var/spool/lpd/lp:lf=/var/log/lpd-errs:\
+        :sh:pl#66:pw#80:if=/usr/local/libexec/lpfilter:</programlisting>
+    </example>
+
+    <para>Format pliku i opcje s± opisane w detalach w na stronie podrêcznika 
+      &man.printcap.5;. Proszê zauwa¿yæ to ¿e <emphasis>wej¶ciowy 
+      filter</emphasis> jest okre¶lony (z opcj±
+      <emphasis>if</emphasis> ), która zaopiekuje siê eliminacj± problemu 
+      schodków:</para> 
+
+    <programlisting>if=/usr/local/libexec/lpfilter</programlisting>
+
+    <note>
+      <title>Sterownik drukarki i drukarki HP</title>
+
+     <para><xref linkend="ex-printcap1" /> u¿ywaj± urz±dzenia
+       <emphasis>lpa0</emphasis> dla drukarki, zamiast 
+       <emphasis>lpd0</emphasis> (przerwanie obs³ugiwane przez
+       sterownik). Je¿eli u¿ywamy przerwania to mamy problem z komunikacj±
+       pomiêdzy niektórymi drukarkami i HP Deskjet 690C sie do takich
+       zalicza: drukowanie jest bardzo powolne i jedna strona PostScript
+       mo¿e nam zaj±æ godziny. Problem mo¿na rozwi±zaæ u¿ywaj±c sterownika
+       <emphasis>lpa</emphasis>. Jest jeszcze mo¿liwo¶æ przekompilowania 
+       j±dra z obs³ug± lpt.</para>
+    </note>
+
+    <para>Wpis w printcap tak¿e okre¶la katalog spool, który musi zostaæ
+      utworzony; ten katalog bêdzie u¿ywany przez daemona 
+      <application>lpd</application> aby zebraæ dane do wydrukowania:</para>
+
+    <screen>&rprompt; <userinput>cd /var/spool/lpd</userinput>
+&rprompt; <userinput>mkdir lp</userinput>
+&rprompt; <userinput>chown daemon:daemon lp</userinput>
+&rprompt; <userinput>chmod 770 lp</userinput></screen>
+
+    <para>Brakuj±c± czê¶ci± jest tylko
+      <filename>lpfilter</filename> filter wej¶cia, który musi zostaæ napisany.
+      Jedynym zajêciem dla tego filtra jest konfigurowanie drukarki ¿eby
+      wyeliminowaæ problem schodków przed wys³aniem tekstu do drukarki.
+      Drukarka u¿ywana w tym przyk³adzie wymaga zainicjowania stringu:
+      <quote><literal>&lt;ESC&gt;&amp;k2G</literal></quote>.</para>
+
+    <example id="ex-lpfilter">
+      <title><filename>/usr/local/libexec/lpfilter</filename></title>
+
+      <programlisting>#!/bin/sh
+# Treat LF as CR+LF
+printf "\033&amp;k2G" &amp;&amp; cat &amp;&amp; exit 0
+exit 2</programlisting>
+    </example>
+
+    <para>Po zapisaniu tego skryptu pod nazw± jak± u¿y³e¶ w
+      <filename>/etc/printcap</filename>, musisz siê upewniæ ¿e mo¿na go
+      wykonywaæ:</para>
+
+    <screen>&rprompt; <userinput>chmod 755 /usr/local/libexec/lpfilter*</userinput></screen>
+
+    <note>
+      <para>Tutaj podajemy kolejny przyk³ad filtra, który mo¿esz u¿yæ:</para>
+
+      <programlisting>if=/usr/libexec/lpr/lpf:</programlisting>
+
+      <para>Ten filter jest bardziej kompleksowy ni¿ ten pokazany przedtem.
+        Jest napisany aby przetworzyæ wynik <command>nroff</command>
+        i obchodzi siê z podkre¶leniem i naddrukowaniem, rozszerza charakter
+        tabu i konwertuje LF do CR + LF.
+        Plik ¼ród³owy tego filtru mo¿e zostaæ znalezione w
+        <filename>/usr/src/usr.sbin/lpr/filters/lpf.c</filename>.</para>
+    </note>
+
+    <para>Jak ju¿ wszystko mamy na miejscu, polecenie 
+      <command>lptest</command>mo¿e zostaæ uruchomione ponownie, teraz
+      u¿ywaj±c polecenia <command>lpr</command>, która wpierw wy¶le dane do lpd
+      spooler, potem uruchomi filter i wy¶le dane do drukarki:</para>
+
+    <screen>&rprompt; <userinput>lptest 70 5 | lpr -h</userinput></screen>
+
+    <para>Program <command>lpr</command> drukuje tekst u¿ywaj±c spooler do 
+      wys³ania danych do drukarki; opcja <option>-h</option> wy³±cza 
+      drukowanie baneru (nie jest tak naprawdê potrzebne, poniewa¿ opcja 
+      <emphasis>sh</emphasis> w <filename>/etc/printcap</filename>). 
+      U¿ytkownicy, bardziej zaznajomieni z systemem drukowania Systemu V mog± 
+      u¿yæ polecenia &man.lp.1;, które jest alternatyw±
+      dla &man.lpr.1;.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-print-ghostscript">
+    <title>Konfiguracja Ghostscript</title>
+
+    <para>Teraz podstawowe drukowanie dzia³a, funkcja dla drukowania
+      plików PostScript mo¿e zostaæ dodana. Drukarka u¿yta w tym przyk³adzie
+      nie wspiera natywnie drukowania PostScript'owych dokumentów; musi zostaæ 
+      u¿yty program, który jest w stanie konwertwaæ plik PostScript do 
+      sekwencji poleceñ, które mog± byæ zrozumiane przez drukarkê.
+      Program <application>Ghostscript</application>,
+      który mo¿na znale¼æ w kolekcji pakietów mo¿e zostaæ u¿yty
+      do tego celu (zobacz <xref linkend="chap-pack" />).  Ta sekcja t³umaczy
+      jak skonfigurowaæ lpd ¿eby u¿ywa³
+      <application>Ghostscript</application> do drukowania plikow 
+      PostScript'owych na HP Deskjet 690C.</para>
+
+    <para>Drugi identyfikator dla drukarki zostanie utworzony w
+      <filename>/etc/printcap</filename>: nowy identyfikator bêdzie
+      u¿ywa³ inny filter wej¶cia, który bêdzie wywo³ywa³ Ghostscript
+      do wykonania aktualnego drukowania PostScript'owego dokumentu.
+      I tak dokument tekstowy zostanie wydrukowany na
+      <emphasis>lp</emphasis> drukarce, a PostScript'owe dokumenty na drukarce
+      <emphasis>ps</emphasis> : obydwa wpisy u¿ywaj± tej samej fizycznej
+      drukarki ale maj± inne filtry drukowania.</para>
+
+    <para>Te same wyniki mog± zostaæ osi±gniête u¿ywaj±c innych konfiguracji.
+      Na przyk³ad, pojedynczy wpis tylko z jednym filtrem mo¿e zostaæ u¿yty.
+      Do tego, filter powinien byæ w stanie automatycznie wykryæ format
+      dokumentu przed wydrukowaniem i u¿yæ poprawnego programu drukowania.
+      To podej¶cie jest ³atwiejsze ale prowadzi do bardziej kompleksowego 
+      filtru; je¿eli lubisz takie podej¶cie to powiniene¶ zastanowiæ siê nad 
+      zainstalowaniem programu
+      <application>magicfilter</application> z kolekcji pakietów :
+      on to potrafi robiæ automatycznie oraz jeszcze du¿o innych rzeczy.</para>
+
+    <para>Dla naszego przyk³adu nowy plik <filename>/etc/printcap</filename>
+      wygl±da tak:</para>
+
+    <example id="ex-printcap2">
+      <title><filename>/etc/printcap</filename></title>
+
+      <programlisting>lp|local printer|HP DeskJet 690C:\
+        :lp=/dev/lpa0:sd=/var/spool/lpd/lp:lf=/var/log/lpd-errs:\
+        :sh:pl#66:pw#80:if=/usr/local/libexec/lpfilter:
+
+ps|Ghostscript driver:\
+        :lp=/dev/lpa0:sd=/var/spool/lpd/ps:lf=/var/log/lpd-errs:\
+        :mx#0:sh:if=/usr/local/libexec/lpfilter-ps:</programlisting>
+      </example>
+    
+    <para>Opcja <option>mx#0</option> jest bardzo wa¿na dla drukowania 
+      PostScript'owych dokumentów poniewa¿ elimunuje restrykcje rozmiaru pliku 
+      wejsciowego;
+      Dokumenty PostScript'owe maj± sk³onno¶æ do bardzo du¿ych rozmiarów.
+      Opcja <option>if</option> wskazuje na nowy filter.
+      Jest tak¿e nowy katalog spoolera.</para>
+
+    <para>Kolejnym krokiem jest utworzenie nowego katalogu spoolera i programu 
+      filtra. Procedura dla katalogu spoolera jest taka sama jak poni¿ej:</para>
+
+    <screen>&rprompt; <userinput>cd /var/spool/lpd</userinput>
+&rprompt; <userinput>mkdir ps</userinput>
+&rprompt; <userinput>chown daemon:daemon ps</userinput>
+&rprompt; <userinput>chmod 770 ps</userinput></screen>
+
+    <para>
+      Program filtruj±cy dla wyniku PostScript jest bardziej kompleksowy
+      ni¿ dla bazowego tekstu: plik który bêdziemy drukowaæ jest podawany
+      do interpretora, który konwertuje do sekwencji polecenia w kontrolnym
+      jêzyku drukarki i potem wysy³a to do drukarki. Osi±gnêli¶my transformacjê
+      taniej kolorowej drukarki do urz±dzenia odpowiedniego dla wyniku 
+      PostScript, dziêki zalecie systemu operacyjnego &os; i niektórych 
+      potê¿nych darmowych programów.
+      Opcje u¿ywane do konfiguracji
+      <application>Ghostscript</application> s± opisane w dokumentacji 
+      Ghostscript: <filename>cdj550</filename> jest nazw± urz±dzenia u¿ywanego 
+      do kierowania drukark± HP.
+    </para>
+
+
+    <example id="ex-lpfilter-ps">
+      <title><filename>/usr/local/libexec/lpfilter-ps</filename></title>
+
+      <programlisting>#!/bin/sh
+# Treat LF as CR+LF
+printf "\033&amp;k2G" || exit 2
+# Print the postscript file
+/usr/pkg/bin/gs -dSAFER -dBATCH -dQUIET -dNOPAUSE -q -sDEVICE=cdj550 \
+-sOutputFile=- -sPAPERSIZE=a4 - &amp;&amp; exit 0
+exit 2</programlisting>
+    </example>
+
+    <para>podsumowuj±c: dwie ró¿ne nazwy drukarki zosta³y utworzone w systemie
+      które odwo³uj± siê do tej samej drukarki ale u¿ywaja innych opcji, 
+      innych filtrów i innych katalogów spoolera. Pliki tekstowe i pliki 
+      PostScript'owe mog± zostaæ wydrukowane. Do drukowania plikow 
+      PostScript'owych mo¿e zostaæ u¿yty pakiet Ghostscript, który musi byæ 
+      wcze¶niej zainstalowany w systemie.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-print-management">
+    <title>Administracja poleceniami drukowania</title>
+
+    <para>Ta sekcja wylistuje niektóre pomocne polecenia BSD dla drukowania i
+      administrowania prac± drukarki.
+      Znamy ju¿ polecenia <command>lpr</command> i
+      <command>lpd</command> oprócz tego mamy tak¿e:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>lpq</term>
+
+	<listitem>
+          <para>badanie procesów kolejki drukarki.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>lprm</term>
+
+	<listitem>
+          <para>usuwanie procesów z kolejki drukarki.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>lpc</term>
+
+        <listitem>
+  	  <para>sprawdza system drukowania, w³±cza/wy³±cza drukarki oraz ich 
+	    w³a¶ciwo¶ci.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-print-remote">
+    <title>Zdalne drukowanie</title>
+
+    <para>Jest mo¿liwe aby skonfigurowaæ system drukowania tak aby wydrukowaæ
+      na drukarce podpiêtej do zdalnego komputera.
+      Powiedzmy ¿e, na przyk³ad, pracujesz na hoscie <emphasis>wotan</emphasis>
+      i chesz drukowaæ dokumenty na drukarce pod³±czonej do hostu
+      <emphasis>loge</emphasis>.
+      Plik <filename>/etc/printcap</filename> hostu loge jest jednym z
+      <xref linkend="ex-printcap2" />.
+      Z wotan bêdzie mo¿liwe drukowanie plikow Postscript u¿ywaj±c Ghostscript 
+      na loge.</para>
+
+    <para>Pierwszym krokiem jest akceptacja drukowanych plikow wys³anych z
+      hostu wotan do hostu loge.
+      ¯eby to otrzymaæ, linijka z hostem wotan musi zostaæ dodana do
+      pliku <filename>/etc/hosts.lpd</filename> na loge:
+    </para>
+
+    <screen>&rprompt; <userinput>hostname</userinput>
+loge
+&rprompt; <userinput>cat /etc/hosts.lpd</userinput>
+wotan </screen>
+
+    <para>Format tego pliku jest bardzo prosty: ka¿da linijka zawiera
+      nazwe hostu który jest dopuszczony do drukowania na systemie lokalnym.
+      Domy¶lnie daemon lpd nas³uchuje tylko na socketach domeny UNIX
+      dla lokalnych pol±czeñ i nie zaakceptuje ¿adnych po³±czeñ z sieci.
+      Aby daemon akceptowa³ przychodz±ce pakiety z sieci,
+      musi zostac dodana poni¿sza linijka do pliku:
+      <filename>/etc/rc.conf</filename>:</para>
+
+    <programlisting>lpd_flags=""</programlisting>
+
+    <para>Nastêpnie, plik <filename>/etc/printcap</filename> na wotan
+      musi zostaæ skonfigurowany aby mo¿na by³o drukowaæ na loge.
+      Na przyk³ad:</para>
+
+    <programlisting>lp|line printer on loge:\
+	:lp=:sd=/var/spool/lpd/lp:lf=/var/log/lp-errs:\
+	:rm=loge:rp=lp
+
+ps|Ghostscript driver on loge:\
+	:lp=:sd=/var/spool/lpd/ps:lf=/var/log/lp-errs:\
+	:mx#0:\
+	:rm=loge:rp=ps</programlisting>
+
+    <para>S± 4 g³ówne ró¿nice pomiêdzy t± konfiguracj± a 
+      <xref linkend="ex-printcap2" />.</para>
+
+    <orderedlist>
+      <listitem>
+	<para>Definicja <quote>lp</quote> jest pusta.</para>
+      </listitem>
+
+      <listitem>
+	<para>Wpis <quote>rm</quote> (zdalna maszyna) definiuje nazwê hosta, 
+        do którego pod³±czona jest drukarka.</para>
+      </listitem>
+
+      <listitem>
+	<para>Wpis <quote>rp</quote> (zdalna drukarka) definiuje nazwê 
+        pod³±czonej do zdalnego hosta.</para>
+      </listitem>
+
+      <listitem>
+	<para>Nie jest konieczne okre¶lenie filtru wej¶cia, poniewa¿ te  
+	  definicje bêd± u¿ywane na ho¶cie loge.</para>
+      </listitem>
+
+      <listitem>
+	<para>Katalog spoolera musi zostaæ lokalnie utworzony na ho¶cie 
+        wotan: </para>
+
+	<screen>&rprompt; <userinput>cd /var/spool/lpd</userinput>
+&rprompt; <userinput>mkdir lp</userinput>
+&rprompt; <userinput>chown daemon:daemon lp</userinput>
+&rprompt; <userinput>chmod 770 lp</userinput>
+&rprompt; <userinput>mkdir ps</userinput>
+&rprompt; <userinput>chown daemon:daemon ps</userinput>
+&rprompt; <userinput>chmod 770 ps</userinput></screen>
+      </listitem>
+    </orderedlist>
+
+    <para>Teraz procesy drukarki dla <quote>lp</quote> i
+      <quote>ps</quote> kolejki na wotan zostan± wys³ane
+      automatycznie do drukarki pod³±czonej do loge.</para>
+  </sect1>
+</chapter>

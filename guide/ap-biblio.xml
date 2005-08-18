@@ -1,0 +1,159 @@
+<!-- $NetBSD: ap-biblio.xml,v 1.4 2004/05/15 18:13:05 hrs Exp $ -->
+
+<appendix id="ap-biblio">
+  <title>Bibliografia</title>
+
+  <para></para>
+
+  <bibliography id="ap-biblio-bibliography">
+    <!-- <title>Bibliography</title> -->
+
+    <biblioentry id='AeleenFrisch'>
+      <abbrev>AeleenFrisch</abbrev>
+      <author><firstname>Aeleen</firstname><surname>Frisch</surname></author>
+      <copyright><year>1991</year></copyright>
+      <publisher>
+      <publishername>O'Reilly &amp; Associates</publishername>
+      </publisher>
+      <title>Essential System Administration</title>
+    </biblioentry>
+
+    <biblioentry id="CraigHunt">
+      <abbrev>CraigHunt</abbrev>
+      <author><firstname>Craig</firstname><surname>Hunt</surname></author>
+      <copyright><year>1993</year></copyright>
+      <publisher>
+      <publishername>O'Reilly &amp; Associates</publishername>
+      </publisher>
+      <title>TCP/IP Network Administration</title>
+    </biblioentry>
+
+    <biblioentry id="RFC1034">
+      <abbrev>RFC1034</abbrev>
+      <author><firstname>P.</firstname><othername role="mi">V.</othername><surname>Mockapetris</surname></author>
+      <copyright><year>1987</year></copyright>
+      <title>RFC 1034: Domain names - concepts and facilities</title>
+    </biblioentry>
+
+    <biblioentry id="RFC1035">
+      <abbrev>RFC1035</abbrev>
+      <author><firstname>P.</firstname><othername role='mi'>V.</othername><surname>Mockapetris</surname></author>
+      <copyright><year>1987</year></copyright>
+      <title>RFC 1035: Domain names - implementation and specification</title>
+    </biblioentry>
+
+    <biblioentry id="RFC1055">
+      <abbrev>RFC1055</abbrev>
+      <author><firstname>J.</firstname><othername role='mi'>L.</othername><surname>Romkey</surname></author>
+      <copyright><year>1988</year></copyright>
+      <title>RFC 1055: Nonstandard for transmission of IP datagrams
+          over serial lines: SLIP</title>
+    </biblioentry>
+
+    <biblioentry id="RFC1331">
+      <abbrev>RFC1331</abbrev>
+      <author><firstname>W.</firstname><surname>Simpson</surname></author>
+      <copyright><year>1992</year></copyright>
+      <title>RFC 1331: The Point-to-Point Protocol (PPP) for the
+          Transmission of Multi-protocol Datagrams over Point-to-Point
+          Links</title>
+    </biblioentry>
+
+    <biblioentry id="RFC1332">
+      <abbrev>RFC1332</abbrev>
+      <author><firstname>G.</firstname><surname>McGregor</surname></author>
+      <copyright><year>1992</year></copyright>
+      <title>RFC 1332: The PPP Internet Protocol Control Protocol
+          (IPCP)</title>
+    </biblioentry>
+
+    <biblioentry id="RFC1933">
+      <abbrev>RFC1933</abbrev>
+      <authorgroup>
+        <author><firstname>R.</firstname><surname>Gilligan</surname></author>
+	<author><firstname>E.</firstname><surname>Nordmark</surname></author>
+      </authorgroup>
+      <copyright><year>1996</year></copyright>
+      <title>RFC 1933: Transition Mechanisms for IPv6 Hosts and Routers</title>
+    </biblioentry>
+
+    <biblioentry id="RFC2003">
+      <abbrev>RFC2004</abbrev>
+      <author><firstname>C.</firstname><surname>Perkins</surname></author>
+      <copyright><year>1996</year></copyright>
+      <title>RFC 2003: IP Encapsulation within IP</title>
+    </biblioentry>
+
+    <biblioentry id="RFC2401">
+      <abbrev>RFC2401</abbrev>
+      <authorgroup>
+        <author><firstname>S.</firstname><surname>Kent</surname></author>
+	<author><firstname>R.</firstname><surname>Atkinson</surname></author>
+      </authorgroup>
+      <copyright><year>1998</year></copyright>
+      <title>RFC 2401: Security Architecture for the Internet Protocol</title>
+    </biblioentry>
+
+    <biblioentry id="RFC2411">
+      <abbrev>RFC2411</abbrev>
+      <authorgroup>
+        <author><firstname>R.</firstname><surname>Thayer</surname></author>
+        <author><firstname>N.</firstname><surname>Doraswamy</surname></author>
+	<author><firstname>R.</firstname><surname>Glenn</surname></author>
+      </authorgroup>
+      <copyright><year>1998</year></copyright>
+      <title>RFC 2411: IP Security Document Roadmap</title>
+    </biblioentry>
+
+    <biblioentry id="RFC2461">
+      <abbrev>RFC2461</abbrev>
+      <authorgroup>
+        <author><firstname>T.</firstname><surname>Narten</surname></author>
+        <author><firstname>E.</firstname><surname>Nordmark</surname></author>
+	<author><firstname>W.</firstname><surname>Simpson</surname></author>
+      </authorgroup>
+      <copyright><year>1998</year></copyright>
+      <title>RFC 2461: Neighbor Discovery for IP Version 6 (IPv6)</title>
+    </biblioentry>
+
+    <biblioentry id="RFC2529">
+      <abbrev>RFC2529</abbrev>
+      <authorgroup>
+        <author><firstname>B.</firstname><surname>Carpenter</surname></author>
+	<author><firstname>C.</firstname><surname>Jung</surname></author>
+      </authorgroup>
+      <copyright><year>1999</year></copyright>
+      <title>RFC 2529: Transmission of IPv6 over IPv4 Domains without Explicit
+	     Tunnels</title>
+    </biblioentry>
+
+    <biblioentry id="RFC3024">
+      <abbrev>RFC3024</abbrev>
+      <author><firstname>G.</firstname><surname>Montenegro</surname></author>
+      <copyright><year>2001</year></copyright>
+      <title>RFC 3024: Reverse Tunneling for Mobile IP</title>
+    </biblioentry>
+
+    <biblioentry id="RFC3027">
+      <abbrev>RFC3027</abbrev>
+      <authorgroup>
+        <author><firstname>M.</firstname><surname>Holdrege</surname></author>
+	<author><firstname>P.</firstname><surname>Srisuresh</surname></author>
+      </authorgroup>
+      <copyright><year>2001</year></copyright>
+      <title>RFC 3027: Protocol Complications with the IP Network Address
+	     Translator</title>
+    </biblioentry>
+
+    <biblioentry id="RFC3056">
+      <abbrev>RFC3056</abbrev>
+      <authorgroup>
+        <author><firstname>B.</firstname><surname>Carpenter</surname></author>
+	<author><firstname>K.</firstname><surname>Moore</surname></author>
+      </authorgroup>
+      <copyright><year>2001</year></copyright>
+      <title>RFC 3056: Connection of IPv6 Domains via IPv4 Clouds</title>
+    </biblioentry>
+
+  </bibliography>
+</appendix>

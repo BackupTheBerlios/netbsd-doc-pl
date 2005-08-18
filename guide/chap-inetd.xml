@@ -1,0 +1,461 @@
+<!-- $NetBSD: chap-inetd.xml,v 1.9 2005/05/05 12:21:22 hrs Exp $ -->
+
+<chapter id="chap-inetd">
+  <title>The Internet Super Server inetd</title>
+
+  <para>The "internet super server", or &man.inetd.8;, is available on all
+    Unix(like) systems, providing many of the basic network services
+    available. This chapter describes the relationship between the
+    daemon and several of the config files in the
+    <filename>/etc/</filename> directory.</para>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-inetd-overview">
+    <title>Overview</title>
+
+    <para>In this document we will look at a simple definition of
+      &man.inetd.8;,
+      how several files that relate to &man.inetd.8; work (not that these
+      files are not related to other software), how to add a service
+      to &man.inetd.8; and some considerations both to use &man.inetd.8; for a
+      particular service and times when a service might be better
+      off running outside of &man.inetd.8;.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-inetd-whats-inetd">
+    <title>What is inetd?</title>
+
+    <para>In traditional Unix scenarios, one server (daemon) process
+      watches for connections on a particular port, and handles
+      incoming requests. Now if a machine offers many services, many
+      daemon processes would be needed, mostly running idle but still
+      wasting resources like memory. The internet super server,
+      inetd, is an approach to this problem. It listens on a number of
+      ports, and when it receives a request it then determines which
+      program to run to handle the request and starts an instance of
+      that program.</para>
+
+    <para>Following is a very simple diagram to illustrate
+      &man.inetd.8;:</para>
+
+    <literallayout>  pop3  ------  |
+                |
+  ftpd -------  | INETD | ---- Internet / DMZ / Switch / Whatever . . .
+                |
+ cvsupserver -  |</literallayout>
+
+    <para>In the above diagram you can see the general idea. The
+      &man.inetd.8; process receives a request and then starts the
+      appropriate server process. What &man.inetd.8; is doing is
+      software multiplexing.  An important note here, regarding
+      security: On many other UNIX-like systems, a package called
+      tcpwrappers is used as a security enhancement for
+      &man.inetd.8;. On &os; the tcpwrapper functionality is built
+      into &man.inetd.8; using libwrap.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-inetd-inetd">
+    <title>Configuring inetd - <filename>/etc/inetd.conf</filename></title>
+
+    <para>The operation of &man.inetd.8; is controlled by its own config
+      file, surprisingly named <filename>/etc/inetd.conf</filename>,
+      see &man.inetd.conf.5;.
+      The <filename>inetd.conf</filename> file basically provides
+      enabling and mapping of services the systems administrator
+      would like to have multiplexed through &man.inetd.8;, indicating
+      which program should be started for incoming requests on which
+      port. </para>
+
+    <para>&man.inetd.conf.5; is an ascii file containing one service per
+      line, and several fields per line. The basic field layout is:</para>
+
+    <programlisting>service-name socket-type protocol wait/nowait user:group server-program arguments</programlisting>
+
+    <variablelist>
+      <varlistentry>
+	<term>service-name:</term>
+
+	<listitem>
+          <para>The service name indicates the port &man.inetd.8; should
+            listen on. It is either a decimal number, or a name
+	    matching a service name given in
+            <filename>/etc/services</filename>.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>socket-type:</term>
+
+	<listitem>
+          <para>The communications socket type, the different types are
+            "stream" for a TCP stream, "dgram" for an UDP service,
+            "raw" for a raw socket, "rdm" for reliably delivered
+            message and "seqpacket" for a sequenced packet socket. The
+            most common socket types are "stream" and "dgram".</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>protocol</term>
+
+	<listitem>
+          <para>The protocol used, mostly "tcp", "tcp6", "udp" and "udp6"
+            for stream-oriented services via the Transmission Control
+            Protocol, or datagram-oriented services via the User
+            Datagram Protocol.  It is worth noting that "tcp" and
+            "udp" mean they use the default (currently IPv4), "tcp4"
+            specifically means communication via IPv4 only, and "tcp6"
+            and "udp6" are IPv6-only. In addition to those, protocols
+            based on Remote Procedure Calls (<acronym>RPC</acronym>)
+            can be specified as either "rpc/tcp" or "rpc/udp".</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>wait/nowait</term>
+
+	<listitem>
+          <para>This field tells &man.inetd.8; if it should wait for a server
+            program to return or to continue processing new connections
+            immediately. Many connections to server processes require
+            answers after data transfers are complete, where other types
+            can keep transmitting on a connection continuously, the
+            latter is a "nowait" and the former "wait". In most cases,
+            this entry corresponds to the socket-type, for example
+            a streaming connection would (most of the time) have a
+            "nowait" value in this field.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>user[:group]</term>
+
+	<listitem>
+          <para>This field gives the user name and optionally a group name
+            that the server process which &man.inetd.8; starts up runs
+            as.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>server-program</term>
+
+	<listitem>
+          <para>This field is the full path of the program that gets started.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>program-arguments</term>
+
+	<listitem>
+          <para>This field contains the argument vector argv[] of the
+            program started, including the program name and additional
+            arguments the systems administrator may need to specify
+            for the server program that is started.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>That is all a lot to digest and there are other things the
+      systems administrator can do with some of the fields. Here is a
+      sample line from an <filename>inetd.conf</filename> file:</para>
+
+    <programlisting>ftp       stream  tcp    nowait  root   /usr/libexec/ftpd    ftpd -ll</programlisting>
+
+    <para>From the left, the service-name is "ftp", socket-type is "stream",
+      protocol is "tcp", &man.inetd.8; won't wait for the server
+      process to terminate ("nowait"), the process runs as user "root",
+      path is <filename>/usr/libexec/ftpd</filename> and program name
+      and arguments are "ftpd -ll".
+      Notice in the last field, the program name is different
+      from the service-name.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-inetd-services">
+    <title>Services - <filename>/etc/services</filename></title>
+
+    <para>The next file to consider is the service name data base that can
+      be found in <filename>/etc/services</filename>. This file
+      basically contains information mapping a service name to a port
+      number. The format of the <filename>/etc/services</filename>
+      file is: </para>
+
+    <programlisting>service-name port-number/protocol-name [aliases]</programlisting>
+
+    <para>"service-name" is the name of the service, "port-number" is the
+      port number assigned to the service, "protocol-name" is either
+      "tcp" or "udp", and if alias names for a port are needed, they
+      can be added as "aliases", separated by white spaces. Comments
+      may be added after a hash mark (#). </para>
+
+    <para>Let's take a look at the "ssh" entries as an example:</para>
+
+<programlisting>ssh             22/tcp           # Secure Shell
+ssh             22/udp</programlisting>
+
+    <para>As we can see, from the left, the service name is "ssh",
+      the port number is "22", the protocols are both "tcp" and "udp".
+      Notice that there is a separate entry for every protocol a
+      service can use (even on the same port).</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-inetd-protocols">
+    <title>Protocols - <filename>/etc/protocols</filename></title>
+
+    <para>Another file read by &man.inetd.8; is
+      <filename>/etc/protocols</filename>. This file has the information
+      pertaining to DARPA Internet protocols.
+      The format of the protocols name data base is:</para>
+
+    <programlisting>protocol-name number [aliases]</programlisting>
+
+    <para>where "protocol-name" describes the payload of an IP packet,
+      e.g. "tcp" or "udp". "number" is the official protocol number
+      assigned by IANA, and optional alias names can be added after
+      that. </para>
+
+    <para>Let's look at the seventh entry in the
+      <filename>/etc/protocols</filename>
+      db as an example:</para>
+
+<programlisting>tcp     6       TCP             # transmission control protocol</programlisting>
+
+    <para>Starting from the left, we see that the protocol name is "tcp",
+      the number is "6" and the only aliases listed is "TCP",
+      belonging to the Transmission Control Protocol as indicated by
+      the comment in that line. </para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-inetd-rpc">
+    <title>Remote Procedure Calls (RPC) - <filename>/etc/rpc</filename></title>
+
+    <para>The rpc program number data base used by services with the "rpc"
+      protocol type in &man.inetd.conf.5; is kept in
+      <filename>/etc/rpc</filename> and contains name mappings to rpc
+      program numbers. The format of the file is:</para>
+
+    <programlisting>server-name program-number aliases</programlisting>
+
+    <para>For example, here is the nfs entry:</para>
+
+    <programlisting>nfs             100003  nfsprog</programlisting>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-inetd-tcpwrap">
+    <title>Allowing and denying hosts
+      - <filename>/etc/hosts.{allow,deny}</filename></title>
+
+    <para>As mentioned above, &os;'s &man.inetd.8; has the tcpwrapper
+      package built in via the libwrap library. As such, &man.inetd.8;
+      can allow or deny access to each service on a more fine-grained
+      base than just allowing a service to everyone, or not enabling
+      it at all. The access control is defined in the files
+      <filename>/etc/hosts.allow</filename> and
+      <filename>/etc/hosts.deny</filename>, see the
+      &man.hosts.access.5; manpage. </para>
+
+    <para>Each of the two files contains several lines that describe
+      access restrictions for a certain server. Access is allowed if
+      permission is given in <filename>/etc/hosts.allow</filename>. If
+      the service is not listened in
+      <filename>/etc/hosts.allow</filename> but in
+      <filename>/etc/hosts.deny</filename>, it is denied. If a service
+      is listed in neither file, it is allowed, giving standard
+      &man.inetd.8; behaviour. </para>
+
+    <para>Each line in <filename>/etc/hosts.allow</filename> and
+      <filename>/etc/hosts.deny</filename> contains a service either
+      by name (as given in the field for argv[0] in
+      <filename>/etc/inetd.conf</filename>, e.g. "ftpd" instead of
+      "ftp"), or the special service "ALL" which obviously applies to
+      all services. Following the service name is - separated by a
+      colon - a number of access restrictions, which can be hostnames,
+      domains, single IP addresses, whole IP subnets or some other
+      restrictions, please check &man.hosts.access.5; for all the
+      details.</para>
+
+    <para>An example configuration that is mostly open but denies access
+      to services to a certain host and all machines from a certain
+      domain would look like this:</para>
+
+    <programlisting># /etc/hostname.deny:
+ALL: some.host.name, .some.domain</programlisting>
+
+    <para>Another example that would be mostly closed, denying access to
+      all but very few machines would need entries in both
+      <filename>/etc/hosts.allow</filename> and
+      <filename>/etc/hosts.deny</filename>. The entry for
+      <filename>/etc/hosts.deny would be:</filename></para>
+
+    <programlisting># /etc/hosts.deny
+ALL: ALL</programlisting>
+
+    <para>The entry to allow a few hosts would be put into
+      <filename>/etc/hosts.allow</filename>: </para>
+
+    <programlisting># /etc/hosts.allow
+ALL: friend.host.domain otherfriend.otherhost.otherdomain</programlisting>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-inetd-adding-service">
+    <title>Adding a Service</title>
+
+    <para>Many times a systems administrator will find that they need
+      to add a service to their system that is not already in
+      &man.inetd.8; or they may wish to move a service to it because it
+      does not get very much traffic. This is usually pretty
+      simple, so as an example we will look at adding a version
+      of POP3 on a &os; system.</para>
+
+    <para>In this case we have retrieved and installed the "cucipop"
+      package, which can be found in
+      <filename>pkgsrc/mail/cucipop</filename>.
+      This server is pretty simple to use, the only oddities are
+      different path locations. Since it is POP3 we know it is a
+      stream oriented connection with "nowait". Running as "root" will
+      be fine, the only item that is different is the location of the
+      program and the name of the program itself.</para>
+
+    <para>So the first half of the new entry in
+      <filename>/etc/inetd.conf</filename>looks like this: </para>
+
+    <programlisting>pop3   stream  tcp     nowait  root</programlisting>
+
+    <para>After installation, pkgsrc deposited cucipop in
+      <filename>/usr/pkg/sbin/cucipop</filename>.
+      So with the next field we have:</para>
+
+    <programlisting>pop3   stream  tcp     nowait  root /usr/pkg/sbin/cucipop</programlisting>
+
+    <para>Last, we want to use the Berkeley mailbox format,
+      so our server program must be called with the
+      <option>-Y</option> option.
+      This leaves the entire entry looking like so:</para>
+
+    <programlisting>pop3   stream  tcp     nowait  root /usr/pkg/sbin/cucipop cucipop -Y</programlisting>
+
+    <para>We have added the service named "pop3" to
+      <filename>/etc/inetd.conf</filename>. Next item to check is that
+      the system can map the service name to a port number in
+      <filename>/etc/services</filename>:</para>
+
+    <screen>&rprompt; <userinput>grep ^pop3 /etc/services</userinput>
+pop3            110/tcp         # POP version 3
+pop3            110/udp
+pop3s           995/tcp                 # pop3 protocol over TLS/SSL (was spop3)
+pop3s           995/udp                 # pop3 protocol over TLS/SSL (was spop3)</screen>
+
+    <para>The "pop3" entries here are of interest, i.e. they are already
+      contained in the <filename>/etc/services</filename> file shipped
+      with &os;.</para>
+
+    <para>Now, to have &man.inetd.8; use the new entry, we simply restart
+      it using the rc script:</para>
+
+    <screen>&rprompt; <userinput>sh /etc/rc.d/inetd restart</userinput></screen>
+
+    <para>All done, in most cases, the software you are using has
+      documentation that will specify the entry, in the off case
+      it does not, sometimes it helps to try and find something
+      similar to the server program you will be adding. A
+      classic example of this is a MUD server which has built-in telnet.
+      You can pretty much borrow the telnet entry and change parts
+      where needed.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-inetd-use-or-not-use">
+    <title>When to use or not to use inetd</title>
+
+    <para>The decision to add or move a service into or out of &man.inetd.8;
+      is usually based on server load. As an example,
+      on most systems the telnet daemon does not require as
+      many new connections as say a mail server. Most of the
+      time the administrator has to feel out if a service should be moved.</para>
+
+    <para>A good example I have seen is mail services such as smtp and pop.
+      I had setup a mail server in which pop3 was in &man.inetd.8; and
+      exim was running in standalone, I mistakenly assumed it
+      would run fine since there was a low amount of users,
+      namely myself and a diagnostic account. The server was also
+      setup to act as a backup MX and relay in case another
+      heavily used one went down. When I ran some tests I
+      discovered a huge time lag for pop connections remotely.
+      This was because of my steady fetching of mail and the
+      diagnostic user constantly mailing diagnostics back and forth.
+      In the end I had to move the pop3 service out of &man.inetd.8;.</para>
+
+    <para>The reason for moving the service is actually quite interesting.
+      When a particular service becomes heavily used, of course,
+      it causes a load on the system. In the case of a service
+      that runs within the &man.inetd.8; meta daemon the effects of a heavily
+      loaded service can also harm other services that use &man.inetd.8;.
+      If the multiplexor is getting too many requests for one
+      particular service, it will begin to affect the performance of
+      other services that use &man.inetd.8;. The fix, in a situation like
+      that, is to make the offending service run outside of &man.inetd.8;
+      so the response time of both the service and &man.inetd.8; will increase.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-inetd-resources">
+    <title>Other Resources</title>
+
+    <para>Following is some additional reading and information
+      about topics covered in this document.</para>
+
+    <para>NetBSD manual pages:</para>
+
+    <itemizedlist>
+      <listitem>
+          <para><ulink url="http://netbsd.gw.com/cgi-bin/man-cgi/man?inetd+8+NetBSD-current">inetd(8)</ulink></para>
+      </listitem>
+
+      <listitem>
+          <para><ulink url="http://netbsd.gw.com/cgi-bin/man-cgi/man?protocols+5+NetBSD-current">protocols(5)</ulink></para>
+      </listitem>
+
+      <listitem>
+          <para><ulink url="http://netbsd.gw.com/cgi-bin/man-cgi/man?rpc+5+NetBSD-current">rpc(5)</ulink></para>
+      </listitem>
+
+      <listitem>
+          <para><ulink url="http://netbsd.gw.com/cgi-bin/man-cgi/man?services+5+NetBSD-current">services(5)</ulink></para>
+      </listitem>
+
+      <listitem>
+          <para><ulink url="http://netbsd.gw.com/cgi-bin/man-cgi/man?hosts_access+5+NetBSD-current">hosts_access(5)</ulink></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Miscellaneous links:</para>
+
+    <itemizedlist>
+      <listitem>
+          <para><ulink url="http://www.iana.org/numbers.htm">IANA: Protocol Numbers and Assignment Services</ulink></para>
+      </listitem>
+
+      <listitem>
+          <para><ulink url="http://www.isi.edu/in-notes/rfc1700.txt">RFC1700: Assigned Numbers</ulink></para>
+      </listitem>
+    </itemizedlist>
+  </sect1>
+</chapter>

@@ -1,0 +1,271 @@
+<!-- $NetBSD: chap-whatsnew.xml,v 1.20 2005/01/06 13:45:45 hubertf Exp $ -->
+
+<chapter id="chap-whatsnew">
+  <title>Nowe mo¿liwo¶ci w &os; 2.0</title>
+
+  <sect1 id="chap-whatsnew-2-0">
+    <title>Co nowego w &os; 2.0?</title>
+
+    <para>Jest niemo¿liwe wymieniæ ka¿d± pojedyncz± poprawkê wniesion± do &os;
+      od poprzedniego wydania 1.6 lub nawet od wersji 1.0. Jednak¿e 
+      podsumujemy podstawowe nowe cechy, które znalaz³y siê w &os; 2.0. S±
+      nimi:</para>
+
+    <sect2 id="chap-whatsnew-2-0-threads">
+      <title>Natywna implementacja w±tków</title>
+
+      <para>Oprócz wsparcia SMP dla portu NetBSD/i386 (patrz ni¿ej), wsparcie 
+        dla natywnej implementacji w±tków by³o jednym z podstawowych celów w 
+	przypadku NetBSD 2.0 i zosta³o wprowadzone w ¿ycie przez Plan Aktywacji
+	(ang. Scheduler Activations). Aplikacje wspieraj±ce natywne w±tki mog± 
+	teraz korzystaæ z wysoko wydajnej implementacji w±tków dla &os; (POSIX).        Zobacz tak¿e stronê podrêcznika man &man.pthread.3; by dowiedzieæ siê 
+	wiêcej.</para>
+
+      <para>Wielow±tkowo¶æ dostarcza aplikacjom pewien poziom równoleg³o¶ci; 
+        wiele w±tków w ramach tego samego procesu mo¿e byæ uruchomione 
+	równocze¶nie na ró¿nych CPU; wymaga to jednak aktywacji opcji j±dra dla
+	wielow±tkowo¶ci.</para>
+  
+      <para>Plan Aktywacji (ang. Scheduler Activations) jest wydajn± metod±
+        odwzorowania N w±tków userlandu do M w±tków j±dra, które unikaj± obu
+	problemów z zastosowaniem wspó³dzia³ania N:1 oraz problemu 
+	zastosowania skalowalno¶ci 1:1.</para>
+    </sect2>
+
+    <sect2 id="chap-whatsnew-2-0-kqueue">
+      <title>Kolejki zdarzeñ - kqueue</title>
+
+      <para>kqueue dostarcza efektywnej struktury zdarzeñ. Aktualnie wspierane 
+	zdarzenia obejmuj± gniazdo, plik, katalog, fifo, rurkê (ang. pipe), 
+	tty, zmiany urz±dzeñ oraz monitorowanie procesów oraz sygna³ów. Aby 
+	dowiedzieæ siê wiêcej zobacz &man.kqueue.2;.</para>
+
+      <para>kqueue jest wspierany przez wszystkie systemy plików w &os; (z 
+        wyj±tkiem Coda) i wszystkie urz±dzenia wspomagaj±ce &man.poll.2;.
+      </para>
+    </sect2>
+
+    <sect2 id="chap-whatsnew-2-0-systrace">
+      <title>systrace</title>
+
+      <para>Systrace monitoruje i kontroluje dostêp aplikacji do systemu przez
+	wymuszenie kontroli dostêpu dla wywo³añ systemowych. Narzêdzie 
+	systrace mo¿e byæ u¿yte do ¶ledzenia dostêpu do systemu przez 
+	niezaufane aplikacje. W dodatku mo¿e byæ tak¿e u¿yte do ochrony 
+	systemu przed b³êdami w aplikacjach (takimi jak przepe³nienie bufora) 
+	przez ograniczanie dostêpu daemonów do systemu. Aby dowiedzieæ siê 
+	wiêcej zoabacz &man.systrace.1;.</para>
+
+      <para>Systrace mo¿e byæ tak¿e u¿yte w przypadku eliminacji zbyt du¿ej
+	liczby niezaufanych programów uruchomionych jako root gdy tylko jeden 
+	lub dwa wywo³ania systemowe wymagaj± takiego przywileju, poprzez 
+	u¿ycie bardzo elastycznego narzêdzia <quote>jail</quote>.</para>
+    </sect2>
+
+    <sect2 id="chap-whatsnew-2-0-ufs2">
+      <title>UFSv2</title>
+
+      <para>UFS2 z FreeBSD zosta³o przeniesione do &os;. UFS2 jest 
+	rozszerzeniem do FFS, dodaje 64 bitowy blok wska¼ników oraz wsparcie 
+	dla rozszerzonego magazynu plików. Miêdzy innymi ulepszeniami UFS2 
+	jest lepiej dostosowany do systemów plików powy¿ej 1 terabajta.</para>
+    </sect2>
+
+    <sect2 id="chap-whatsnew-2-0-java">
+      <title>Wsparcie dla Javy</title>
+
+      <para>Poprawki zosta³y dodane do emulacji Linux'a pod &os; by wesprzeæ
+	ostatni± wersjê Sun JDK/JRE dla Linux'a. Testy pokaza³y, ¿e teraz 
+	Java mo¿e byæ uruchomiona natywnie.</para>
+    </sect2>
+
+    <sect2 id="chap-whatsnew-2-0-veriexec">
+      <title>Verified Exec</title>
+
+      <para>Jak sugeruje nazwa, Verified Exec sprawdza kryptograficzn± sumê 
+        kontroln± przed pozwoleniem wykonania plików binarnych i skryptów.
+      </para>
+	
+      <para>Mo¿e byæ u¿yte do zapobie¿enia uruchomienia przez system plików 
+	binarnych lub skryptów, które s± nielegalnie zmodyfikowane lub 
+	zainstalowane. W dodatku Verified Exec mo¿e tak¿e byæ u¿yte do 
+	ograniczenia u¿ycia interpertera skryptów tylko do autoryzowanych 
+        skryptów.</para>
+
+      <para>
+	Po wiêcej informacji zobacz na &man.verifiedexec.4; oraz 
+	&man.veriexecctl.8;.
+      </para>
+    </sect2>
+
+    <sect2 id="chap-whatsnew-2-0-cgd">
+      <title>Cryptographic disk driver</title>
+
+      <para>Cryptographic disk driver (<devicename>cgd</devicename>) mo¿e byæ 
+	u¿yty do szyfrowania disków lub partycji u¿ywaj±c do tego silnych 
+	algorytmów kryptograficznych takich jak AES (Rijndael) oraz Blowfish, 
+	a tak¿e mo¿e byæ skonfigurowany do szyfrowania tak¿e swap'u. Po wiêcej 
+	informacji zajrzyj do <xref linkend="chap-cgd" /> oraz &man.cgd.4; i 
+	&man.cgdconfig.8;.</para>
+    </sect2>
+
+    <sect2 id="chap-whatsnew-2-0-nonexec">
+      <title>Ochrona stosu i sterty</title>
+
+      <para>&os; 2.0 wymusza ochronê stosu i sterty na wielu platformach. 
+	Oznacza to, ¿e stos i sterta s± zrobione jako "non-executable" kiedy s± 
+	oznaczone jako "writable". Utrudnia to przeprowadzenie ataku typu 
+	przepe³nienie bufora (ang. buffer overflow).</para>
+    </sect2>
+
+    <sect2 id="chap-whatsnew-2-0-toolchain">
+      <title>Nowy toolchain</title>
+
+      <para>&os; 2.0 wspiera nowy toolchain oparty o gcc 3.3.3 i binutils 2.14.
+	gcc 3.3.3 dodaje wsparcie dla pewnej liczby CPU i znacznei ulepsza 
+	wsparcie dla platformy i386 oraz pozosta³ych. Nowe platformy wspierane 
+	przez gcc 3.3.3 umo¿liwiaj± portowanie &os; do wiêkszej liczby 
+	architektur.</para>
+    </sect2>
+
+    <sect2 id="chap-whatsnew-2-0-scalability">
+      <title>Poprawa skalowalno¶ci</title>
+
+      <para>
+	&os; 2.0 zosta³ zoptimalizowany podczas ciê¿kiego procesu rozwoju. 
+	To s± niektóre z rzeczy, które zosta³y poprawione:
+      </para>
+
+      <itemizedlist>
+	<listitem>
+	  <para>
+            Plan przydzia³u pamiêci dla bufora cache, który jest u¿ywany do
+	    cachowania meta danych systemu plików, zosta³ przepisany od nowa.
+	    Bufor cache mo¿e teraz u¿yæ a¿ do 15% z fizycznej pamiêci w 
+	    domy¶lnej konfiguracji (dostrajany przez &man.sysctl.8;). 
+    	  </para>
+	</listitem>
+        <listitem>
+          <para>
+	    Bufor gniazda jest teraz 0(C). Mo¿e to dostarczyæ istotny wzrost 
+	    mocy i wydajno¶ci dla niektórych aplikacji, która u¿ywaj± du¿ego 
+	    gniazda buforu.
+	  </para>
+        </listitem>
+        <listitem>
+	  <para>
+	    i386 &man.pmap.9; u¿ywa teraz rozszerzonego drzewa zamiast 
+	    po³±czonych list, co daje &man.fork.2; znacznie lepszy podzia³ 
+	    liczby zwiêkszanych procesów.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Drzewo red-black jest teraz u¿ywane do znalezienia wpisów w vm_map.
+	    To przy¶piesza przydzia³ oraz od¶wie¿anie pamiêci.
+	  </para>
+        </listitem>
+      </itemizedlist>
+    </sect2>
+
+    <!-- other:
+      "new hardware": usb2, firewire, ...
+      smbfs
+      uwscons
+      LFSv2
+    -->
+
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-whatsnew-ports">
+    <title>Nowe porty oraz rozszerzenia do istniej±cych portów.</title>
+
+    <sect2 id="chap-whatsnew-ports-amd64">
+      <title>amd64 - AMD Opteron</title>
+
+      <para>Nowy port dla 64-bitowego procesora AMD Opteron, zawiera wsparcie 
+	dla SMP.</para>
+    </sect2>
+
+    <sect2 id="chap-whatsnew-ports-evbsh5">
+      <title>evbsh5 - bazuj±cy na Hitachi Super-H 5</title>
+
+      <para>
+	Hitachi SuperH SH-5 jest bi-endian, 32 i 64 bitowym procesorem. Jest 
+	to nowy port bazuj±cy na p³ycie SH-5 Cayman. Wspierany dla pewnej 
+	liczby standardowych, niezale¿nych od urz±dzenia sterowników w³±czaj±c 
+	w to urz±dzenia audio, SCSI oraz karty sieciowe.</para>
+    </sect2>
+
+    <sect2 id="chap-whatsnew-ports-i386">
+      <title>i386 - sprzêt PC od i386 do Pentium IV</title>
+      <para>
+	Wydanie &os; 2.0 z Symmetrical Multiprocessing (SMP) (oprócz natywnej 
+	implementacji w±tków) dla portu i386 by³o drugim g³ównym celem, który 
+	zosta³ osi±gniêty.
+	Port i386 posiada tak¿e nowe ACPI oraz system zarz±dzania energi±, 
+	który daje wiele korzy¶ci w przypadku implementacji ACPI Intela.
+      </para>
+    </sect2>
+
+    <sect2 id="chap-whatsnew-ports-macppc">
+      <title>macppc - PowerPC bazowany na Mac</title>
+
+      <para>SMP jest teraz dostêpny tak¿e na macppc. Wsparcie sprzêtowe dla 
+        nowszych modeli G4 zosta³o dodane.</para>
+    </sect2>
+
+    <sect2 id="chap-whatsnew-ports-sparc">
+      <title>sparc - Sprzêt Sun'a oraz jego klony</title>
+
+      <para>SMP jest teraz wspierane na sprzêcie SPARC takim jak Sun's 
+	SPARCstations 10 i 20.</para>
+    </sect2>
+
+    <!-- other:
+      ...
+    -->
+
+  </sect1>
+
+  <sect1 id="chap-whatsnew-pkgsrc">
+    <title>pkgsrc - Kolekcja pakietów &os;</title>
+
+    <para>pkgsrc zosta³o znacz±co powiêkszone i teraz zawiera ponad 5000 
+      pakietów. Pewna liczba nowych platform jest wspieranych przez pkgsrc 
+      w³±czaj±c w to Solaris, Linux, Darwin, FreeBSD, OpenBSD, DragonFlyBSD 
+      oraz Irix. Wsparcie dla pozosta³ych platform (miêdzy innymi AIX, BSD/OS 
+      i HP-UX) jest obecnie opracowywane dziêki nowemu, przeno¶nemu zestawowi 
+      bootstrap, który daje znacznie lepsze mo¿liwo¶ci wspierania pkgsrc dla 
+      nowych systemów operacyjnych.</para>
+
+<!--
+    <para>
+      As well as this, several major enhancements have been made to
+      pkgsrc, including:
+    </para>
+
+    <itemizedlist>
+
+      <listitem>
+        <para>pkgviews</para>
+        <para>
+          pkgviews allows multiple, possibly conflicting versions
+          of the same package to be installed simultaneously,
+          providing greater flexibility for package installations.
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>bulk builds</para>
+        <para>
+          The bulk build infrastructure has been improved to
+          support bulk builds on platforms other than NetBSD.
+        </para>
+      </listitem>
+    </itemizedlist>
+-->
+  </sect1>
+</chapter>

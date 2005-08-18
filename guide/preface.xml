@@ -1,0 +1,40 @@
+<!-- $NetBSD: preface.xml,v 1.8 2004/12/02 01:52:07 hubertf Exp $ -->
+
+<preface id="preface">
+  <title>Cel tego przewodnika</title>
+  
+  <para>Przewodnik ten opisuje instalacjê oraz konfiguracjê systemu systemu
+    operacyjnego &os; jak równie¿ strukturê i administracjê, niektórych jego
+    podsystemów.
+    Jest on adresowany g³ównie do ludzi, którzy przenosz± siê z innych 
+    systemów operacyjnych w nadziei i¿ bêdzie on rozwi±zaniem wielu niewielkich
+    problemów, z którymi zetkniesz siê u¿ywaj±c nowego narzêdzia.</para>
+
+  <para>Ten przewodnik nie jest podrêcznikiem Unix'a. Podstawowa wiedza z 
+    niektórych pojêæ oraz narzêdzi jest wymagana aby w pe³ni go zrozumieæ. 
+    Powiniene¶ wiedzieæ, dla przyk³adu, co to s± pliki i katalogi oraz jak
+    u¿ywaæ edytora. Jest bardzo du¿o ksi±¿ek wyja¶niaj±cych tego typu rzeczy, 
+    wiêc je¶li nie rozumiesz tych pojêæ sugerujê ci by¶ zapozna³ siê z jedn± z 
+    nich. Uwa¿am, ¿e najlepszym wyborem bêdzie wybranie ksi±zki ogólnej i
+    unikanie tytu³ów typu <quote>Naucz siê Unix'a-XYZ, w wersji 1.2.3.4 w 10 
+    dni</quote> ale jest to ju¿ twój osobisty wybór. Je¶li zainstalujesz
+    system BSD, wcze¶niej czy pó¼niej natkniesz siê na edytor 
+    <application>vi</application>: bez dodatkowej dokumentacji mo¿e on siê
+    staæ dla ciebie przeszkod± nie do pokonania. Kiedy ju¿ zakoñczysz 
+    instalacjê systemu, bêdziesz móg³ zainstalowaæ jakikolwiek inny edytor, 
+    który preferujesz.</para>
+
+  <para>Nadal du¿o pracy jest potrzebne do zakoñczenia tego wprowadzenia do 
+    &os;: niektóre z rozdzia³ów nie s± jeszcze skoñczone (niektóre nawet 
+    jeszcze nie s± rozpoczête) a tak¿e wiele z tych tematów nadal wymagaj± 
+    testowania (tak, ten przewodniku musi byæ tak¿e testowany). Ca³y czas
+    próbujê pracowaæ nad nim i ulepszaæ go w swoim wolnym czasie, lecz je¶li
+    chcia³by¶ pomóc, proszê bardzo: mo¿esz napisaæ nowe rodzia³y (albo czê¶ci)
+    lub te¿ wysy³aæ poprawki dla ju¿ istniej±cych tematów.</para>
+
+  <para>
+    Ten przewodnik jest akutalnie utrzymywany przez zespó³ www NetBSD
+    (<email>www@NetBSD.org</email>). Poprawki oraz sugestie powinny byæ wysy³ane
+    na ten adres. Zobacz tak¿e <xref linkend="ap-contrib" />.
+  </para>
+</preface>

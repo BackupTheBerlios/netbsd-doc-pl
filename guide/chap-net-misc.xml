@@ -1,0 +1,1027 @@
+<!-- $NetBSD: chap-net-misc.xml,v 1.9 2005/07/30 22:27:25 ross Exp $ -->
+
+<chapter id="chap-net-misc">
+  <title>Miscellaneous networking topics</title>
+
+  <sect1 id="chap-net-misc-bridge">
+    <title>Bridge</title>
+
+    <para>A bridge can be used to combine different physical networks
+      into one logical network, i.e. connect them at layer 2 of the
+      ISO-OSI model, not at layer 3, which is what a router would
+      do. The NetBSD <quote>bridge</quote> driver
+      provides bridge functionality on NetBSD systems.</para>
+
+    <sect2 id="chap-net-misc-bridge-example">
+      <title>Bridge example</title>
+
+      <para>In this example two physical networks are going to be combined
+        in one logical network, 192.168.1.0, using a NetBSD bridge. The
+        NetBSD machine which is going to act as bridge has two interfaces,
+        ne0 and ne1, which are both connected to one physical network.</para>
+
+      <para>The first step is to make sure support for the <quote>bridge</quote>
+        is compiled in the running kernel. Support is included in the
+        GENERIC kernel.</para>
+
+      <para>When the system is ready the bridge can be created, this can
+        be done using the <command>brconfig</command>(8) command. First
+        of a bridge interface has to be created. With the following
+        <command>ifconfig</command> command the <quote>bridge0</quote>
+        interface will be created:</para>
+
+      <screen>&uprompt; <command>ifconfig bridge0 create</command></screen>
+
+      <para>Please make sure that at this point both the ne0 and ne1
+        interfaces are up.  The next step is to add the ne0 and ne1
+        interfaces to the bridge.</para>
+
+      <screen>&uprompt; <command>brconfig bridge0 add ne0 add ne1 up</command></screen>
+
+      <para>This configuration can be automatically set up by creating
+        an <filename>/etc/ifconfig.interface</filename> file, in
+        this case <filename>/etc/ifconfig.bridge0</filename>,
+        with the following contents:</para>
+
+      <programlisting>create
+!brconfig $int add ne0 add ne1 up</programlisting>
+
+      <para>After setting up the bridge the bridge configuration can
+        be displayed using the <command>brconfig -a</command> command.
+        Remember that if you want to give the bridge machine an IP
+        address you can only allocate an IP address to one of the
+        interfaces which are part of the bridge.</para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="chap-net-misc-nfs">
+    <title>Network File System (NFS)</title>
+
+    <para>Now that the network is working it is possible to share files and
+      directories over the network using the Network File System
+      (<acronym>NFS</acronym>).
+      From the point of view of file sharing, the computer which gives
+      access to its files and directories is called the
+      <emphasis>server</emphasis>, and the computer using these files
+      and directories is the <emphasis>client</emphasis>.
+      A computer can be client and server at the same time.</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>A kernel must be compiled with the appropriate options for
+          the client and the server (the options are easy to find in
+          the kernel configuration file. See <xref
+          linkend="chap-net-practice-kernel-options" />
+	  for more information on NFS
+          related kernel options.</para>
+      </listitem>
+
+      <listitem>
+        <para>The server must enable the
+          <application>rpcbind</application>,
+          <application>mountd</application>
+          <application>lockd</application>
+          <application>statd</application>
+          and
+          <literal>nfs_server</literal> daemons in
+          <filename>/etc/rc.conf</filename>:</para>
+
+        <programlisting>rpcbind=yes
+mountd=yes
+nfs_server=yes
+lockd=yes
+statd=yes</programlisting>
+      </listitem>
+
+      <listitem>
+        <para>The client must enable the
+          <application>rpcbind</application>,
+          <application>lockd</application>
+          <application>statd</application>
+          and
+          <literal>nfs_client</literal> daemons in
+          <filename>/etc/rc.conf</filename>:</para>
+
+	<programlisting>rpcbind=yes
+nfs_client=yes
+lockd=yes
+statd=yes</programlisting>
+      </listitem>
+
+      <listitem>
+        <para>The server must list the exported directories in
+          <filename>/etc/exports</filename> and then run the command
+          <command>kill -HUP `cat /var/run/mountd.pid</command>
+          (<command>hup mountd</command> may work too!).</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>A client host can access a remote directory through NFS if:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>The server host exports the directory to the client.
+          The list of filesystems a NFS server exports can be
+          checked with the <command>showmount -e</command> command,
+          see &man.showmount.8;:</para>
+
+        <screen>&rprompt; <userinput>showmount -e 192.168.1.2</userinput>
+Exports list on 192.168.1.2:
+/home                              host1 host2 host3</screen>
+      </listitem>
+
+      <listitem>
+        <para>The client host mounts the remote directory with the command
+          <command>mount 192.168.1.2:/home /home</command></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>The <command>mount</command> command has a rich set of options for
+      remote directories which are not very intuitive (to say the least).</para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-net-misc-nfs-example">
+      <title>NFS setup example</title>
+
+      <para>The scenario described here is the following: five client
+        machines (cli1, ...,
+        cli5) share some directories on a server (buzz.toys.org).
+        Some of the directories exported by the server are reserved for a
+        specific client, the other directories are common for all client
+        machines.
+        All the clients boot from the server and must mount the
+        directories.</para>
+
+      <para>The directories exported from the server are:</para>
+
+      <variablelist>
+        <varlistentry>
+          <term><filename>/export/cli?/root</filename></term>
+
+          <listitem>
+            <para>the five root directories for the five client machines.
+              Each client has its own root directory.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><filename>/export/cli?/swap</filename></term>
+
+          <listitem>
+            <para>Five swap directories for the five swap machines.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><filename>/export/common/usr</filename></term>
+
+          <listitem>
+            <para><filename>/usr</filename> directory; common for all client
+              hosts.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><filename>/usr/src</filename></term>
+
+          <listitem>
+            <para>Common <filename>/usr/src</filename> directory for all
+              client machines.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <para>The following file systems exist on the server</para>
+
+      <programlisting>/dev/ra0a on /
+/dev/ra0f on /usr
+/dev/ra1a on /usr/src
+/dev/ra2a on /export</programlisting>
+
+      <para>Each client needs the following file systems</para>
+
+      <programlisting>buzz:/export/cli?/root   on /
+buzz:/export/common/usr  on /usr
+buzz:/usr/src            on /usr/src</programlisting>
+
+      <para>The server configuration is the following:</para>
+
+      <programlisting># /etc/exports
+/usr/src  -network 192.168.1.0 -mask 255.255.255.0
+/export   -alldirs -maproot=root -network 192.168.1.0 -mask 255.255.255.0</programlisting>
+
+      <para>On the client machines <filename>/etc/fstab</filename>
+	contains:</para>
+
+      <programlisting>buzz:/export/cli<replaceable>X</replaceable>/root  /        nfs rw
+buzz:/export/common/usr /usr     nfs ro,nodev,nosuid
+buzz:/usr/src           /usr/src nfs rw,nodev,nosuid</programlisting>
+
+      <para>Each client machine has its number substituted to the
+        <quote><replaceable>X</replaceable></quote> character in the
+        first line of the previous example.</para>
+    </sect2>
+  </sect1> <!-- NFS -->
+
+  <sect1 id="chap-net-misc-automount">
+    <title>Setting up NFS automounting for <filename>/net</filename>
+      with &man.amd.8;</title>
+
+    <sect2 id="chap-net-misc-automount-intro">
+      <title>Introduction</title>
+
+      <para>The problem with NFS (and other) mounts is, that you usually
+        have to be root to make them, which can be rather
+        inconvenient for users. Using &man.amd.8; you can set up a
+        certain directory (Commonly <filename>/net</filename>),
+        under which one
+        can make any NFS-mount as a normal user, as long as the
+        filesystem about to be accessed is actually exported by the
+        NFS server.</para>
+
+      <para>To check if a certain server exports a filesystem, and which
+        ones, use the <command>showmount</command>-command with the
+        <option>-e</option>
+        (export) switch:</para>
+
+      <screen>&uprompt; <userinput>showmount -e wuarchive.wustl.edu</userinput>
+Exports list on wuarchive.wustl.edu:
+/export/home                       onc.wustl.edu
+/export/local                      onc.wustl.edu
+/export/adm/log                    onc.wustl.edu
+/usr                               onc.wustl.edu
+/                                  onc.wustl.edu
+/archive                           Everyone</screen>
+
+      <para>If you then want to mount a directory to access anything
+        below it (for example
+        <filename>/archive/systems/unix/NetBSD</filename>),
+        just change into that directory:</para>
+
+      <screen>&uprompt; <userinput>cd /net/wuarchive.wustl.edu/archive/systems/unix/NetBSD</userinput></screen>
+
+      <para>The filesystem will be mounted (by <command>amd</command>),
+        and you can a
+        access any files just as if the directory was mounted by the
+        superuser of your system.</para>
+    </sect2> <!-- Introduction -->
+
+    <sect2 id="chap-net-misc-automount-setup">
+      <title>Actual setup</title>
+
+      <para>You can set up such a <filename>/net</filename> directory with the
+        following steps (including basic <command>amd</command>
+	configuration):</para>
+
+      <procedure>
+        <step>
+          <para>in <filename>/etc/rc.conf</filename>, set the following variable:</para>
+
+          <programlisting>amd=yes</programlisting>
+        </step>
+
+        <step>
+          <para><command>mkdir /amd</command></para>
+        </step>
+
+        <step>
+          <para><command>mkdir /net</command></para>
+        </step>
+
+        <step>
+          <para>Taking <filename>/usr/share/examples/amd/amd.conf</filename>,
+            put the following into <filename>/etc/amd.conf</filename>:</para>
+
+          <programlisting>[ /net ]
+map_name =              /etc/amd/net        </programlisting>
+        </step>
+
+        <step>
+          <para>Taking <filename>/usr/share/examples/amd/net</filename> as example,
+            put the following into <filename>/etc/amd/net</filename>:</para>
+
+          <programlisting>/defaults       type:=host;rhost:=${key};fs:=${autodir}/${rhost}/root
+*             host==${key};type:=link;fs:=/                           \
+              host!=${key};opts:=ro,soft,intr,nodev,nosuid,noconn</programlisting>
+        </step>
+
+        <step>
+          <para>Reboot, or (re)start <command>amd</command> by hand:</para>
+
+          <screen>&rprompt; <userinput>sh /etc/rc.d/amd restart</userinput></screen>
+        </step>
+      </procedure>
+    </sect2> <!-- Setup -->
+  </sect1> <!-- amd -->
+
+  <sect1 id="chap-net-misc-ipv6-6to4">
+    <title>IPv6 Connectivity &amp; Transition via 6to4</title>
+
+    <!--
+          Note to translators: if you want to translate this to
+          German, contact me (hubertf@NetBSD.org) and ask me for
+          ctv6.html - I already have a german translation of this!
+    -->
+
+    <para>This section will concentrate on how to get network
+      connectivity for IPv6 and - as that is rarely available directly
+      - talk at length about the alternatives to native
+      IPv6 connectivity as a transitional method until native IPv6 peers
+      are available.</para>
+
+    <para>Finding an ISP that offers IPv6 natively needs quite some
+      luck. What you need next is a router that will be able to
+      handle the traffic. To date, not all router manufacturers
+      offer IPv6 or hardware accelerated IPv6 features, and
+      gateway NAT boxes only rarely support IPv6 and also block IPv6 tunnels.
+      An alternative approach involves configuring
+      a standard PC running &os; to act as a router.
+      The base &os; system contains a complete IPv6 routing solution,
+      and for special routing needs software like
+      Zebra can provide additional routing protocols. This solution is
+      rather common for sites that want IPv6 connectivity
+      today. The drawbacks are that you need an ISP that supports
+      IPv6 and that you may need a dedicated uplink only for IPv6.</para>
+      <!-- Huh?  Why a dedicated link?? [ross] -->
+
+    <para> IPv6 to-the-door may be rare, but you can still get IPv6
+      connectivity by using tunnels. Instead of talking IPv6 on the
+      wire, the IPv6 packets are encapsulated in IPv4 packets, as shown
+      in <xref linkend="ipv6-en-2tunnel" />. Using the existing IPv4
+      infrastructure, the encapsulated packets are sent to a
+      IPv6-capable uplink that will then remove the encapsulation, and
+      forward the IPv6 packets.</para>
+
+    <figure id="ipv6-en-2tunnel">
+      <title>A frequently used method for transition is tunneling IPv6 in
+        IPv4 packets</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/ipv6-en-2tunnel.gif" format="GIF" />
+        </imageobject>
+
+        <imageobject>
+          <imagedata fileref="&imagesdir;/ipv6-en-2tunnel.eps" format="EPS" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>When using tunnels, there are two possibilities. One is to use
+      a so-called <quote>configured</quote> tunnel, the other is called an
+      <quote>automatic</quote> tunnel. A <quote>configured</quote> tunnel
+      is one that required preparation from both ends of the tunnel,
+      usually connected with some kind of registration to exchange setup
+      information. An example for such a configured tunnel is the
+      IPv6-over-IPv4 encapsulation described in <xref
+      linkend="RFC1933" />, and that's implemented e.g. by the &man.gif.4;
+      device found in &os;.</para>
+
+    <para>An <quote>automatic</quote> tunnel consists of a public server
+      that has some kind of IPv6 connectivity, e.g. via 6Bone. That server
+      has made its connectivity data public, and also runs a
+      tunneling protocol that does not require an explicit
+      registration of the sites using it as uplink. A well-used
+      example of such a protocol is the 6to4 mechanism described in
+      <xref linkend="RFC3056" />, and that is implemented in the
+      &man.stf.4; device found in &os;'s. Another mechanism that
+      does not require registration of IPv6-information is the 6over4
+      mechanism, which implements transporting of IPv6 over a
+      multicast-enabled IPv4 network, instead of e.g. ethernet or
+      FDDI. 6over4 is documented in <xref linkend="RFC2529" />.
+      It's main drawback is
+      that you do need existing multicast infrastructure. If you
+      don't have that, setting it up is about as much effort as
+      setting up a configured IPv6 tunnel directly, so it's usually
+      not worth bothering in that case.</para>
+
+    <sect2 id="chap-net-misc-ipv6-6to4-get-running">
+      <title>Getting 6to4 IPv6 up &amp; running</title>
+
+      <para>6to4 is an easy way to get IPv6 connectivity for hosts that
+        only have an IPv4 uplink, especially if you have the background
+        given in <xref linkend="ipv6-intro" />. It can be used with
+        static as well as dynamically assigned IPv4 addresses,
+        e.g. as found in modem dialup scenarios today. When using
+        dynamic IPv4 addresses, a change of IP addresses will be a
+        problem for incoming traffic, i.e. you can't run persistent
+        servers.</para>
+
+      <para>Example configurations given in this section is for &os; 1.5.2.</para>
+    </sect2> <!-- Getting 6to4 IPv6 up &amp; running -->
+
+    <sect2 id="chap-net-misc-ipv6-6to4-address-space">
+      <title>Obtaining IPv6 Address Space for 6to4 </title>
+
+      <para>The 6to4 IPv6 setup on your side doesn't consist of a
+        single IPv6 address; Instead, you get a whole /48 network!
+        The IPv6 addresses are derived from your (single) IPv4
+        address.  The address prefix <quote>2002:</quote> is reserved for
+        6to4 based addresses (i.e. IPv6 addresses derived from IPv4
+        addresses). The next 32 bits are your IPv4 address. This
+        results in a /48 network that you can use for your very own
+        purpose. It leaves 16 bits space for
+        2<superscript>16</superscript> IPv6 subnets, which can take
+        up to 2<superscript>64</superscript> nodes each. <xref
+        linkend="ipv6-en-3adr" /> illustrates the building of your
+        IPv6 address (range) from your IPv4 address.</para>
+
+      <para>Thanks to
+        the 6to4 prefix and your worldwide unique IPv4 address, this
+        address block is unique, and it's mapped to your machine
+        carrying the IPv4 address in question.</para>
+
+      <figure id="ipv6-en-3adr">
+        <title>6to4 derives an IPv6 from an IPv4 address</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="&imagesdir;/ipv6-en-3adr.gif" format="GIF" />
+          </imageobject>
+
+          <imageobject>
+            <imagedata fileref="&imagesdir;/ipv6-en-3adr.eps" format="EPS" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+    </sect2><!-- Obtaining IPv6 Address Space for 6to4  -->
+
+    <sect2 id="chap-net-misc-ipv6-6to4-howto-connect">
+      <title>How to get connected</title>
+
+      <para>In contrast to the configured <quote>IPv6-over-IPv4 tunnel</quote>
+        setup, you do not have to register at a 6bone-gateway, which would
+        only then forward your IPv6 traffic encapsulated in IPv4. Instead,
+        as your IPv6 address is derived from your IPv4 address, inbound
+        traffic can be sent through the nearest 6to4 relay router.
+        De-encapsulation of the packet is done via a
+        6to4-capable network interface, which then forwards the
+        resulting IPv6 packet according to your routing setup (in
+        case you have more than one machine connected on your 6to4
+        assigned network).</para>
+
+      <para>To transmit IPv6 packets, the 6to4 router
+        will encapsulate them inside
+        IPv4 packets; a system performing these functions is called
+	a 6to4 border router. These packets have a default route to
+	the <firstterm>6to4 relay anycast prefix</firstterm>.
+	This anycast prefix will route the tunnel to a
+	<firstterm>6to4 relay router</firstterm>.
+        <xref linkend="ipv6-en-1scene" />
+        illustrates this.</para>
+
+      <figure id="ipv6-en-1scene">
+        <title>Request and reply can be routed via different
+	  gateways in 6to4</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="&imagesdir;/ipv6-en-1scene.gif" format="GIF" />
+          </imageobject>
+
+          <imageobject>
+            <imagedata fileref="&imagesdir;/ipv6-en-1scene.eps" format="EPS" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+    </sect2><!-- How to get connected  -->
+
+    <sect2 id="chap-net-misc-ipv6-6to4-security">
+      <title>Security Considerations</title>
+
+      <para>In contrast to the <quote>configured tunnel</quote> setup, you
+        usually can't setup packet filters to block 6to4-packets from
+        unauthorized sources, as this is exactly how (and why) 6to4
+        works at all. As such, malicious users can send packets with
+        invalid/hazardous IPv6 payload. If you don't already filter
+        on your border gateways anyways, packets with the following
+        characteristics should not be allowed as valid 6to4 packets,
+        and some firewalling seems to be justified for them:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>unspecified IPv4 source/destination address: 0.0.0.0/8</para>
+        </listitem>
+
+        <listitem>
+          <para>loopback address in outer (v4) source/destination: 127.0.0.0/8</para>
+        </listitem>
+
+        <listitem>
+          <para>IPv4 multicast in source/destination: 224.0.0.0/4</para>
+        </listitem>
+
+        <listitem>
+          <para>limited broadcasts: 255.0.0.0/8</para>
+        </listitem>
+
+        <listitem>
+          <para>subnet broadcast address as source/destination: depends
+            on your IPv4 setup</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>The &os; &man.stf.4; manual page documents some common
+        configuration mistakes intercepted by default by the KAME
+        stack as well as some further advice on filtering, but keep
+        in mind that because of the requirement of these filters,
+        6to4 is not perfectly secure. Still, if forged 6to4 packets
+        become a problem, you can use IPsec authentication to ensure
+        the IPv6 packets are not modified.</para>
+    </sect2><!-- Security Considerations -->
+
+    <sect2 id="chap-net-misc-ipv6-6to4-data-needed-for-setup">
+      <title>Data Needed for 6to4 Setup</title>
+
+      <para>In order to setup and configure IPv6 over 6to4, a few bits
+        of configuration data must be known in advance. These are:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Your local IPv4 address. It can be determined using
+            either the    '<command>ifconfig -a</command>' or
+            '<command>netstat -i</command>' commands on
+            most Unix systems. If you use a NATing gateway or
+            something, be sure to use the official, outside-visible
+            address, not your private (10/8 or 192.168/16) one.</para>
+
+          <para>We will use 62.224.57.114 as the local IPv4 address in
+            our example.</para>
+        </listitem>
+
+        <listitem>
+          <para>Your local IPv6 address, as derived from the IPv4
+            address. See <xref linkend="ipv6-en-3adr" /> on how to do
+            that.</para>
+
+          <para>For our example, this is 2002:3ee0:3972:0001::1
+            (62.224.57.114 == 0x3ee03972, 0001::1 arbitrarily
+            chosen).</para>
+        </listitem>
+
+        <listitem>
+          <para>The <firstterm>6to4 IPv6 relay anycast address</firstterm>.
+	  which is 2002:c058:6301::, or
+	  the IPv6 address of a specific 6to4 relay router you want
+            to use. The IPv6 address will do, as it also contains the
+            IPv4 address in the usual 6to4 translation.</para>
+        </listitem>
+      </itemizedlist>
+    </sect2><!-- Data Needed for 6to4 Setup -->
+
+    <sect2 id="chap-net-misc-ipv6-6to4-kernel-config">
+      <title>Kernel Preparation</title>
+
+      <para>To process 6to4 packets, the operating system kernel needs
+        to know about them. For that a driver has to be compiled in
+        that knows about 6to4, and how to handle it.</para>
+
+      <para>For a &os; kernel, put the following into your
+        kernel config file to prepare it for using IPv6 and 6to4,
+        e.g. on &os; use:</para>
+
+      <programlisting>options INET6                 # IPv6
+pseudo-device stf             # 6to4 IPv6 over IPv4 encapsulation</programlisting>
+
+      <para>Note that the &man.stf.4; device is not enabled by
+        default. Rebuild your kernel, then reboot
+        your system to use the new kernel. Please consult
+        <xref linkend="chap-kernel" /> for further information on
+        configuring, building and installing a new kernel!</para>
+    </sect2><!-- Kernel Preparation -->
+
+    <sect2 id="chap-net-misc-ipv6-6to4-setup">
+      <title>6to4 Setup</title>
+
+      <para>This section describes the commands to setup 6to4. In short,
+        the steps performed here are:</para>
+
+      <orderedlist>
+        <listitem>
+          <para>Configure interface</para>
+        </listitem>
+
+        <listitem>
+          <para>Set default route</para>
+        </listitem>
+
+        <listitem>
+          <para>Setup Router Advertisement, if wanted</para>
+        </listitem>
+      </orderedlist>
+
+      <para>The first step in setting up 6to4 is assigning an IPv6
+        address to the 6to4 interface. This is achieved with the
+        &man.ifconfig.8; command. Assuming the example configuration
+        above, the command for &os; is:</para>
+
+      <screen>&rprompt; <userinput>ifconfig stf0 inet6 2002:3ee0:3972:1::1 prefixlen 16 alias</userinput></screen>
+
+      <para>After configuring the 6to4 device with these commands,
+        routing needs to be setup, to forward all tunneled IPv6 traffic to
+        the 6to4 relay router. The best way to do this is by
+        setting a default route, the command to do so is, for &os;:</para>
+
+      <screen>&rprompt; <userinput>route add -inet6 default 2002:c058:6301::</userinput></screen>
+
+      <para>Note that &os;'s &man.stf.4; device determines the
+        IPv4 address of the 6to4 uplink from the routing table. Using
+        this feature, it is easy to setup your own 6to4 (uplink)
+        gateway if you have an IPv6 uplink, e.g. via 6Bone.</para>
+
+      <para>After these commands, you are connected to the IPv6-enabled
+        world - Congratulations! Assuming name resolution is still
+        done via IPv4, you can now ping an IPv6-site like www.kame.net
+        or www6.NetBSD.org:</para>
+
+      <screen>&rprompt; <userinput>/sbin/ping6 www.kame.net</userinput></screen>
+
+      <para>As a final step in setting up IPv6 via 6to4, you will want
+        to setup Router Advertisement if you have several hosts on
+        your network. While it is possible to setup 6to4 on each
+        node, doing so will result in very expensive routing from
+        one node to the other - packets will be sent to the remote
+        6to4 gateway, which will then route the packets back to the
+        neighbor node. Instead, setting up 6to4 on one machine and
+        talking native IPv6 on-wire is the preferred method of
+        handling things.</para>
+
+      <para>The first step to do so is to assign an IPv6-address to your
+        ethernet. In the following example we will assume subnet
+        <quote>2</quote>
+        of the IPv6-net is used for the local ethernet and the MAC
+        address of the ethernet interface is 12:34:56:78:9a:bc,
+        i.e. your local gateway's ethernet interface's IP address
+        will be 2002:3ee0:3972:2:1234:56ff:fe78:9abc. Assign this
+        address to your ethernet interface, e.g.</para>
+
+      <screen>&rprompt; <userinput>ifconfig ne0 inet6 alias 2002:3ee0:3972:2:1234:56ff:fe78:9abc</userinput></screen>
+
+      <para>Here, <quote>ne0</quote> is an example for your ethernet card
+        interface. This will most likely be different for your
+        setup, depending on what kind of card is used.</para>
+
+      <para>Next thing that needs to be ensured for setting up the
+        router is that it will actually forward packets from the
+        local 6to4 device to the ethernet device and back. To enable
+        IPv6 packet forwarding, set <quote>ip6mode=router</quote> in &os;'s
+        <filename>/etc/rc.conf</filename>, which will result in the
+        <quote>net.inet6.ip6.forwarding</quote> sysctl being set to <quote>1</quote>:</para>
+
+      <screen>&rprompt; <userinput>sysctl -w net.inet6.ip6.forwarding=1</userinput></screen>
+
+      <figure id="ipv6-en-5forward">
+        <title>Enabling packet forwarding is needed for a 6to4 router</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="&imagesdir;/ipv6-en-5forward.gif" format="GIF" />
+          </imageobject>
+
+          <imageobject>
+            <imagedata fileref="&imagesdir;/ipv6-en-5forward.eps" format="EPS" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+
+      <para>To setup router advertisement on BSD, the file
+        <filename>/etc/rtadvd.conf</filename> needs to be checked. It allows
+        configuration of many things, but usually the default config
+        of not containing any data is ok. With that default, IPv6
+        addresses found on all of the router's network interfaces
+        will be advertised.</para>
+
+      <para>After checking the router advertisement configuration is
+        correct and IPv6 forwarding is turned on, the daemon
+        handling it can be started. Under &os;, it is called
+        '<command>rtadvd</command>'. Start it up either manually
+        (for testing it the first time) or via the system's startup
+        scripts, and see all your local nodes automagically
+        configure the advertised subnet address in addition to their
+        already-existing link local address.</para>
+
+      <screen>&rprompt; <userinput>rtadvd</userinput></screen>
+    </sect2><!-- 6to4 Setup -->
+
+    <sect2 id="chap-net-misc-ipv6-6to4-hf6to4">
+      <title>Quickstart using pkgsrc/net/hf6to4</title>
+
+      <para>So far, we have described how 6to4 works and how to set it
+        up manually. For an automated way to make everything happen
+        e.g. when going online, the 'hf6to4' package is convenient. It
+        will determine your IPv6 address from the IPv4 address you
+        got assigned by your provider, then set things up that you
+        are connected.</para>
+
+      <para>Steps to setup the pkgsrc/net/hf6to4 package are:</para>
+
+      <orderedlist>
+        <listitem>
+          <para>Install the package either by compiling it from pkgsrc,
+            or by <command>pkg_add</command>'ing the 6to4-1.2
+            package.</para>
+
+          <screen>&rprompt; <userinput>cd /usr/pkgsrc/net/hf6to4</userinput>
+&rprompt; <userinput>make install</userinput></screen>
+        </listitem>
+
+        <listitem>
+          <para>Make sure you have the &man.stf.4; pseudo-device in your
+            kernel, see above.</para>
+        </listitem>
+
+        <listitem>
+          <para>Configure the 'hf6to4' package. First, copy
+            <filename>/usr/pkg/share/examples/hf6to4/hf6to4.conf</filename> to
+            <filename>/usr/pkg/etc/hf6to4.conf</filename>, then adjust
+            the variables. Note that the file is in /bin/sh syntax.</para>
+
+          <screen>&rprompt; <userinput>cd /usr/pkg/etc</userinput>
+&rprompt; <userinput>cp ../share/examples/hf6to4/hf6to4.conf hf6to4.conf</userinput>
+&rprompt; <userinput>vi hf6to4.conf</userinput></screen>
+
+          <para>Please see the &man.hf6to4.8; manpage for an explanation of all
+            the variables you can set in
+            <filename>hf6to4.conf</filename>. If you have dialup IP
+            via PPP, and don't want to run Router Advertizing for
+            other IPv6 machines on your home or office network, you
+            don't need to configure anything. If you want to setup
+            Router Advertising, you need to set the
+            <varname>in_if</varname> to the internal (ethernet)
+            interface, e.g.</para>
+
+          <programlisting>$in_if="rtk0";            # Inside (ethernet) interface</programlisting>
+        </listitem>
+
+        <listitem>
+          <para>Now dial up, then start the 6to4 command manually:</para>
+
+          <screen>&rprompt; <userinput>/usr/pkg/sbin/hf6to4 start</userinput></screen>
+
+        </listitem>
+
+        <listitem>
+          <para>After that, you should be connected, use
+            &man.ping6.8;: to see if everything works:</para>
+
+          <screen>&rprompt; <userinput>ping6 www.NetBSD.org</userinput>
+PING6(56=40+8+8 bytes) 2002:d954:110b:1::1 --&gt; 2001:4f8:4:7:2e0:81ff:fe52:9a6b
+16 bytes from 2001:4f8:4:7:2e0:81ff:fe52:9a6b, icmp_seq=0 hlim=60 time=250.234 ms
+16 bytes from 2001:4f8:4:7:2e0:81ff:fe52:9a6b, icmp_seq=1 hlim=60 time=255.652 ms
+16 bytes from 2001:4f8:4:7:2e0:81ff:fe52:9a6b, icmp_seq=2 hlim=60 time=251.237 ms
+^C
+--- www.NetBSD.org ping6 statistics ---
+3 packets transmitted, 3 packets received, 0.0% packet loss
+round-trip min/avg/max/std-dev = 250.234/252.374/255.652/2.354 ms
+
+&rprompt; <userinput>traceroute6 www.NetBSD.org</userinput>
+traceroute6 to www.NetBSD.org (2001:4f8:4:7:2e0:81ff:fe52:9a6b)
+from 2002:d954:110b:1::1, 64 hops max, 12 byte packets
+ 1  2002:c25f:6cbf:1::1  66.31 ms  66.382 ms  69.062 ms
+ 2  nr-erl1.6win.dfn.de  76.134 ms *  76.87 ms
+ 3  nr-fra1.6win.dfn.de  76.371 ms  80.709 ms  79.482 ms
+ 4  dfn.de6.de.6net.org  92.763 ms  90.863 ms  94.322 ms
+ 5  de.nl6.nl.6net.org  116.115 ms  93.463 ms  96.331 ms
+ 6  nl.uk6.uk.6net.org  103.347 ms  99.334 ms  100.803 ms
+ 7  uk1.uk61.uk.6net.org  99.481 ms  100.421 ms  100.119 ms
+ 8  2001:798:28:300::2  89.711 ms  90.435 ms  90.035 ms
+ 9  ge-1-0-0-2.r20.londen03.uk.bb.verio.net  179.671 ms  185.141 ms  185.86 ms
+10  p16-0-0-0.r81.nycmny01.us.bb.verio.net  177.067 ms  179.086 ms  178.05 ms
+11  p16-1-1-3.r20.nycmny01.us.bb.verio.net  178.04 ms  179.727 ms  184.165 ms
+12  p16-0-1-1.r20.mlpsca01.us.bb.verio.net  249.856 ms  247.476 ms  249.012 ms
+13  p64-0-0-0.r21.snjsca04.us.bb.verio.net  239.691 ms  241.404 ms  240.998 ms
+14  p64-0-0-0.r21.plalca01.us.bb.verio.net  247.541 ms  246.661 ms  246.359 ms
+15  xe-0-2-0.r20.plalca01.us.bb.verio.net  240.987 ms 239.056 ms  241.251 ms
+16  ge-6-1.a01.snfcca05.us.ra.verio.net  240.868 ms  241.29 ms  242.337 ms
+17  fa-5-2.a01.snfcca05.us.ce.verio.net  249.477 ms  250.4 ms  256.035 ms
+18  2001:4f8:4:7:2e0:81ff:fe52:9a6b  268.164 ms  252.97 ms  252.366 ms </screen>
+
+          <para>Please note that <command>traceroute6</command> shows
+            the v6 hops only, any underlying tunnels are invisible
+            and thus not displayed.</para>
+        </listitem>
+
+        <listitem>
+          <para>If this works, you can put the following lines into
+            your <filename>/etc/ppp/ip-up</filename> script to run
+            the command each time
+            you go online:</para>
+
+          <programlisting>logger -p user.info -t ip-up Configuring 6to4 IPv6
+/usr/pkg/sbin/hf6to4 stop
+/usr/pkg/sbin/hf6to4 start</programlisting>
+        </listitem>
+
+        <listitem>
+          <para>If you want to route IPv6 for your LAN, you can instruct
+            <command>6to4.pl</command> to setup Router Advertising
+            for you too:</para>
+
+          <screen>&rprompt; <userinput>/usr/pkg/sbin/hf6to4 rtadvd-start</userinput></screen>
+
+          <para>You can put that command into
+            <filename>/etc/ppp/ip-up</filename> as well to make it
+            permanent.</para>
+        </listitem>
+
+        <listitem>
+          <para>If you have changed <filename>/etc/ppp/ip-up</filename>
+            to setup 6to4 automatically, you will most likely want
+            to change <filename>/etc/ppp/ip-down</filename> too, to
+            shut it down when you go offline. Here's what to put
+            into <filename>/etc/ppp/ip-down</filename>:</para>
+
+          <programlisting>logger -p user.info -t ip-down Shutting down 6to4 IPv6
+/usr/pkg/sbin/hf6to4 rtadvd-stop
+/usr/pkg/sbin/hf6to4 stop</programlisting>
+        </listitem>
+      </orderedlist>
+    </sect2>
+
+    <sect2 id="chap-net-misc-ipv6-6to4-known-gateway">
+      <title>Known 6to4 Relay Routers</title>
+
+      <para>It is normally not necessary to pick a specific 6to4 relay
+      router, but if necessary, you may find a list of known working routers
+        at <ulink url="http://www.kfu.com/~nsayer/6to4/"></ulink>.
+        In tests, only 6to4.kfu.com and 6to4.ipv6.microsoft.com were
+        found working. Cisco has one that requires registration,
+        see <ulink url="http://www.cisco.com/ipv6/"></ulink>.</para>
+
+      <para>There's also an experimental 6to4 server located in Germany,
+        6to4.ipv6.fh-regensburg.de. This server runs under &os;
+        1.6 and was setup using the configuration steps described
+        above. The whole configuration of the machine can be seen at
+        <ulink
+        url="http://www.feyrer.de/IPv6/netstart.local"></ulink>.</para>
+    </sect2><!-- Known 6to4 Gateway -->
+
+    <sect2 id="chap-net-misc-ipv6-6to4-ipf">
+      <title>Tunneling 6to4 through an IPFilter firewall</title>
+
+      <para>The 6to4 protocol encapsulates IPv6 packets in IPv4, and gives
+        them their own IP type, which most firewalls block as unknown,
+        as their payload type is directly "TCP", "UDP" or
+        "ICMP".  Usually, you want to setup your 6to4
+        gateway on the same machine that is directly connected to the
+        (IPv4) internet, and which usually runs the firewall. For the
+        case that you want to run your 6to4 gateway behind a firewall,
+        you need to drill a hole into the firewall, to let 6to4
+        packets through. Here is how to do this!</para>
+
+      <para>The example assumes that you use the "ppp0" interface on your
+        firewall to connect to the Internet.</para>
+
+      <para>Put the following lines into
+        <filename>/etc/ipf.conf</filename> to allow your IPfilter
+        firewall let all 6to4 packets pass (lines broken with \ due to
+        space restrictions; please put them lines continued that way
+        all in one line):</para>
+
+      <programlisting># Handle traffic by different rulesets
+block in  quick on ppp0 all head 1
+block out quick on ppp0 all head 2
+
+### Incoming packets:
+# allow some IPv4:
+pass  in  log quick on ppp0 proto tcp from any to any \
+	port = www flags S keep state keep frags	group 1
+pass  in      quick on ppp0 proto tcp from any to any \
+	port = ssh keep state 				group 1
+pass  in      quick on ppp0 proto tcp from any to any \
+	port = mail keep state				group 1
+pass  in  log quick on ppp0 proto tcp from any to any \
+	port = ftp keep state				group 1
+pass  in  log quick on ppp0 proto tcp from any to any \
+	port = ftp-data keep state			group 1
+pass  in  log quick on ppp0 proto icmp from any to any	      group 1
+# allow all IPv6:
+pass in       quick on ppp0 proto ipv6       from any to any  group 1
+pass in  log  quick on ppp0 proto ipv6-route from any to any  group 1
+pass in  log  quick on ppp0 proto ipv6-frag  from any to any  group 1
+pass in  log  quick on ppp0 proto ipv6-icmp  from any to any  group 1
+pass in  log  quick on ppp0 proto ipv6-nonxt from any to any  group 1
+pass in  log  quick on ppp0 proto ipv6-opts  from any to any  group 1
+# block rest:
+blockin  log  quick on ppp0 all                               group 1
+
+### Outgoing packets:
+# allow usual stuff:
+pass  out     quick on ppp0 proto  tcp from any to any flags S \
+	keep state keep frags group 2
+pass  out     quick on ppp0 proto  udp from any to any         \
+	keep state keep frags group 2
+pass  out     quick on ppp0 proto icmp from any to any         \
+	keep state            group 2
+# allow all IPv6:
+pass out      quick on ppp0 proto ipv6       from any to any  group 2
+pass out log  quick on ppp0 proto ipv6-route from any to any  group 2
+pass out log  quick on ppp0 proto ipv6-frag  from any to any  group 2
+pass out log  quick on ppp0 proto ipv6-icmp  from any to any  group 2
+pass out log  quick on ppp0 proto ipv6-nonxt from any to any  group 2
+pass out log  quick on ppp0 proto ipv6-opts  from any to any  group 2
+# block rest:
+block out log quick on ppp0 all				      group 2</programlisting>
+
+      <para>Now any host on your network can send (the "out" rules") and
+        receive (the "in" rules) v4-encapsulated IPv6 packets,
+        allowing setup of any of them as a 6to4 gateway. Of course you
+        only want to do this on one host and use native IPv6 between
+        your hosts, and you may also want to enforce this with more
+        restrictive rulesets, please see &man.ipf.conf.5; for more
+        information on IPFilter rules.</para>
+
+      <para>After  your firewall lets pass encapsulated IPv6 packets, you
+        may want to set up your 6to4 gateway to monitor the IPv6
+        traffic, or even restrict it. To do so, you need to setup
+        IPfilter on your 6to4 gateway as well. For basic monitoring,
+        enable "ipfilter=yes" in  <filename>/etc/rc.conf</filename>
+        and put the following into
+        <filename>/etc/ipf6.conf</filename>:</para>
+
+      <programlisting>pass in  log quick on stf0 from any to any
+pass out log quick on stf0 from any to any</programlisting>
+
+      <para>This logs all (IPv6) traffic going in and out of your "stf0"
+        tunneling interface. You can add filter rules as well if
+        needed.</para>
+
+      <para>If you are more interested in traffic stats than a general
+        overview of your network traffic, using MRTG in conjunction
+        with the "net-snmp" package is recommended instead of
+        analyzing IPfilter log files.</para>
+    </sect2><!-- Tunneling 6to4 through an IPFilter firewall -->
+
+    <sect2 id="chap-net-misc-ipv6-6to4-further-reading">
+      <title>Conclusion &amp; Further Reading</title>
+
+      <para>Compared to where IPv4 is today, IPv6 is still in its early
+        steps. It is working, there are all sort of services and
+        clients available, only the userbase is missing. It is hoped
+        the information provided here helps people better understand
+        what IPv6 is, and to start playing with it.</para>
+
+      <para>A few links should be mentioned here for interested parties:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>An example script to setup 6to4 on BSD based machines is
+            available at <ulink
+            url="http://www.NetBSD.org/packages/net/hf6to4/"></ulink>.
+            The script determines your IPv6 address and sets up 6to4
+            and (if wanted) router advertising. It was designed to
+            work in dialup setups with changing IPv4 addresses.</para>
+        </listitem>
+
+        <listitem>
+          <para>Given that there isn't a standard for IPv6 in Linux land
+            today, there are different setup instructions for
+            most distributions. The setup of IPv6 on Debian GNU/Linux
+            can be found at <ulink
+            url="http://people.debian.org/~csmall/ipv6/setup.html"></ulink>.</para>
+        </listitem>
+
+        <listitem>
+          <para>The BSD Unix implementations have their own IPv6
+            documentation each, interesting URLs are <ulink
+            url="http://www.NetBSD.org/Documentation/network/ipv6/"></ulink>
+            for &os;, <ulink
+            url="http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/network-ipv6.html"></ulink>
+            for FreeBSD.</para>
+        </listitem>
+
+        <listitem>
+          <para>Projects working on implementing IPv6 protocol stacks
+            for free Unix like operating systems are KAME for BSD
+            and USAGI for Linux. Their web sites can be found at
+            <ulink
+            url="http://www.kame.net/">http://www.kame.net/</ulink> and
+            <ulink
+            url="http://www.linux-ipv6.org/">http://www.linux-ipv6.org/</ulink>.
+            A list of host and router implementations can be found
+            at <ulink
+            url="http://playground.sun.com/pub/ipng/html/ipng-implementations.html"></ulink>.</para>
+        </listitem>
+
+        <listitem>
+          <para>Besides the official RFC archive at <ulink
+            url="ftp://ftp.isi.edu/in-notes"></ulink>,
+            information on IPv6 can be found at several web
+            sites. First and foremost, the 6Bone's web page at <ulink
+            url="http://www.6bone.net/"></ulink>
+            must be mentioned. 6Bone was started as the testbed for
+            IPv6, and is now an important part of the IPv6-connected
+            world. Other web pages that contain IPv6-related
+            contents include <ulink
+            url="http://www.ipv6.org/"></ulink>, <ulink
+            url="http://playground.sun.com/pub/ipng/html/"></ulink>
+            and <ulink
+            url="http://www.ipv6forum.com/"></ulink>.
+            Most of these sites carry further links - be sure to
+            have a look!</para>
+        </listitem>
+      </itemizedlist>
+    </sect2><!-- Conclusion &amp; Further Reading -->
+  </sect1> <!-- IPv6/6to4 setup -->
+</chapter> <!-- Miscellaneous networking topics -->

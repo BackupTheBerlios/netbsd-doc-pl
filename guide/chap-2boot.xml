@@ -1,0 +1,352 @@
+<!-- $NetBSD: chap-2boot.xml,v 1.15 2005/03/12 05:16:01 reed Exp $ -->
+
+<chapter id="chap-2boot">
+  <title>Drugi start systemu</title>
+
+  <para>Podczas pierwszego uruchomienia dokonano podstawowej konfiguracji 
+    systemu. Ten rozdzia³ opisuje niektóre operacje i komendy pomocne w 
+    dalszej konfiguracji.</para>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-2boot-dmesg">
+    <title>dmesg</title>
+
+    <para>Podczas startu systemu j±dro wyswietla d³ug± listê ró¿nych
+      informacji o statusie j±dra (np. dostêpnej pamiêci) oraz 
+      urz±dzeniach peryferyjnych wykrytych przez system.
+      Informacje te s± bardzo wa¿ne dla zdiagnozowania problemów ze
+      sprzêtem czy konfiguracj±, oraz poznania nazw przydzielonych
+      przez system poszczególnym urz±dzeni± (np. mo¿na sprawdziæ, 
+      czy karta sieciowa zosta³a rozpoznana jako 
+      <devicename>ne0</devicename> czy <devicename>ne1</devicename>.)
+      Zazwyczaj informacje te przebiegaj± przez ekran zbyt szybko, 
+      by z nich skorzystaæ, ale mo¿na u¿yc komendy 
+      &man.dmesg.8; i zobaczyæ je ponownie:</para>
+
+    <screen>&rprompt; <userinput>dmesg | more</userinput></screen>
+
+     <para>Je¶li wygl±da na to, ¿e co¶ w systemie nie dzia³a poprawnie
+       i zamierzasz poprosiæ o pomoc na jednej z list dyskusyjnych &os;,
+       pamiêtaj o do³±czeniu zwi±zanych z problemem informacji wy¶wietlanych
+       przez dmesg. Pomo¿e to innym zdiagnozowaæ problem. Podczas startu
+       systemu &os; zapisuje kopiê wyników dzia³ania dmesg do pliku
+       <filename>/var/run/dmesg.out</filename>. Jest to porz±dane poniewa¿
+       system z czasem pozbywa siê starych informacji.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-2boot-mount-cdrom">
+    <title>Montowanie CD-ROM</title>
+
+    <para>Nowi u¿ytkownicy s± czêsto zaskoczeni faktem, ¿e 
+      mimo rozpoznania i zamontowania ich napêdu CD-ROM przez
+      program instalacyjny, system <quote>zapomnia³</quote> 
+      jak u¿ywaæ CD-ROM. Nie ma tu ¿adnej magii: CD-ROM mo¿na 
+      montowaæ jak ka¿dy inny system plików; nale¿y jedynie   
+      znaæ nazwê urz±dzenia i parê opcji polecenia 
+      &man.mount.8;.
+      Nazwê urz±dzenia znajdziemy dziêki wymienionej wcze¶niej
+      komendzie &man.dmesg.8;.
+      Na przyk³ad je¶li &man.dmesg.8; poka¿e:</para>
+
+    <screen>&rprompt; <userinput>dmesg | grep ^cd</userinput>
+cd0 at atapibus0 drive 1: &lt;ASUS CD-S400/A, , V2.1H&gt; type 5 cdrom removable</screen>
+
+    <para>nazw± urz±dzenia jest <devicename>cd0</devicename>, i mo¿na  
+      zamontowaæ CD-ROM nastêpuj±cymi poleceniami:</para>
+
+    <screen>&rprompt; <userinput>mkdir /cdrom</userinput>
+&rprompt; <userinput>mount -t cd9660 -o ro /dev/cd0a /cdrom</userinput></screen>
+
+    <para>Aby uczyniæ ¿ycie ³atwiejszym, mo¿na dodaæ linijkê do pliku
+      <filename>/etc/fstab</filename>:</para>
+
+    <programlisting>/dev/cd0a /cdrom cd9660 ro,noauto 0 0</programlisting>
+
+    <para>Mo¿na teraz zamontowaæ CD-ROM bez konieczno¶ci restartowania systemu
+      poleceniem:</para>
+
+    <screen>&rprompt; <userinput>mount /cdrom</userinput></screen>
+
+    <para>Kiedy CD-ROM jest zamontowany, nie nale¿y go wyjmowaæ. 
+      Najpierw nale¿y go odmontowaæ:</para>
+    
+    <screen>&rprompt; <userinput>umount /cdrom</userinput></screen>
+
+    <para>Jest tak¿e komenda programowa, która odmontowuje CD-ROM i wysuwa
+      tackê z p³yt±:</para>
+
+    <screen>&rprompt; <userinput>eject /dev/cd0a</userinput></screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-2boot-mount-floppy">
+    <title>Montowanie dyskietki</title>
+
+    <para>Aby zamontowaæ dyskietkê trzeba znaæ nazwê urz±dzenia 
+      (napêdu stacji dyskietek) i rodzaj systemu plików na dyskietce.
+      Strona manuala &man.fdc.4; dostarcza wielu  
+      informacji o nazewnictwie urz±dzeñ.
+      Dla przyk³adu, aby odczytywaæ i zapisywaæ dyskietkê w 
+      formacie MS-DOS nale¿y u¿yæ nastêpuj±cego polecenia:</para>
+
+    <screen>&rprompt; <userinput>mount -t msdos /dev/fd0a /mnt</userinput></screen>
+
+    <para>Zamiast <filename>/mnt</filename> mo¿na u¿yæ
+      innego katalogu, wg w³asnego wyboru. Mo¿na na przyk³ad
+      utworzyæ katalog <filename>/floppy</filename>, podobnie jak
+      zrobiono to dla CD-ROMu.
+      W przypadku intensywnego korzystania z dyskietek MS-DOS
+      warto zainstalowaæ pakiet <application>mtools</application>, 
+      udostêpniaj±cy dyskietki i partycje dyskowe MS-DOS
+      bez potrzeby montowania. Jest to bardzo przydatne przy 
+      szybkim kopiowaniu pliku z/na dyskietkê.</para>
+
+    <screen>&rprompt; <userinput>mcopy foo bar a:</userinput>
+&rprompt; <userinput>mcopy a:baz.txt baz</userinput>
+&rprompt; <userinput>mcopy a:\*.jpg .</userinput>
+    </screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-2boot-win-partition">
+    <title>Dostêp do partycji DOS/WINDOWS</title>
+
+    <para>Je¶li &os; wspó³dzieli dysk twardy z MS-DOS lub Windows, 
+      mo¿na zmodyfikowaæ etykietê dysku tak, by partycje DOS
+      by³y widziane z &os;.
+      Po pierwsze, nale¿y okre¶liæ geometriê partycji DOS, u¿ywaj±c
+      na przyk³ad &man.fdisk.8;.</para>
+
+    <screen>&rprompt; <userinput>fdisk wd0</userinput>
+&os; disklabel disk geometry:
+cylinders: 77520, heads: 16, sectors/track: 63 (1008 sectors/cylinder)
+...
+Partition table:
+0: OS/2 HPFS or NTFS or QNX2 or Advanced UNIX (sysid 7)
+    bootmenu: WinXP
+    start 63, size 20643462 (10080 MB, Cyls 0-1285), Active
+1: NetBSD (sysid 169)
+    start 20643525, size 57496635 (28075 MB, Cyls 1285-4864)
+2: &lt;UNUSED&gt;
+3: &lt;UNUSED&gt;</screen>
+
+    <note>
+      <para>w tym przyk³adzie dysk twardy to <devicename>wd0</devicename>; 
+      podstaw nazwê odpowiedniego urz±dzenia w Twoim systemie.</para>
+    </note>
+
+    <para>Wynik dzia³ania polecenia fdisk pokazuje, ¿e partycjia Windows u¿ywa 
+      NTFS (<quote>OS/2 HPFS or NTFS or QNX2 or Advanced UNIX 
+      (sysid 7)</quote>), je¶li partycja by³aby typu FAT zobaczy³by¶ co¶
+      <quote>Primary 'big' DOSi, 16-bit FAT (&gt;32MB) (sysid 6)</quote>.
+    </para>
+
+    <para>Partycja Windows jest obecnie widziana w tablicy partycji MBR, w 
+      porz±dku w jakim jest montowana z &os;. S± dwa sposoby edycji u¿ywaj±c 
+      polecenia <command>disklabel -e</command> lub u¿ywaj±c polecenia 
+      &man.mbrlabel.8;. Wpierw opiszê pierwszy sposób.</para>
+
+    <para>Kiedy uruchomisz &man.mbrlabel.8; potrzebuje on dysku, w którym
+      bêdzie szuka³ podzia³u partycji w MBR i wtedy doda je do disklabel:
+    </para>
+
+    <screen>
+&rprompt; <userinput>disklabel wd0</userinput>
+...
+ d:  78140160         0     unused      0     0        # (Cyl.      0 -  77519)
+&rprompt;
+&rprompt; <userinput>mbrlabel -rw wd0</userinput>
+Found NTFS partition; size 20643462 (10079 MB), offset 63
+  adding NTFS partition to slot e.
+Found 4.2BSD partition; size 57496572 (28074 MB), offset 20643588
+  skipping existing unused partition at slot c.
+
+16 partitions:
+#        size    offset     fstype [fsize bsize cpg/sgs]
+ a:  57236256  20643588     4.2BSD   1024  8192 46920  # (Cyl.  20479*-  77261*)
+ b:    260316  77879844       swap                     # (Cyl.  77261*-  77519)
+ c:  57496572  20643588     unused      0     0        # (Cyl.  20479*-  77519)
+ d:  78140160         0     unused      0     0        # (Cyl.      0 -  77519)
+ e:  20643462        63       NTFS                     # (Cyl.      0*-  20479*)
+
+Updating in-core and on-disk disk label.
+&rprompt;
+&rprompt; <userinput>disklabel wd0</userinput>
+...
+ d:  78140160         0     unused      0     0        # (Cyl.      0 -  77519)
+ e:  20643462        63       NTFS                     # (Cyl.      0*-  20479*) </screen>
+
+    <para>Je¶li z jakich¶ powodów nie mo¿esz lub nie chcesz u¿ywaæ 
+      &man.mbrlabel.8; mo¿esz edytowaæ disklabel rêcznie u¿ywaj±c powy¿szego
+      polecenia <command>fdisk</command>-command. Partycja z systemem plików 
+      NTFS zaczyna siê na 63 sektorze i ma rozmiar 20643462 sektorów. Partycja
+      &os; zaczyna siê na sektorze 20643525 (20643525 = 20643462 + 63).
+      Te informacje zostan± u¿yte przy modyfikacji etykiety dysku: wszystko, 
+      co trzeba zrobiæ, to dodanie jednej linii okre¶laj±cej pozycjê i typ 
+      partycji NTFS. Do zmodyfikowania etykiety dysku u¿ywa siê polecenia 
+      <command>disklabel</command>. Je¶li jest wywo³ane z opcj± 
+      <option>-e</option>, uruchomi Twój ulubiony edytor ($EDITOR), który 
+      pos³u¿y do zmodyfikowania etykiety. Na przyk³ad:</para>
+
+    <screen>&rprompt; <userinput>disklabel -e wd0</userinput>
+...
+#        size   offset     fstype  [fsize bsize  cpg]
+...
+ d:  78140160         0     unused      0     0        # (Cyl.      0 -  77519)
+ e:  20643462        63       NTFS </screen>
+
+    <para>Partycje od <quote>a</quote> do <quote>d</quote> s± ju¿ u¿ywane i 
+      pierwszym dostêpnym identyfikatorem jest <quote>e</quote>.
+      Pola <quote>size</quote> i <quote>offset</quote> zawieraj± 
+      poprzednio wyliczone warto¶ci.
+      Nastêpnie musi zostac utworzone miejsce zamontowania.
+      Na przyk³ad:</para>
+    <screen>&rprompt; <userinput>mkdir /c</userinput></screen>
+
+    <para>Wreszcie, nale¿y dodaæ liniê do pliku 
+      <filename>/etc/fstab</filename>.</para>
+	  
+    <programlisting>/dev/wd0e /c ntfs ro,noauto 1 3</programlisting>
+
+    <para>
+      Je¶li chcesz zamontowaæ partycje MS-DOS "FAT" zamiast NTFS, u¿yj MSDOS
+      jako "fstype" w disklabel i "msdos" jako typ systemu plików w (trzecia
+      kolumna) <filename>/etc/fstab</filename>. Mo¿esz tak¿e montowaæ system
+      plików FAT jako read/write, u¿ywaj±c "rw" zamiast "ro" w 
+      <filename>/etc/fstab</filename>. Wiêcej informacji na temat systemu 
+      plików MSDOS i NTFS w &os; otrzymasz zagl±daj±c do &man.mount.msdos.8; 
+      oraz &man.mount.ntfs.8;.
+    </para>
+    
+    <para>Teraz partycja MS-DOS mo¿e byæ w prosty sposób 
+      montowana komend±:</para>
+
+    <screen>&rprompt; <userinput>mount /c</userinput></screen>
+
+    <para>T± sam± metod± mo¿na montowaæ partycje FAT i FAT32.
+      Aby montowaæ partycje automatycznie przy starcie
+      systemu, usuwamy opcjê <option>noauto</option> z pliku 
+    <filename>/etc/fstab</filename>.</para>
+
+    <programlisting>/dev/wd0e /c ntfs ro 1 3</programlisting>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-2boot-adding-users">
+    <title>Dodawanie u¿ytkowników</title>
+
+    <para>Nadszed³ czas na dodanie nowego u¿ytkownika do systemu, od tego
+      momentu nie u¿ywaj ju¿ konta root dla codziennej pracy (tak, mówimy 
+      teraz powa¿nie). &os; oferuje narzêdzie &man.useradd.8; do tworzenia 
+      nowego konta urzytkownia. Dla przyk³adu stworzymy nowe konto:
+    </para>
+
+    <screen>&rprompt; <userinput>useradd -m joe</userinput></screen>
+
+    <para>Ustawienia domy¶lne dla polecenia &man.useradd.8; mog± byæ zmienione;
+      Aby dowiedzieæ siê wiêcej zobacz &man.useradd.8;</para>
+
+    <para>Ka¿de konto uprawnione do zmiany identyfikatora 
+      skutecznego na root (su root) musi znajdowaæ siê w grupie
+      wheel. Mo¿na to zrobiæ po utworzeniu konta, okre¶laj±c 
+      dla niego odpowiedni± dodatkow± grupê.</para>
+
+    <screen>&rprompt; <userinput>useradd -m -G wheel joe</userinput></screen>
+
+    <para>
+      Jako alternatywa, polecenie &man.usermod.8; mo¿e byæ u¿yte do dodania
+      u¿ytkownika do istniej±cej grupy:
+    </para>
+
+    <screen>&rprompt; <userinput>usermod -G wheel joe</userinput></screen> 
+
+    <note>
+      <para>
+        Mo¿esz tak¿e bezpo¶rednio edytowaæ <filename>/etc/group</filename>
+	dodaj±c nazwê u¿ytkownika do grup, ale <emphasis>nie</emphasis> edytuj 
+	<filename>/etc/passwd</filename>!. Wszystkie zmiany dokonywane w tym
+	pliku mog± zostaæ stracone. Wiêcej informacji znajdziesz <xref 
+	linkend="chap-2boot-shadow-passwords" />.
+      </para>
+    </note>
+    
+    <note>
+      <para>Je¶li system u¿ywa ssh, bezpo¶redni dostêp do konta root przez
+	ssh jest domy¶lnie niemo¿liwy. Sprawd¼ &man.sshd.config.5; oraz
+	<filename>/etc/ssh/sshd_config</filename> by to zmieniæ.</para>
+    </note>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-2boot-shadow-passwords">
+    <title>Przes³anianie hase³ (Shadow passwords)</title>
+
+    <para>Przes³anianie hase³ jest w &os; domy¶lnie w³±czone i
+      nie mo¿e byæ wy³±czone: wszystkie has³a w 
+      <filename>/etc/passwd</filename> zawieraj± 
+      <quote>*</quote>, a zakodowane has³a znajduj± sie w innym pliku, 
+      <filename>/etc/master.passwd</filename>, który mo¿e byæ czytany 
+      tylko z uprawnieniami u¿ytkownika root.
+      Uruchomiony w celu wyedytowania hase³ program &man.vipw.8; 
+      otwiera kopiê <filename>/etc/master.passwd</filename>; 
+      kiedy koñczy dzia³anie sprawdza poprawno¶æ tej kopii, 
+      tworzy nowy <filename>/etc/passwd</filename> i instaluje
+      nowy plik <filename>/etc/master.passwd</filename>.
+      Wreszcie uruchamia program &man.pwd.mkdb.8;, który tworzy 
+      pliki 
+      <filename>/etc/pwd.db</filename> i
+      <filename>/etc/spwd.db</filename>, dwie bazy danych, które s± 
+      odpowiednikami <filename>/etc/passwd</filename> i
+      <filename>/etc/master.passwd</filename>, ale
+      przetwarzane s± szybciej od nich.</para>
+
+    <para>Jak mo¿na zauwa¿yæ, has³a s± w &os; obs³ugiwane 
+      automatycznie. Zak³adaj±c korzystanie z &man.vipw.8; 
+      przy ich edycji, nie ma potrzeby stosowania ¿adnej 
+      specjalnej procedury administracyjnej.</para>
+
+    <para>Bardzo wa¿ne jest, by administruj±c kontami 
+      <emphasis>zawsze</emphasis> u¿ywaæ 
+      <command>vipw</command> i innych przeznaczonych 
+      do tego celu narzêdzi (&man.chfn.1;, &man.chsh.1;,
+      &man.chpass.1;, &man.passwd.1;), i 
+      <emphasis>nigdy</emphasis> nie modyfikowaæ
+       bezpo¶rednio 
+      <filename>/etc/master.passwd</filename>.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-2boot-rebooting-system">
+    <title>Zatrzymywanie i restartowanie systemu</title>
+
+    <para>Do zatrzymywania lub restartowania systemu u¿ywaj tylko dwóch 
+      poleceñ:</para>
+
+    <screen>&rprompt; <userinput>shutdown -h now</userinput>
+&rprompt; <userinput>shutdown -r now</userinput></screen>
+
+    <para>Dwa inne polecenia wykonuj±ce te same zadania:</para>
+
+    <screen>&rprompt; <userinput>halt</userinput>
+&rprompt; <userinput>reboot</userinput></screen>
+
+    <para>&man.halt.8;, &man.reboot.8; i &man.shutdown.8;
+      nie s± synonimami; s±, w kolejno¶ci, coraz bardziej
+      wyrafinowane.
+      W systemie obs³uguj±cym jednocze¶nie wielu u¿ytkowników
+      nale¿y u¿ywaæ &man.shutdown.8;; mo¿na dziêki temu  
+      zaplanowaæ opó¼nione wy³±czenie systemu, powiadomiæ
+      o nim u¿ytkowników itd.
+      Dok³adniejszy opis znajduje siê na stronach podrêcznika 
+      po¶wiêconych &man.shutdown.8;, &man.halt.8; 
+      i &man.reboot.8;.</para>
+  </sect1>
+</chapter>

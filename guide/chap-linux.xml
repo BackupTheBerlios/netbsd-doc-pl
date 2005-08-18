@@ -1,0 +1,244 @@
+<!-- $NetBSD: chap-linux.xml,v 1.12 2004/11/13 13:14:59 hubertf Exp $ -->
+
+<chapter id="chap-linux">
+  <title>Emulacja Linux'a</title>
+
+  <para>Port &os; dla i386, alpha, mac68k, macppc, a tak¿e wielu innych 
+    architektur mo¿e uruchomiæ wiele programów Linux'owych u¿ywaj±c warstwy 
+    emulacji.
+    Ogólnie, gdy my¶lisz o emulacji, wyobra¿asz sobie co¶ powolnego i
+    niewydajnego, gdy¿ czêsto proces emulacji musi odtworzyæ instrukcje
+    sprzêtowe a nawet architekturê (najczê¶ciej ze starych maszyn) dla 
+    programów.
+    W wiêkszo¶ci przypadków emulacji Linux'a jest to radykalnie inna:
+    to jest tylko cienka programowa warstwa, w wiêkszo¶ci dla wywo³añ
+    systemowych, które i tak s± ju¿ w obu systemach bardzo podobne.
+    Sam kod aplikacji jest przetwarzany z pe³n± prêdko¶ci± twojego
+    procesora, wiêc nie otrzymujesz obni¿onej wydajno¶ci dla emulacji
+    Linux'a i wra¿enie jest dok³adnie takie samo jak dla natywnej
+    aplikacji &os;.</para>
+
+  <para>Ten rozdzia³ opisuje jak skonfigurowaæ emulacjê Linux'a na
+    przyk³adzie instalacji dobrze znanego <application>Acrobat Reader'a
+    </application> w wersji 4.</para>
+			  
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-linux-setup">
+    <title>Ustawianie emulacji</title>
+
+    <para>Instalacja emulacji Linux'a opisana jest na stronie 
+      &man.compat.linux.8; u¿ywaj±c systemu pakietów potrzebne s± tylko dwa 
+      kroki</para>
+
+    <procedure>
+      <step>
+        <para>Konfiguracja j±dra.</para>
+      </step>
+
+      <step>
+	<para>Instalacja Linux'owych bibliotek.</para>
+      </step>
+
+      <step>
+	<para>Instalacja aplikacji Linux'a takich jak Acrobat Reader</para>
+      </step>
+    </procedure>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-linux-setup-configure-kernel">
+      <title>Konfiguracja j±dra</title>
+      
+      <para>Je¿eli u¿ywasz j±dra GENERIC nie musisz nic robiæ poniewa¿
+	kompatybilno¶æ z Linux'em jest ju¿ w³±czona.</para>
+
+      <para>Je¶li u¿ywasz w³asnego j±dra, sprawd¼ czy nastêpuj±ce 
+        opcje s± w³±czone:</para>
+
+      <programlisting>option COMPAT_LINUX
+option EXEC_ELF32</programlisting>
+
+      <para>je¶li posiadasz j±dro skompilowane z powy¿szymi opcjami
+        mo¿esz instalowaæ potrzebne oprogramowanie</para>
+
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-linux-setup-install-linux-lib">
+      <title>Instalowanie Linux'owych bibliotek</title>
+
+      <para>Zwykle aplikacje s± powi±zane przez bibliteki dzielone i dlatego 
+	s± one wymagane tak¿e przez aplikacje Linux'a. Linux'owe biblioteki 
+	mo¿esz wzi±æ z ka¿dej dystrybucji Linux'a, ale sugerowan± metod± jest 
+	u¿ywanie systemu pakietów i automatyczna instalacja (u¿ywane s± 
+	biblioteki Suse'a.) Gdy zainstalujesz biblioteki, nastêpuje:</para>
+
+      <itemizedlist>
+        <listitem>
+	  <para>Stworzenie 
+	    <emphasis>drugiego g³ównego (root) katalogu</emphasis>, który 
+	    bêdzie u¿ywany dla Linux'owych programów.
+            Ten katalog to <filename>/emul/linux/</filename>
+            Linux'owe programy w trybie emulacji bêd± u¿ywaæ tego katalogu
+    	    jako swojego g³ównego katalogu. Je¶li wymagany plik nie zostanie
+	    znaleziony, wówczas bêdzie szukany w g³ównym katalogu 
+	    <filename>/</filename></para>
+
+          <para>
+	    Dla przyk³adu, je¶li aplikacja Linux'owa otwiera
+	    <filename>/etc/ld.so.conf</filename>, to bêdzie wpierw szukaæ w
+	    <filename>/emul/linux/etc/ld.so.conf</filename> i je¶li go nie 
+	    znajdzie zacznie szukaæ w 
+	    <filename>/etc/ld.so.conf</filename>.
+	  </para>
+        </listitem>
+
+        <listitem>
+          <para>Zainstalowanie wspó³dzielonych bibliotek dla Linux'a.
+	    Wiêkszo¶æ aplikacji ³±czona jest dynamicznie i oczekuje
+	    odnalezienia niezbêdnych bibliotek w systemie.
+	    Dla przyk³adu, dla <application>Acrobat Reader</application>,
+	    je¶li wejdziesz do
+	    <filename>/usr/pkgsrc/print/acroread</filename> i wydasz komendê
+	    <command>make depends</command>, otrzymasz nastêpuj±c± wiadomo¶æ:
+	  </para>
+
+          <screen>===>  acroread-4.0 requires Linux glibc2 libraries - see &man.compat.linux.8;.</screen>
+        </listitem>
+      </itemizedlist>
+
+      <para>Obydwie operacje powinny zostaæ wykonane automatycznie przez
+        system pakietów, bez potrzeby rêcznej interwencji ze strony
+        u¿ytkownika (Przypuszczam, ¿e od teraz ju¿ pokocha³e¶ system
+        pakietów...). Zauwa¿, ¿e ta sekcja opisuje rêczn± instalacjê
+        Linux'owych bibliotek.</para>
+
+      <para>By zainstalowaæ biblioteki, musi zostaæ zainstalowany program
+        który potrafi obs³u¿yæ format <acronym>RPM</acronym>: to jest
+        <filename>rpm</filename>, który bêdzie u¿yty do wypakowania
+        bibliotek Suse'a. Wykonaj <command>make</command> i
+        <command>make install</command> w katalogu
+        <filename>/usr/pkgsrc/misc/rpm/</filename> by zbudowaæ
+        i zainstalowaæ <command>rpm</command>.</para>
+
+      <para>Nastêpnie musi zostaæ zainstalowany pakiet 
+	<filename>suse_base</filename>.
+        Pliki RPM Suse'a mog± byæ pobrane przez system pakietów lub, je¶li masz
+        p³ytê CD z Suse, mo¿esz je skopiowaæ do katalogu
+        <filename>/usr/pkgsrc/distfiles/suse</filename> i uruchomiæ
+	<command>make</command> i <command>make install</command>, po 
+	wcze¶niejszym przej¶ciu do katalogu 
+	<filename>/usr/pkgsrc/emulators/suse_base</filename>
+      </para>
+
+      <para>T± sam± metod± mo¿esz zainstalowaæ <filename>suse_compat</filename>,
+        <filename>suse_libc5</filename> i <filename>suse_x11</filename>.
+        Ostateczna konfiguracja wygl±da nastêpuj±co:</para>
+
+      <screen>&rprompt; <userinput>pkg_info -a | grep suse</userinput>
+suse_base-7.3nb5    Linux compatibility package
+suse_x11-7.3nb2     Linux compatibility package for X11 binaries
+suse_compat-7.3     Linux compatibility package with old shared libraries </screen>
+
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-linux-setup-install-acroread">
+      <title>Instalowanie Acrobat Readera</title>
+
+      <para>Teraz wszystko jest gotowe do instalacji programu
+        <application>Acrobat Reader</application> (albo innych
+        Linux'owych programów.)
+        Wejd¼ do 
+        <filename>/usr/pkgsrc/print/acroread</filename> i wydaj jak zwykle
+         komendy:</para>
+
+      <screen>&rprompt; <userinput>make</userinput>
+&rprompt; <userinput>make install</userinput></screen>
+
+      <note>
+       <para>by pobraæ i zainstalowaæ Acrobat Reader'a powinienne¶ dodaæ liniê
+         <quote>ACCEPTABLE_LICENSES+=adobe-acrobat-license</quote> do
+         <filename>/etc/mk.conf</filename> by zaakceptowaæ licencjê
+          Acrobat Reader.</para>
+      </note>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-linux-directory-structure">
+    <title>Struktura katalogów</title>
+
+    <para>Je¶li sprawdzimy wynik instalacji Linux'owych bibliotek i
+      programów zauwa¿ymy, ¿e <filename>/emul/linux</filename>
+      jest symbolicznym linkiem wskazuj±cym na
+      <filename>/usr/pkg/emul/linux</filename>, gdzie zosta³y
+      stworzone nastêpuj±ce katalogi:</para>
+
+    <literallayout>bin/
+boot/
+cdrom/
+dev/
+etc/
+floppy/
+home/
+lib/
+mnt/
+opt/
+proc/
+root/
+sbin/
+usr/</literallayout>
+
+    <note>
+    <para>proszê odno¶ siê zawsze do <filename>/emul/linux</filename> a nie do
+      <filename>/usr/pkg/emul/linux</filename>.
+      Ten ostatni jest szczegó³ow± implementacj± i mo¿e zmieniæ siê w
+      przysz³o¶ci.</para>
+    </note>
+
+    <para>Jak wiele przestrzeni wymaga emulacja programów Linux'a?
+      Na swoim systemie otrzymujê nastêpuj±ce dane:</para>
+
+    <screen>&rprompt; <userinput>cd /usr/pkg/emul</userinput>
+&rprompt; <userinput>du -k linux</userinput>
+...
+214049   linux/</screen>
+
+    <para>Program <application>Acrobat Reader</application>, zosta³ 
+      zainstalowany w zwyczajowym dla binariów katalogu:
+      <filename>/usr/pkg/bin/</filename>. Mo¿e byæ teraz uruchomiony tak jak 
+      inne programy:</para>
+
+    <screen>&uprompt; <userinput>acroread netbsd.pdf</userinput> </screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-linux-emulating-procfs">
+    <title>Emulacja /proc</title>
+
+    <para>
+      Niektóre programy Linux'owe wymagaj± Linux'owego systemu 
+      <filename>/proc</filename>. System plików prcfs &os; mo¿e emulowaæ 
+      <filename>/proc</filename>, który zawieraz specyficzne Linux'owe pseudo 
+      pliki (ang. pseudo-files). Aby emulowaæ ten system plików wydaj 
+      polecenie:</para>
+
+    <screen>
+&rprompt; <userinput>mount_procfs -o linux procfs /emul/linux/proc</userinput>
+    </screen>
+
+    <para>W tym przek³adzie Linux'owy system plików proc bêdzie podmontowany
+      do katalogu <filename>/emul/linux/proc</filename>. Mo¿esz tak¿e 
+      zautomatyzowaæ ten proces w &os; przez dodanie nastêpuj±cej lini do 
+      <filename>/etc/fstab</filename>:</para>
+    <screen>
+procfs /emul/linux/proc procfs ro,linux
+    </screen>
+  </sect1>
+</chapter>

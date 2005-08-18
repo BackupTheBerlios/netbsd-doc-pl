@@ -1,0 +1,961 @@
+<!-- $NetBSD: chap-mail.xml,v 1.11 2005/05/05 12:21:22 hrs Exp $ -->
+
+<chapter id="chap-mail">
+  <title>Mail and news</title>
+
+  <para>This chapter explains how to set up &os; to use mail and news.
+    Only a simple but very common setup is described: the
+    configuration of a host connected to the Internet with a modem
+    through a provider. You can think of this chapter as the
+    continuation of <xref linkend="chap-net-practice" />, assuming a
+    similar network configuration.
+    Even this <quote>simple</quote> setup proves to be difficult if you
+    don't know where to start or if you've only read introductory or
+    technical documentation; in fact you will notice that some
+    details are really challenging (for example, mapping your
+    internal network names to <quote>real</quote> names requires a
+    good knowledge of <application>sendmail</application>).
+    A general description of mail and news configuration is beyond
+    the scope of this guide; please read a good Unix Administration
+    book (some very good ones are listed on the &os; site).
+    The problem is in fact very complex because of the myriad of
+    possible configurations and connections and because it's not
+    enough to configure a single program - you need to correctly match
+    the configuration of several cooperating components.</para>
+
+  <para>This chapter also briefly describes the configuration (but not the
+    usage) of two popular applications, <application>mutt</application>
+    for mail and <application>tin</application> for news.
+    The usage is not described because they are easy to use and well
+    documented.
+    Obviously, both mutt and tin are not mandatory choices: many
+    other similar applications exist but I think that they are a good
+    starting point because they are widely used, simple, work well
+    and don't use too much disk space and memory.
+    Both are console mode programs; if you prefer graphics
+    applications there are also many choices for X.</para>
+
+  <para>In short, the programs required for the configuration described
+    in this chapter are:</para>
+
+  <itemizedlist>
+    <listitem>
+      <para><application>sendmail</application></para>
+    </listitem>
+
+    <listitem>
+      <para><application>fetchmail</application></para>
+    </listitem>
+
+    <listitem>
+      <para><application>m4</application></para>
+    </listitem>
+
+    <listitem>
+      <para><application>mutt</application></para>
+    </listitem>
+
+    <listitem>
+      <para><application>tin</application></para>
+    </listitem>
+  </itemizedlist>
+
+  <para>Of these, only sendmail and m4 are installed with the base system; you
+    can install the other programs from the &os; package collection,
+    pkgsrc - see <xref linkend="chap-pack" />.</para>
+
+  <para>Before continuing, remember that none of the programs presented
+    in this chapter is mandatory: there are other applications
+    performing similar tasks and many users prefer them.
+    You'll find different opinions reading the mailing lists.
+    You can also use different strategies for sending and receiving
+    mail: the one explained here is only a starting point; once you
+    understand how it works you'll probably want to modify it to suit
+    your needs or to adopt a different method altogether.</para>
+
+  <para>At the opposite extreme of the example presented here, there is
+    the usage of an application like
+    <application>Mozilla</application>, which does everything and
+    frees you from the need of configuring many components: with
+    Mozilla you can browse the Internet, send and receive mail
+    and read news.  Besides, the setup is very simple.  There is a
+    price to pay, though: Mozilla is a <quote>closed</quote>
+    program that will not cooperate easily with other standard Unix
+    utilities.  </para>
+
+  <para>Another possibility is to use <application>emacs</application> to
+    read mail and news.  Emacs needs no introduction to Unix users
+    but, in case you don't know, it is an extensible editor (although
+    calling emacs an editor is somewhat reductive) which becomes a
+    complete work environment, and can be used to read mail, news and
+    to perform many operations.  For many people emacs is the only
+    environment that they need and they use it for all their work.
+    The configuration of emacs for mail and news is described in the
+    emacs manual.</para>
+
+  <para>In the rest of this chapter we will deal with a host connected to
+    the Internet through a PPP connection via serial modem to a
+    provider.</para>
+
+  <itemizedlist>
+    <listitem>
+      <para>the local host's name is <quote>&myhost;</quote> and the
+        internal network is <quote>&mynet;</quote>, which means that the
+        FQDN (Fully Qualified Domain Name) is <quote>&myfqdn;</quote>.</para>
+    </listitem>
+
+    <listitem>
+      <para>the user's login name on &myhost; is <quote>&myuser;</quote>.</para>
+    </listitem>
+
+    <listitem>
+      <para>the provider's name is &providername;.</para>
+    </listitem>
+
+    <listitem>
+      <para>the provider's mail server is <quote>&provmailserver;</quote>.</para>
+    </listitem>
+
+    <listitem>
+      <para>the provider's news server is <quote>&provnewsserver;</quote>.</para>
+    </listitem>
+
+    <listitem>
+      <para>the user's (<quote>&myuser;</quote>) account at the provider is
+        <quote>&provuser;</quote> with the password <quote>&provpwd;</quote>.</para>
+    </listitem>
+  </itemizedlist>
+
+  <para>First some basic terminology:</para>
+
+  <variablelist>
+    <varlistentry>
+      <term>MUA (mail user agent)</term>
+
+      <listitem>
+        <para>a program to read and write mail.
+  	For example: <application>mutt</application>,
+  	<application>elm</application> and <application>pine</application>
+  	but also the simple <application>mail</application> application
+  	installed with the base system.</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>MTA (mail transfer agent)</term>
+
+      <listitem>
+        <para>a program that transfers mail between
+  	two host but also locally (on the same host).
+  	The MTA decides the path that the mail will follow to get to
+  	the destination.
+  	On BSD systems (but not only) the standard MTA is
+  	<application>sendmail</application>, other examples are
+	<application>postfix</application>,
+	<application>qmail</application>,
+	<application>exim</application> and
+	<application>Microsoft Exchange</application>. </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term>MDA (mail delivery agent)</term>
+
+      <listitem>
+        <para>a program, usually used by the MTA,
+  	that delivers the mail; for example, it physically puts the
+  	messages in the recipient's mailbox.
+  	For example, sendmail uses one or more MDA to deliver mail,
+	and <application>procmail</application> is another well-known
+        MDA. </para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+
+  <para><xref linkend="fig-mail1" /> depicts the mail system that we want
+    to set up.
+    Between the local network (or the single host) and the provider
+    there is a modem PPP connection.
+    The <quote>bubbles</quote> with the thick border (sendmail,
+    fetchmail, mutt) are the programs
+    launched manually by the user; the remaining bubbles are the
+    programs that are launched automatically.
+    The circled numbers refere to the logical steps of the mail
+    cycle:</para>
+
+  <procedure>
+    <step>
+      <para>In step (1) mail is downloaded from the provider's
+        <acronym>POP</acronym> server using fetchmail, which hands
+	messages off to sendmail to put the messages in the user's
+        mailbox. </para>
+    </step>
+
+    <step>
+      <para>In step (2) the user launches mutt (or another MUA) to read
+        mail, reply and write new messages.</para>
+    </step>
+
+    <step>
+      <para>In step (3) the user <quote>sends</quote> the mail from within
+        mutt.  Messages are accumulated in the spool area.</para>
+    </step>
+
+    <step>
+      <para>In step (4) the user calls sendmail to transfer the messages
+        to the provider's <acronym>SMTP</acronym> server, that will
+        deliver them to the final destination (possibly through other
+        mail servers).
+        The provider's SMTP server acts as a <emphasis>relay</emphasis>
+        for our mail.</para>
+    </step>
+  </procedure>
+
+  <para>The connection with the provider must be up only during steps (1)
+    and (4); for the remaining steps it is not needed.</para>
+
+  <figure id="fig-mail1">
+    <title>Structure of the mail system</title>
+
+    <mediaobject>
+      <imageobject>
+        <imagedata fileref="&imagesdir;/mail1.gif" format="GIF" />
+      </imageobject>
+
+      <imageobject>
+        <imagedata fileref="&imagesdir;/mail1.eps" format="EPS" />
+      </imageobject>
+    </mediaobject>
+  </figure>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-mail-sendmail">
+    <title>sendmail</title>
+
+    <para>When an MTA must deliver a local message, it is delivered
+      directly.  If the message is intended for a different domain, the MTA
+      must find out the address of the mail server for that domain.
+      Sendmail uses the DNS service (described in <xref
+      linkend="chap-dns" />) to find a mail exchanger handling mail
+      for the given domain, and delivers the message to that
+      mail server then.</para>
+
+    <para>The most used <emphasis>MTA</emphasis> in the world is probably
+      <application>sendmail</application>.  Sendmail is controlled by
+      a set of configuration files and databases, of which
+      <filename>/etc/mail/sendmail.cf</filename> is the most
+      important.  In general, if you are not an expert it is better
+      not to modify the <filename>/etc/mail/sendmail.cf</filename>
+      file directly; instead, use a set of predefined macros and the
+      <application>m4</application> preprocessor, which greatly (well,
+      almost) simplify the configuration.</para>
+
+    <note>
+      <para>Prior to version 1.5 of &os;, the mail configuration files
+	were in <filename>/etc</filename> instead of
+	<filename>/etc/mail</filename>.</para>
+    </note>
+
+    <para>Even using the macros, the configuration of sendmail is not for
+      the faint of heart, and the next sections only describe an
+      example which can be modified to suit different needs and
+      different configurations.  If you connect to the Internet with a
+      modem, the example configuration file will probably fit all your
+      needs: just replace the fictitious data with yours.</para>
+
+    <para>The first problem to be solved is that the local network we are
+      dealing with is an internal network, i.e. not directly accessible
+      from the Internet.
+      This means that the names used internally have no meaning on the
+      Internet; in short, <quote>&myfqdn;</quote> cannot be reached by an
+      external host: no one will be able to reply to a mail sent with
+      this return address (many mail systems will even reject the
+      message as spam prevention as it comes from an unknown host).
+      The true address, the one visible from everybody, is assigned by
+      the provider and, therefore, it is necessary to convert the local
+      address <quote>&myuser;@&myfqdn;</quote> to the real address
+      <quote>&provmailaddr;</quote>.
+      Sendmail, if correctly configured, will take care of this when it
+      transfers the messages.</para>
+
+    <para>You'll probably also want to configure
+      <application>sendmail</application> in order to send the e-mails
+      to the provider's mail server, using it as a
+      <firstterm>relay</firstterm>.  In the configuration described in
+      this chapter, sendmail does not directly contact the recipient's
+      mail server (as previously described) but relays all its mail to
+      the provider's mail server.</para>
+
+    <note>
+      <para>The provider's mail server acts as a
+	<firstterm>relay</firstterm>, which means that it delivers
+	mail which is not destined to its own domain, to another mail
+	server.  It acts as an intermediary between two servers.</para>
+    </note>
+
+    <para>Since the connection with the provider is not always active, it
+      is not necessary to start sendmail as a daemon in
+      <filename>/etc/rc.conf</filename>: you can disable it with the
+      line <quote><literal>sendmail=NO</literal></quote>.
+      As a consequence it will be necessary to
+      launch sendmail manually when you want to transfer mail to the
+      provider.  Local mail is delivered correctly even if sendmail is
+      not active as a daemon.</para>
+
+    <para>Let's start configuring sendmail.</para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-mail-sendmail-genericstable">
+      <title>Configuration with genericstable</title>
+
+      <para>This type of configuration uses the file
+        <filename>/etc/mail/genericstable</filename> which contains the
+        mapping used by sendmail to rewrite the internal hostnames.</para>
+
+      <para>The first step is therefore to write the
+        <filename>genericstable</filename> file.  For example:</para>
+
+      <programlisting>&myuser;:         &provmailaddr;
+root:          &provmailaddr;
+news:          &provmailaddr;</programlisting>
+
+      <para>These entries will map the mail sent from the users given on
+        the left side into the globally valid email addresses given on
+        the right, making it appear as if the mail was really sent
+        from that address. </para>
+
+      <para>For the sake of efficiency, <filename>genericstable</filename>
+        must be transformed into a binary file with the following
+        command:</para>
+
+      <screen>&rprompt; <userinput>/usr/sbin/sendmail -bi -oA/etc/mail/genericstable</userinput></screen>
+
+      <para>Now it's time to create the prototype configuration file which
+        we'll use to create the sendmail configuration file.</para>
+
+      <screen>&rprompt; <userinput>cd /usr/share/sendmail/cf</userinput></screen>
+
+      <para>The new sendmail configuration file, which we'll call
+        <filename>mycf.mc</filename>, contains:</para>
+
+      <programlisting>divert(-1)dnl
+include(`../m4/cf.m4')dnl
+VERSIONID(`mycf.mc created by &myuser;@&myfqdn; May 18 2001')dnl
+OSTYPE(bsd4.4)dnl
+
+dnl # Settings for masquerading.  Addresses of the following types
+dnl # are rewritten
+dnl #     &myuser;@&myfqdn;
+dnl #     &myuser;@&myhost;
+GENERICS_DOMAIN(&myfqdn; &myhost;)dnl
+FEATURE(genericstable)dnl
+FEATURE(masquerade_envelope)dnl
+
+define(`SMART_HOST',`&provmailserver;')dnl
+
+FEATURE(redirect)dnl
+FEATURE(nocanonify)dnl
+
+dnl # The following feature is useful if sendmail is called by
+dnl # fetchmail (which is usually the case).  If sendmail cannot
+dnl # resolve the name of the sender, the mail will not be delivered.
+dnl # For example:
+dnl #	MAIL FROM:&lt;www-owner@NetBSD.org&gt; SIZE=2718
+dnl #	501 &lt;www-owner@NetBSD.org&gt;... Sender domain must exist
+FEATURE(`accept_unresolvable_domains')dnl
+
+dnl # accept_unqualified_senders is useful with some MUA, which send
+dnl # mail as, for example:
+dnl #	MAIL FROM:&lt;&myuser;&gt;
+FEATURE(`accept_unqualified_senders')dnl
+
+dnl # Mail for `smtp' mailer is marked `expensive' (`e' flag):
+dnl # instead of connecting with the relay, sendmail puts it in
+dnl # a queue for delayed processing.
+dnl # Sendmail starts complaining about undelivered messages after
+dnl # 16 hours.
+define(`SMTP_MAILER_FLAGS',`e')dnl
+define(`confCON_EXPENSIVE',`True')dnl
+define(`confTO_QUEUEWARN', `16h')dnl
+
+dnl # For european users
+define(`confDEF_CHAR_SET',`ISO-8859-1')dnl
+
+dnl # Enable the following three lines to use procmail as a local
+dnl # delivery agent.  The third line is optional, only the first
+dnl # two are required.
+dnl # define(`PROCMAIL_MAILER_PATH', /usr/pkg/bin/procmail)dnl
+dnl # FEATURE(local_procmail)dnl
+dnl # MAILER(procmail)dnl
+
+dnl # The following two mailers must always be defined
+MAILER(local)dnl
+MAILER(smtp)dnl</programlisting>
+
+      <note>
+        <para>In the previous example, everything after a
+	  <quote>dnl</quote> is considered a comment and will be
+	  discarded by the <application>m4</application> preprocessor.</para>
+      </note>
+
+      <para>This configuration tells sendmail to rewrite the addresses of
+        type <quote>&myfqdn;</quote> using the real names found in the
+        <filename>/etc/mail/genericstable</filename> file.
+        It also says that mail should be sent to the
+        <quote>&provmailserver;</quote> server.
+        The meaning of the options is described in detail in the file
+        <filename>/usr/share/sendmail/README</filename>.</para>
+
+      <para>In order to create your own version of the example
+	configuration file, you must change only two lines,
+	substituting your real data:</para>
+
+      <programlisting>GENERICS_DOMAIN(&myfqdn; &myhost;)dnl
+define(`SMART_HOST',`&provmailserver;')dnl</programlisting>
+
+      <para>Finally, the new configuration file must be generated, after
+        having saved the previous version:</para>
+
+      <screen>&rprompt; <userinput>cp /etc/mail/sendmail.cf /etc/mail/sendmail.cf.bak</userinput>
+&rprompt; <userinput>m4 mycf.mc &gt; /etc/mail/sendmail.cf</userinput></screen>
+
+      <para>Note that there is afile <filename>netbsd-proto.mc</filename>
+	in the <filename>/usr/share/sendmail/cf</filename> directory
+        which is used to create the default
+        <filename>/etc/mail/sendmail.cf</filename> shipped with &os;.
+        With the <command>make</command> command it can be rebuilt,
+        if needed.</para>
+
+      <para>Now everything is ready to start sending mail.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-mail-sendmail-testing-configuration">
+      <title>Testing the configuration</title>
+
+      <para>Sendmail is finally configured and ready to work, but before
+	sending real mail it is better to do some simple tests.
+	First let's try sending a local e-mail with the following
+	command:</para>
+
+      <screen>&uprompt; <userinput>sendmail -v &myuser;</userinput>
+<userinput>Subject: test</userinput>
+
+<userinput>Hello world</userinput>
+<userinput>.</userinput>
+&myuser;... Connecting to local...
+&myuser;... Sent</screen>
+
+      <para>Please follow exactly the example above: leave a blank line
+	after Subject: and end the message with a line containing
+	only one dot.
+	Now you should be able to read the message with your mail
+	client and verify that the From: field has been correctly
+	rewritten.</para>
+
+      <programlisting>From: &provmailaddr;</programlisting>
+
+      <para>Next you can verify the address rewriting rules directly,
+	using sendmail in address test mode with the
+	<option>-bt</option> option.
+	This mode shows the parsing performed by sendmail for an
+	address and how it gets rewritten according to the rules in
+	the configuration file.
+	It is also possible to perform other tests and view some
+	information.</para>
+
+      <screen>&uprompt; <userinput>sendmail -bt</userinput>
+ADDRESS TEST MODE (ruleset 3 NOT automatically invoked)
+Enter &lt;ruleset&gt; &lt;address&gt;
+&gt;</screen>
+
+      <para>You can display the help with the <quote><command>?</command></quote>
+	command.</para>
+      <para>First, let's verify that the generictable map file works
+	correctly:</para>
+
+      <screen><userinput>/map generics &myuser;</userinput>
+map_lookup: generics (&myuser;) returns &provuser;@&provider;</screen>
+
+      <para>Everything's ok here; sendmail found the local name and its
+	real counterpart in the map.</para>
+      <para>Now we can test the rewriting of the envelope's sender
+	address with the following commands:</para>
+
+      <screen><userinput>/tryflags ES</userinput>
+<userinput>/try smtp &myuser;@&myfqdn;</userinput></screen>
+
+      <para>The result should be similar to the following:</para>
+
+      <screen>Trying envelope sender address &myuser;@ape.insetti.net for mailer smtp
+rewrite: ruleset   3   input: &myuser; @ ape . insetti . net
+rewrite: ruleset  96   input: &myuser; &lt; @ ape . insetti . net &gt;
+rewrite: ruleset  96 returns: &myuser; &lt; @ ape . insetti . net . &gt;
+rewrite: ruleset   3 returns: &myuser; &lt; @ ape . insetti . net . &gt;
+rewrite: ruleset   1   input: &myuser; &lt; @ ape . insetti . net . &gt;
+rewrite: ruleset   1 returns: &myuser; &lt; @ ape . insetti . net . &gt;
+rewrite: ruleset  11   input: &myuser; &lt; @ ape . insetti . net . &gt;
+rewrite: ruleset  51   input: &myuser; &lt; @ ape . insetti . net . &gt;
+rewrite: ruleset  51 returns: &myuser; &lt; @ ape . insetti . net . &gt;
+rewrite: ruleset  61   input: &myuser; &lt; @ ape . insetti . net . &gt;
+rewrite: ruleset  61 returns: &myuser; &lt; @ ape . insetti . net . &gt;
+rewrite: ruleset  94   input: &myuser; &lt; @ ape . insetti . net . &gt;
+rewrite: ruleset  93   input: &myuser; &lt; @ ape . insetti . net . &gt;
+rewrite: ruleset   3   input: &provuser; @ bignet . it
+rewrite: ruleset  96   input: &provuser; &lt; @ bignet . it &gt;
+rewrite: ruleset  96 returns: &provuser; &lt; @ bignet . it &gt;
+rewrite: ruleset   3 returns: &provuser; &lt; @ bignet . it &gt;
+rewrite: ruleset  93 returns: &provuser; &lt; @ bignet . it &gt;
+rewrite: ruleset  94 returns: &provuser; &lt; @ bignet . it &gt;
+rewrite: ruleset  11 returns: &provuser; &lt; @ bignet . it &gt;
+rewrite: ruleset   4   input: &provuser; &lt; @ bignet . it &gt;
+rewrite: ruleset   4 returns: &provuser; @ bignet . it
+Rcode = 0, addr = &provuser;@bignet.it
+&gt;</screen>
+
+      <para>As you can see, the local address has been rewritten to the
+	real address, which will appear in your e-mails when they
+	leave your system.</para>
+      <para>You can achieve a similar result with the following command:</para>
+
+      <screen><userinput>/try smtp &myuser;</userinput></screen>
+
+      <para>We can also verify the rewriting of the header's sender with
+	the following commands:</para>
+
+      <screen><userinput>/tryflags HS</userinput>
+<userinput>/try smtp &myuser;@&myfqdn;</userinput></screen>
+
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-mail-sendmail-alternative-mta">
+      <title>Using an alternative MTA</title>
+
+      <para>Starting from version 1.4 of &os; sendmail is not called
+	directly:</para>
+
+      <screen>&uprompt; <userinput>ls -l /usr/sbin/sendmail</userinput>
+lrwxr-xr-x  1 root  wheel  21 Nov  1 01:14 /usr/sbin/sendmail@ -&gt; /usr/sbin/mailwrapper</screen>
+
+      <para>The purpose of mailwrapper is to allow the usage of an
+	alternative MTA instead of sendmail (for example, postfix).
+	If you plan to use a different mailer I suggest that you
+	read the &man.mailwrapper.8; and the &man.mailer.conf.5; manpages,
+	which are very clear.</para>
+    </sect2>
+
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-main-fetchmail">
+    <title>fetchmail</title>
+
+    <para>If someone sends me mail, it is received and stored by the
+      provider, and not automatically transfered to the local hosts;
+      therefore it is necessary to download it.
+      <application>Fetchmail</application> is a very popular program
+      that downloads mail from a remote mail server (using e.g. the
+      Post Office Protocol, POP) and forwards it to
+      the local system for delivery (usually using
+      <application>sendmail</application>).
+      It is powerful yet easy to use and configure: after
+      installation, the file <filename>~/.fetchmailrc</filename> must be
+      created and the program is ready to run
+      (<filename>~/.fetchmailrc</filename> contains a password so
+      appropriate permissions on the file are required).</para>
+
+    <para>This is an example <filename>.fetchmailrc</filename>:</para>
+
+    <programlisting>poll &provmailserver;
+protocol POP3
+username &provuser; there with password &provpwd; is &myuser; here
+flush
+mda "/usr/sbin/sendmail -oem %T"</programlisting>
+
+    <para>The last line (<quote>mda ...</quote>) is used only if sendmail is
+      not active as daemon on the system.
+      Please note that the POP-mail server indicated in this file
+      (&provmailserver;) is only used to retrieve mails, and that it
+      is not necessary the same as the mail relay used by sendmail
+      to send out mails.</para>
+
+    <para>After setting up the <filename>.fetchmailrc</filename> file, the
+      following command can be used to download and deliver mail
+      to the local system:</para>
+
+    <screen>&uprompt; <userinput>fetchmail</userinput></screen>
+
+    <para>The messages can now be read with <application>mutt</application>.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-mail-mutt">
+    <title>Reading and writing mail with mutt</title>
+
+    <para><application>Mutt</application> is one of the most popular mail
+      programs: it is <quote>lightweight</quote>, easy to use and has lots
+      of features.
+      The man page <application>mutt</application> is very bare bones;
+      the real documentation is in
+      <filename>/usr/pkg/share/doc/mutt/</filename>, in particular
+      <filename>manual.txt</filename>.</para>
+
+    <para>Mutt's configuration is defined by the <filename>~/.muttrc</filename>
+      file.  The easiest way to create it is to copy mutt's example
+      muttrc file (usually
+      <filename>/usr/pkg/share/examples/mutt/sample.muttrc</filename>)
+      to the home directory and modify it.  The following example
+      shows how to achieve some results:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Save a copy of sent mail.</para>
+      </listitem>
+
+      <listitem>
+        <para>Define a directory and two files for incoming and outgoing
+          mail saved by mutt (in this example the directory is
+          <filename>~/Mail</filename> and the files are
+          <filename>incoming</filename> and <filename>outgoing</filename>).</para>
+      </listitem>
+
+      <listitem>
+        <para>Define some colors.</para>
+      </listitem>
+
+      <listitem>
+        <para>Define an alias.</para>
+      </listitem>
+    </itemizedlist>
+
+    <programlisting>set copy=yes
+set edit_headers
+set folder="~/Mail"
+unset force_name
+set mbox="~/Mail/incoming"
+set record="~/Mail/outgoing"
+unset save_name
+
+bind pager &lt;up&gt; previous-page
+bind pager &lt;down&gt; next-page
+
+color normal white black
+color hdrdefault blue black
+color indicator white blue
+color markers red black
+color quoted cyan black
+color status white blue
+color error red white
+color underline yellow black
+
+mono quoted standout
+mono hdrdefault underline
+mono indicator underline
+mono status bold
+
+alias pippo Pippo Verdi &lt;pippo.verdi@pluto.net&gt;</programlisting>
+
+    <para>To start mutt:</para>
+
+    <screen>&uprompt; <userinput>mutt</userinput></screen>
+
+    <para>Please note that mutt supports color, but this depends on the
+      terminal settings. Under X you can use "xterm-color", for
+      example: </para>
+
+    <screen>&uprompt; <userinput>env TERM=xterm-color mutt</userinput></screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-mail-receiving">
+    <title>Strategy for receiving mail</title>
+
+    <para>This section describes a simple method for receiving and reading
+      mail.
+      The connection to the provider is activated only for the time
+      required to dowload the messages; mail is then read offline.</para>
+
+    <orderedlist>
+      <listitem>
+        <para>Activate the connection to the provider.</para>
+      </listitem>
+
+      <listitem>
+        <para>Run <command>fetchmail</command>.</para>
+      </listitem>
+
+      <listitem>
+        <para>Deactivate the connection.</para>
+      </listitem>
+
+      <listitem>
+        <para>Read mail with mutt.</para>
+      </listitem>
+    </orderedlist>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-mail-sending">
+    <title>Strategy for sending mail</title>
+
+    <para>When mail has been written and <quote>sent</quote> with
+      <application>mutt</application>, the messages must be transferred
+      to the provider with sendmail.
+      Mail is sent from <application>mutt</application> with the
+      <command>y</command> command, but this does not really send it;
+      the messages are enqueued in the spool area; if
+      <application>sendmail</application> is not active as a daemon it
+      is necessary to start it manually or the messages will remain on
+      the hard disk.
+      The necessary steps are:</para>
+
+    <orderedlist>
+      <listitem>
+        <para>Write mail with mutt, send it and exit mutt. You can check
+          if and what messages are in the sendmail mail queue using
+          the &man.mailq.1; program.</para>
+      </listitem>
+
+      <listitem>
+        <para>Activate the connection with the provider.</para>
+      </listitem>
+
+      <listitem>
+        <para>If  your provider requires you to do "SMTP-after-POP",
+           i.e. it first wants to make sure to know who you are before
+           you are allowed to send mail (and no spam), you need to run
+           <command>fetchmail</command> again first. </para>
+      </listitem>
+
+      <listitem>
+        <para>Write the command <command>/usr/sbin/sendmail -q
+           -v</command> to transfer the queued messages to the
+           provider.</para>
+      </listitem>
+
+      <listitem>
+        <para>Deactivate the connection.</para>
+      </listitem>
+    </orderedlist>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-mail-advanced">
+    <title>Advanced mail tools</title>
+
+    <para>When you start using mail, you won't probably have very
+      sophisticated requirements and the already described standard
+      configuration will satisfy all your needs.  But for many users
+      the number of daily messages will increase with time and a more
+      rational organization of the mail storage will become necessary,
+      for example subdividing mail in different mail boxes organized
+      by topic.  If, for example, you subscribe to a mailing list, you
+      will likely receive many messages every day and you will want to
+      keep them separate from the rest of your mail.  You will soon
+      find that you are spending too much time every day repeating the
+      same manual operations to organize your mail boxes.</para>
+
+    <para>Why repeat the same operations manually when you can have a
+      program perform them automatically for you?  There are numerous
+      tools that you can add to your mail system to increase its
+      flexibility and automatically process your messages.  Amongst
+      the most known and used there are:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><application>procmail</application>, an advanced mail
+	  delivery agent and general purpose mail filter for local
+	  mail, which automatically processes incoming mail using user
+	  defined rulesets.  It integrates smoothly with sendmail.</para>
+      </listitem>
+
+      <listitem>
+        <para><application>spamassassin</application> or
+           <application>spamprobe</application>, to help fight spam.</para>
+      </listitem>
+
+      <listitem>
+        <para><application>metamail</application>, a tool to process
+	  attachments.</para>
+      </listitem>
+
+      <listitem>
+        <para><application>formail</application>, a mail formatter.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>In the remaining part of this section a sample configuration for
+      procmail will be presented for a very common case: delivering
+      automatically to a user defined mailbox all the messages coming
+      from a mailing list.  The configuration of sendmail will be
+      modified in order to call procmail directly (procmail will be
+      the <emphasis>local mailer</emphasis> used by sendmail). and a
+      custom configuration file for procmail will be created.</para>
+
+    <para>First, procmail must be installed using the package system
+      (<filename>mail/procmail</filename>) or <command>pkg_add</command>.</para>
+
+    <para>Next, the configuration of sendmail must be changed, in order
+      to use procmail as local mailer.  Uncomment the following
+      three lines from the <filename>mycf.mc</filename> sendmail
+      M4 prototype file and recreate the sendmail configuration
+      file as described above:</para>
+
+    <programlisting>define(`PROCMAIL_MAILER_PATH', /usr/pkg/bin/procmail)dnl
+FEATURE(local_procmail)dnl
+MAILER(procmail)dnl</programlisting>
+
+    <para>The first line defines the path of the procmail program (you can
+      see where procmail is installed with the command <command>which
+      procmail</command>).  The second line tells sendmail to use
+      procmail for local mail delivery and the third adds procmail to
+      the list of sendmail's mailers.  The third line adds procmail
+      to the list of sendmail's mailers (this line is optional).</para>
+
+    <para>The last step is the creation of the procmail configuration
+      file, containing the recipes for mail delivery.</para>
+
+    <para>Let's say that, for example, you subscribed to a mailing list on
+      roses whose address is <quote>roses@flowers.org</quote> and that
+      every message from the list contains the following line in the
+      header:</para>
+
+    <programlisting>Delivered-To: roses@flowers.org</programlisting>
+
+    <para>Assuming you want to automatically sort all mails going over
+      that list into the local mail folder "roses_list", the procmail
+      configuration file (<filename>.procmailrc</filename>) looks like
+      this:</para>
+
+    <programlisting>PATH=/bin:/usr/bin:/usr/pkg/bin
+MAILDIR=$HOME/Mail
+LOGFILE=$MAILDIR/from
+
+:0
+* ^Delivered-To: roses@flowers.org
+roses_list</programlisting>
+
+    <para>The previous file contains only one rule, beginning with the
+      line containing <quote>:0</quote>.  The following line identifies
+      all messages containing the string <quote>Delivered-To:
+      roses@flowers.org</quote> and the last line says that the selected
+      messages must go to the <filename>roses_list</filename> mailbox
+      (which you should have created in $MAILDIR).  The remaining
+      messages will be delivered to the default mailbox.
+      Note that $MAILDIR is the same directory that you have
+      configured with mutt:</para>
+
+    <programlisting>set folder="~/Mail"</programlisting>
+
+    <para>Of course the mailing list is only an example; procmail is a
+      very versatile tool which can be used to filter mail based on
+      many criteria.  As usual, refer to the man pages for more
+      details: &man.procmail.1;, &man.procmailrc.5;, and
+      &man.procmailex.5; (this last
+      one contains many examples of configuration files).</para>
+
+    <para>You can check that procmail is used as local mailer by
+      sendmail if you run the latter in test mode:</para>
+
+    <screen>&uprompt; <userinput>/usr/sbin/sendmail -bt</userinput>
+ADDRESS TEST MODE (ruleset 3 NOT automatically invoked)
+Enter &lt;ruleset&gt; &lt;address&gt;
+&gt;</screen>
+
+    <para>The following command displays the list of mailers known to
+      sendmail:</para>
+
+    <screen>&gt; <userinput>=M</userinput></screen>
+
+    <para>You should find a line like the following one:</para>
+
+    <screen>mailer 3 (local): P=/usr/pkg/bin/procmail S=EnvFromL/HdrFromL ...</screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-mail-tin">
+    <title>News with tin</title>
+
+    <para>The word <emphasis>news</emphasis> indicates the set of messages
+      posted to the USENET newsgroups, a service available on the Internet.
+      Each newsgroup contains articles related to a specific topic.
+      Reading a newsgroup is different than reading a mailing list:
+      when you subscribe to a mailing list you receive the articles by
+      mail and you read them with a standard mail program like mutt,
+      which you use also to send replies.
+      News, instead, are read directly from a news server with a
+      dedicated program called <emphasis>newsreader</emphasis> like,
+      for example, <application>tin</application>.
+      With tin you can subscribe to the newsgroups that you're
+      interested in and follow the <emphasis>threads</emphasis>.
+      A thread is a sequence of articles which all derive from an
+      article that we could call <quote>original</quote>.
+      In short, a message is sent to the group, someone answers, other
+      people answer to those who answered in the first place and so
+      on, creating a tree like structure of messages and replies:
+      without a newsreader it is impossible to understand the correct
+      sequence of messages.</para>
+
+    <para>After the installation of <application>tin</application> (from the
+      package collection as usual) the only thing left to do is to write
+      the name of the <acronym>NNTP</acronym> server in the file
+      <filename>/usr/pkg/etc/nntp/server</filename>, which you may
+      need to create first. For example:</para>
+
+    <programlisting>&provnewsserver;</programlisting>
+
+    <para>Once this has been done, the program can be started with the
+      command <command>tin</command>.
+      On the screen something similar to the following example will be
+      displayed:</para>
+
+    <screen>&uprompt; <userinput>tin</userinput>
+Connecting to &provnewsserver;...
+&provnewsserver; InterNetNews NNRP server INN 1.7.2 08-Dec-1997 ready (posting ok).
+Reading groups from active file...
+Checking for new groups...
+Reading attributes file...
+Reading newsgroups file...
+Creating newsrc file...
+Autosubscribing groups...
+Reading newsrc file...</screen>
+
+    <para>Be patient when you connect for the first time, because tin
+      downloads an immense list of newsgroups to which you can subscribe
+      and this takes several minutes.
+      When the donwload is finished, the program's main screen is displayed;
+      usually no groups are displayed; to see the list of groups press
+      <command>y</command>.
+      To subscribe to a group, move on the group's name and press
+      <command>y</command>.</para>
+
+    <para>Once that you have subscribed to some newsgroups you can start
+      tin more quickly with the command <command>tin -Q</command>.
+      The search for new groups is disabled
+      (<option>-q</option>), only active groups are searched
+      (<option>-n</option>) and newsgroup description are not loaded
+      (<option>-d</option>): it will not be possible to use the
+      <command>y</command> (yank) command in tin.
+      When tin is started with this option it can't tell if a
+      newsgroup is moderated or not.</para>
+
+    <para>Note that if you are connecting from an internal network (like
+      in our example), when you send ("post") a message the address at
+      the beginning of the message will be wrong (because it is the
+      internal address).  To solve the problem, use the option
+      <quote>mail_address</quote> in the tin configuration file
+      (<filename>~/.tin/tinrc</filename>) or set the REPLYTO
+      environment variable.</para>
+  </sect1>
+</chapter>

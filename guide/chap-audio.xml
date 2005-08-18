@@ -1,0 +1,241 @@
+<!-- $NetBSD: chap-audio.xml,v 1.11 2004/12/13 20:04:38 hrs Exp $ -->
+
+<chapter id="chap-audio">
+  <title>Audio</title>
+
+  <para>Ten rozdzia³ jest krótkim wstêpem do u¿ytkowania urz±dzeñ audio 
+    na &os; (kto chce mieæ g³uchy komputer?) </para>
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-audio-basic">
+    <title>Podstawowe elementy sprzêtowe</title>
+
+    <para>Aby uruchomiæ d¼wiêk w twoim systemie najpierw
+    musisz wiedzieæ jak± kartê muzyczn± masz zainstalowan±. Ostatnio
+    znanie tylko karty i modelu nie wystarcza poniewa¿ wiele kart u¿ywa
+    chipsetów od innych firm. Dlatego wiedzieæ jaki chipset jest na 
+    karcie muzycznej czasami mo¿e byæ pomocne.
+    &os; kernel potrafi sam rozpoznaæ chipsety przez szybkie przejrzenie
+     <command>dmesg</command> to jest wystarczaj±ce w wiêkszo¶ci 
+     przypadków.</para>
+
+    <para>A wiêc, wpisz nastepuj±ca komende:</para>
+
+    <screen>&rprompt; <userinput>dmesg | more</userinput></screen>
+
+    <para>i szukaj swojej karty muzycznej i chipsetu. Je¿eli bêdziesz mia³ 
+    szczê¶cie to nie bêdziesz musia³ nic robiæ poniewa¿ &os; automatycznie
+    wykrywa i konfiguruje du¿o kart muzycznych.</para>
+
+    <para>Czasami karta nie pracuje poniewa¿ nie jest obs³ugiwana albo 
+      potrzebujesz specjalnych sterowników aby zosta³a wykryta w &os;.
+      Obecnie du¿a ilo¶æ kart muzycznych jest bardzo tania i dlatego powiniene¶
+      wzi±¶æ pod uwagê kupienie innej karty, ale przedtem mo¿esz
+      spróbowaæ kilku prostych sztuczek aby uruchomiæ kartê na &os;.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-audio-bios">
+    <title>Ustawienia BIOS'u</title>
+
+    <para>Ta sekcja jest pomocna tylko dla u¿ytkowników komputerów z 
+      architektury i386; na innych architekturach (np. Amiga) nie ma
+      takiej opcji. Najwa¿niejsz± rzecz± aby ustaliæ czy dana karta
+      bêdzie dzia³aæ z &os; jest typ interfejsu karty.</para>
+
+    <para>Najbardziej znanymi interfejsami s± ISA i PCI.</para>
+
+    <para>ISA Plug and Play karty s± bardziej zawi³e w konfiguracji 
+    poniewa¿ bêdziemy w wiekszym stopniu mieli styczno¶æ z BIOS'em komputera</para>
+
+    <para>Na nowszych komputerach (wyprodukowanych po 1997) jest opcja w biosie
+      która wywo³uje du¿o bólu g³owy przy konfiguracji ISA Plug and Play
+      kart muzycznych (i nie tylko kart muzycznych): ta opcja jest
+      przewa¿nie nazywana <quote>PNP OS Installed</quote> i mo¿na j± znale¼æ
+      w <quote>PNP/PCI Configuration</quote>(nazwy mog± byæ ró¿ne w twoim 
+      BIOS'ie.) Najlepiej jest j± wy³±czyæ (czyli ustawiæ <quote>NO</quote>)
+      dla twojego &os;.</para>
+
+    <note>
+      <para>Na wielu systemach wszystko pracuje dobrze nawet je¿eli ta opcja
+	jest w³±czona. To jest w znacznym stopniu zale¿ne od systemu.</para>
+    </note>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-audio-configuring-device">
+    <title>Konfiguracja urz±dzenia audio</title>
+
+    <para>Podczas instalacji &os; urz±dzenia s± tworzone w
+<filename>/dev</filename> katalogu. My siê zainteresujemy:</para>
+
+    <literallayout><filename>/dev/audio</filename>
+<filename>/dev/sound</filename>
+<filename>/dev/mixer</filename></literallayout>
+
+    <para>Je¿eli ich tam nie ma mo¿emy je utworzyæ nastêpuj±co:</para>
+
+    <screen>&rprompt; <userinput>cd /dev</userinput>
+&rprompt; <userinput>./MAKEDEV all</userinput></screen>
+
+    <para>Ta komenda utworzy wszystkie urz±dzenia wraz z urz±dzeniami
+	audio</para>
+
+    <para>Karta muzyczna jest teraz prawdopodobnie gotowa do u¿ytku bez 
+      dodatkowego wysi³ku.</para>
+
+    <para>Mo¿esz zrobiæ szybki test i wys³aæ plik d¼wiêkowy do urz±dzenia
+    	(pliki d¼wiêkowe w wiêkszo¶ci maj± rozszerzenie<filename>.au</filename>), 
+    	ale je¿eli nie masz pliku d¼wiêkowego mo¿esz spróbowaæ
+	wyslaæ text albo plik binarny (oczywi¶cie nic wielkiego nie
+	us³yszysz...).
+      U¿yj <filename>/dev/audio</filename> lub
+      <filename>/dev/sound</filename>:</para>
+
+    <screen>&rprompt; <userinput>cat nazwa_pliku &gt; /dev/audio</userinput></screen>
+
+    <para>lub</para>
+
+    <screen>&rprompt; <userinput>cat nazwa_pliku &gt; /dev/sound</userinput></screen>
+
+    <para>Je¿eli co¶ us³yszysz to znaczy ¿e karta jest wspierana
+    	przez &os; i zosta³a rozpoznana i skonfigurowana przez kernel
+    	podczas bootowania; w przeciwnym razie musisz skonfigurowaæ
+    	ustawienia kernela dla urz±dzenia audio zainstalowanego w 
+    	komputerze (przyjmuj±c ze karta/chipset jest wspierana).</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-audio-configuring-kernel">
+    <title>Konfiguracja urz±dzeñ audio kernela</title>
+
+    <para>&os; wspiera wiele kart muzycznych, j±dro GENERIC
+    	od razu uruchamia i konfiguruje wiêkszo¶æ z nich. Czasami 
+    	potrzebne jest ustawienie IRQ i DMA dla nie-PnP ISA kart.</para>
+
+    <note>
+      <para>Kiedy tworzysz swoje w³asne j±dro dobrze jest wspieraæ siê
+      kopi± pliku GENERIC, jak opisano w <xref linkend="chap-kernel" />.</para>
+    </note>
+
+    <para>Je¿eli dalej bêdziesz mia³ problemy to mo¿esz w³±czyæ wszystkie
+    	urz±dzenia, poniewa¿ niektóre karty dzwiêkowe mog± pracowaæ tylko 
+    	przez emulacje innej karty.</para>
+
+    <para>Du¿o chipsetów u¿ywa zgodno¶ci SoundBlaster lub OPL, ale wiêksza
+	ilo¶æ kart pracuje z emulacj± WSS.</para>
+
+    <para>OPL jest to syntezator MIDI wyprodukowany przez Yamaha;
+    	jest du¿o wariantow OPL (np. OPL2, OPL3SA, OPL3SA2, itp.).
+    	Du¿o kart muzycznych polega na tym komponencie albo na
+	kompatybilnym. Na przyklad, karty wyprodukowane przez Crystal
+	(w¶ród których bardzo popularny jest CS423x) wszystkie maj±
+	ten chipset i dlatego pracuj± z &os;.</para>
+
+    <para>WSS nie jest microchip'em; to jest skrót od Windows Sound
+    	System. WSS jest nazwa sterownika kernela &os; który wspiera
+    	system audio Windowsa. Du¿o kart muzycznych pracuje z Windows
+    	poniewa¿ nale¿± do tego standardu (WSS), te same mog± byæ wspierane przez &os;.</para>
+
+    <para>Wiêkszo¶æ kart muzycznych, które testowalem z &os;
+    	pracuje tylko je¿eli <filename>opl*</filename> i <filename>
+    	wss*</filename> s± zdefiniowane w j±drze.</para>
+
+    <para>Nie powiniene¶ mieæ ¿adnego problemu ¿eby zmusiæ karty
+    	Creative SoundBlaster do pracy z &os;: prawie wszystkie
+    	s± wspierane, w³±czaj±c SoundBlaster Live 1024!</para>
+
+    <para>Kiedy wszystko dzia³a mo¿esz zahaszowac w pliku j±dra
+    	wpisy do urz±dzeñ których nie potrzebujesz.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-audio-advanced">
+    <title>Zaawansowane komendy</title>
+
+    <para>&os; jest wyposa¿ony w komendy, które s± u¿ywane do obs³ugi urz±dzeñ
+	audio.
+      S± to:</para>
+
+    <itemizedlist>
+      <listitem>
+	<para>&man.audioctl.1;</para>
+      </listitem>
+
+      <listitem>
+	<para>&man.mixerctl.1;</para>
+      </listitem>
+
+      <listitem>
+	<para>&man.audioplay.1;</para>
+      </listitem>
+
+      <listitem>
+	<para>&man.audiorecord.1;</para>
+      </listitem>
+    </itemizedlist>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-audio-advanced-audioctl">
+      <title>&man.audioctl.1;</title>
+
+      <para>&man.audioctl.1; zosta³o stworzone w &os; 1.3 
+      	i jest u¿ywane do manualnego ustawienia zmiennych dotycz±cych audio
+	I/O jak czêstotliwo¶æ dla grania i nagrywania. 
+	Dostêpne parametry mog± zostaæ wy¶wietlone za pomoc± komendy:
+      	</para>
+
+      <screen>&rprompt; <userinput>audioctl -a | more</userinput></screen>
+
+      <para>Dla przyk³adu, do sluchania muzyki jako¶ci CD mo¿esz u¿yæ
+	nastêpuj±cej komendy.</para>
+
+      <screen>&rprompt; <userinput>audioctl -w play=44100,2,16,slinear_le</userinput></screen>
+
+      <para>Ta komenda ustawia czestotliwo¶æ do 44100Hz, 2 kana³y audio,
+      	16 bit, kodowanie slinear_le.</para>
+
+      <para>Mo¿esz zobaczyæ wspierane kodowania u¿ywaj±c:</para>
+
+      <screen>&rprompt; <userinput>audioctl encodings</userinput></screen>
+
+      <para>Ta komenda wy¶wietla listê wszystkich kodowañ wspieranych przez
+      	kartê muzyczn± w twoim systemie.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-audio-advanced-mixerctl">
+      <title>&man.mixerctl.1;</title>
+
+      <para>Ta komenda jest u¿ywana do konfiguracji mixowania audio 
+      	i ma podobny interfejs do &man.audioctl.1;.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-audio-advanced-audioplay">
+      <title>&man.audioplay.1;</title>
+
+      <para>Z t± komend± mo¿esz graæ pliki audio w prostych formatach
+      takich jak ULAW i WAV. Dla bardziej wyrafinowanych potrzeb powiniene¶
+      zainstalowaæ jeden z du¿ej grupy programów dostêpnych w systemie
+      pakietów który pozwoli ci graæ pliki audio w ró¿nych formatach
+      (np. MP3, itp.)</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+     <sect2 id="chap-audio-advanced-audiorecord">
+      <title>&man.audiorecord.1;</title>
+
+      <para>Komenda ta s³u¿y do nagrywania plików 
+      	audio.</para>
+    </sect2>
+  </sect1>
+</chapter>

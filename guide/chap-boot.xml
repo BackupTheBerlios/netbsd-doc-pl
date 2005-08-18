@@ -1,0 +1,462 @@
+<!-- $NetBSD: chap-boot.xml,v 1.18 2004/12/13 20:04:38 hrs Exp $ -->
+
+<chapter id="chap-boot">
+  <title>Pierwsze uruchomienie</title>
+
+  <para>Po tym jak instalacja dobiegnie koñca komputer zostanie uruchomiony 
+    ponownie: je¶li wszystko pójdzie dobrze znak zachêty powinien pojawiæ siê 
+    w przeci±gu kilku sekund (lub minut, w zale¿no¶ci od Twojego sprzêtu). 
+    System  nie jest jednak jeszcze skonfigurowany ale nie martw siê: 
+    konfiguracja jest bardzo ³atwa i ma³o k³opotliwa, chocia¿ z pocz±tku mo¿e 
+    wydawaæ Ci siê ona bardzo niewygodna. Czytaj±c ten rozdzia³ zobaczysz jak 
+    prosta mo¿e byæ konfiguracja, oraz nauczysz siê podstaw przy administracji 
+    systemem, co bêdzie pomocne w pó¼niejszym czasie, np. gdy bêdziesz mia³ 
+    jaki¶ k³opot - bêdziesz wiedzia³ gdzie zajrzeæ.
+  </para>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-boot-something-wrong">
+    <title>Je¶li co¶ pójdzie nie tak</title>
+
+    <para>Je¶li system nie startuje, przyczyn± mo¿e byæ boot manager, który 
+      prawdopodobnie nie zosta³ poprawnie zainstalowany, albo problem tkwi w 
+      MBR (Master Boot Record). Zrestartuj komputer i uruchom go z dyskietki 
+      startowej, kiedy zobaczysz komunikat:</para>
+
+    <screen>booting fd0a:netbsd - starting in ...</screen>
+
+    <para>naci¶nij klawisz spacji, uruchamianie systemu zostanie wstrzymane i 
+      na ekranie zobaczysz znak zachêty. Aby uzyskaæ pomoc naci¶nij klawisz 
+      <quote>?</quote> lub napisz <quote>help</quote>.
+    </para>
+
+    <screen>type "?" or "help" for help.
+<prompt>&gt;</prompt> <userinput>?</userinput>
+commands are:
+boot [xdNx:][filename] [-adrs]
+     (ex. "sd0a:netbsd.old -s")
+ls [path]
+dev xd[N[x]]:
+help|?
+quit
+<prompt>&gt;</prompt> <userinput>boot wd0a:netbsd</userinput></screen>
+
+    <para>System powinien teraz wystartowaæ bezpo¶rednio z twartego dysku 
+      zamiast z dyskietki. Je¶li NetBSD uruchamia siê poprawie z twardego 
+      dysku, prawdopodomnie problemem jest z Master Boot Record: mo¿esz 
+      zainstalowaæ boot managera albo zmodywikowaæ jego konfiguracjê za pomoc± 
+      polecenia <command>fdisk -B</command>. 
+      Zobacz <xref linkend="chap-misc-bootmanager" />, na której znajdziesz
+      szczegó³owy opis.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-boot-login">
+    <title>Logowanie do systemu</title>
+
+    <para>Podczas pierwszego logowania do systemu u¿yjesz konta 
+      superu¿ytkownika - <username>root</username>, które zosta³o zdefiniowane 
+      na koñcu instalacji. W polu password wpisz has³o dla u¿ytkownika root, 
+      które zdefiniowa³e¶ podczas instalacji, je¶li nie definiowa³e¶ has³a, 
+      wystarczy nacisn±æ tylko klawisz Enter.</para>
+
+    <screen><prompt>&os;/i386 (Amnesiac) (ttyE0)</prompt>
+<prompt>login:</prompt> <userinput>root</userinput>
+<prompt>password</prompt>
+...
+Rekomendujemy utworzenie konta u¿ytkownika i u¿ywanie &man.su.1; dla konta root.
+<prompt>#</prompt></screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-boot-keyboard-layout">
+    <title>Zmiana uk³adu klawiatury</title>
+
+    <para>Standardowo, po zainstalowaniu &os; klawiatura ma uk³ad US, je¶li 
+      masz inn± klawiaturê to teraz jest najlepszy moment aby zmieniæ uk³ad 
+      klawiatury, najlepiej jest to zrobiæ przed rozpoczêciem konfiguracji 
+      systemu. Dla przyk³adu, je¶li u¿ywasz w³oskiej klawiatury, wykonaj 
+      poni¿sze polecenia:</para>
+
+    <screen>&rprompt; <userinput>wsconsctl -k -w encoding=it</userinput>
+encoding -> it</screen>
+
+    <para>
+      Zobacz tak¿e <xref linkend="chap-cons-wscons-keymaps" /> listê dostêpnych
+      mapowaæ klawiatury oraz co nale¿y zrobiæ by ustawiæ j± ju¿ na sta³e.
+    </para>
+
+
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-boot-man-command">
+    <title>Polecenie - man</title>
+
+    <para>Je¶li nigdy wcze¶niej nie u¿ywa³e¶ Unixopodobnego systemu, Twoim 
+      najlepszym przyjacielem bêdzie od teraz komenda <command>man</command>, 
+      która pokazuje wybrane strony podrêcznika systemowego: Strony 
+      podrêcznika systemowego &os s± najlepszym i najbardziej szczegó³owym 
+      poradnikiem jaki masz pod rêk±, chocia¿ s± one napisane bardziej ze 
+      strony technicznej i mog± okazaæ siê z pocz±tku nie zrozumia³e.</para>
+
+    <para><command>man <replaceable>name</replaceable></command> pokazuje stronê podrêcznika dla s³owa 
+      <quote><replaceable>name</replaceable></quote>
+      polecenie and <command>man -k <replaceable>name</replaceable></command> pokazuje stronê podrêcznika, które zawiera s³owo 
+      <quote><replaceable>name</replaceable></quote> (do tego celu mo¿esz te¿ u¿ywaæ polecenia
+      <command>apropos</command>).</para>
+
+    <para>Aby dowiedzieæ siê paru podstawowych rzeczy o poleceniu <command>man</command> wpisz:</para>
+
+    <screen>&rprompt; <userinput>man man</userinput></screen>
+
+    <para>Manuale s± podzielone na dziewiêæ sekcji, które zawieraj± jedynie 
+      podstawowe informacje nie tylko o komendach, ale równie¿ informacje na 
+      temat w³a¶ciow¶ci i budowy systemu &os;. Na przyk³ad spójrz na stronê 
+      podrêcznika &man.hier.7;, która opisuje szczegó³owo uk³ad systemu 
+      plików, który jest u¿ywany w &os;.</para>
+
+    <screen>&rprompt; <userinput>man hier</userinput></screen>
+
+    <para>
+    <!--
+      Per chi fosse un po' perplesso: <emphasis>hier</emphasis> &egrave;
+      l'abbreviazione di hierarchy.
+    -->
+      Innymi podobnymi stronami s± &man.release.7; oraz &man.packages.7;.
+      Ka¿da strona zawiera &man.intro.8; która opisuje jej zawarto¶æ. 
+      Zobacz:</para>
+
+    <screen>&rprompt; <userinput>man 8 intro</userinput></screen>
+
+    <example id="chap-boot-man-command-sections">
+      <title>Sekcje manuali</title>
+
+      <orderedlist>
+        <listitem>
+          <para>ogólne polecenia (narzêdzia i u¿yteczne programy)</para>
+        </listitem>
+
+        <listitem>
+          <para>wywo³ania systemowe i numery b³êdów</para>
+        </listitem>
+
+        <listitem>
+          <para>biblioteki jêzyka C</para>
+        </listitem>
+
+        <listitem>
+          <para>pliki specjalen i wsparcie sprzêtowe</para>
+        </listitem>
+
+        <listitem>
+          <para>struktury plików</para>
+        </listitem>
+
+        <listitem>
+          <para>gry</para>
+        </listitem>
+
+        <listitem>
+          <para>rozmaite strony informacyjne</para>
+        </listitem>
+
+        <listitem>
+          <para>komendy i administracja systemem</para>
+        </listitem>
+
+        <listitem>
+          <para>cechy wewnêtrzen j±dra systemu</para>
+        </listitem>
+      </orderedlist>
+    </example>
+
+    <para>Wybrany temat mo¿e zawieraæ siê w wiêcej ni¿ jednej sekcji manuali; 
+      aby zobaczyæ okre¶lon± stronê, dodaj numer sekcji jako argument komendy 
+      man. Na przyk³ad <emphasis>time</emphasis> zawiera siê w sekcji 1 
+      (time, jako komenda u¿ytkownika) oraz w sekcji 3 (time, jako fukcja 
+      biblioteki jêzyka C). Aby zobaczyæ stronê podrêcznika dla fukcji time 
+      biblioteki C, napisz:</para>
+
+    <screen>&rprompt; <userinput>man 3 time</userinput></screen>
+
+    <para>Aby zobaczyæ wszystkie dostêpne strony podrêcznika wpisz:</para>
+
+    <screen>&rprompt; <userinput>man -w time</userinput></screen>
+    
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-boot-change-root-password">
+    <title>Zmiana has³a <username>root</username></title>
+
+    <para>Je¶li nie zdefiniowa³e¶ has³a <username>root'a</username> podczas 
+      instalcji (od wersji 1.5pre sposób ten nie jest mo¿liwy) najwy¿szy czas 
+      aby¶ je zmieni³, u¿yj wiêc polecenia <command>passwd</command></para>
+
+    <screen>&rprompt; <userinput>passwd</userinput>
+Changing local password for root.
+New password:
+Retype new password:</screen>
+
+    <para>Has³o nie jest wy¶wietlane na monitorze podczas jego wpisywania. 
+      W pó¼niejszym czasie poznasz jak dodaæ inne konta u¿ytkowników do
+      Twojego systemu.</para>
+
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-boot-change-shell">
+    <title>Zmiana pow³oki</title>
+
+    <para>Standardow± pow³ok± dla <username>root'a</username> jest 
+      <command>csh</command>; je¶li nic Ci ona nie mówi, powiniene¶ zacz±æ 
+      studiowanie csh, korzystaj±c np. z (&man.csh.1;): jest to dobra 
+      interaktywna pow³oka, chocia¿ brakuje jej edycji historii 
+      (zobacz <emphasis>tcsh</emphasis>, bash albo nawet &os; 
+      <filename>/bin/sh</filename >).
+      Je¶li chcesz zmieniæ swoj± pow³okê u¿yj polecenia &man.chsh.1;. 
+      Pow³oki, które s± dostêpne zaraz po zainstalowaniu systemu &os; to:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>csh</para>
+      </listitem>
+
+      <listitem>
+        <para>sh</para>
+      </listitem>
+
+      <listitem>
+        <para>ksh</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Je¶li zmienisz swoj± pow³okê, bêdzie ona dostêpna dopiero przy 
+      nastêpnym zalogowaniu. Nastêpnie mo¿esz wydaæ polecenie (je¶li wybra³e¶
+      pow³okê <command>csh</command>):</para>
+
+    <screen>&rprompt; <userinput>set filec</userinput></screen>
+
+    <para>uaktywnia ona mo¿lowo¶æ zakoñczenia pracy z pow³ok± (np. klawiszem 
+      ESC; u¿yj Ctrl+D aby wy¶wietliæ listê mo¿liwych zakoñczeñ.)</para>
+
+    <para>Mo¿esz te¿ zainstalowaæ inne pow³oki w Twoim systemie, tcsh, bash, 
+      zsh oraz inne pow³oki s± dostêpne w zbiorze pakietów (o którym powiemy 
+      w dalszych rozdzia³ach).</para>
+
+    <para>W tym momencie mo¿esz te¿ stworzyæ pliki inicjuj±ce pow³oki 
+      (<filename>.chsrc</filename>,
+      <filename>.login</filename>, ...)</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-boot-system-time">
+    <title>Ustawienia czasu</title>
+
+    <para>&os;, jak wszystkie systemy UNIX, u¿ywa zegara systemowego opartego 
+      na czasie Greenwich (UTC) i jest to czas, na który powiniene¶ ustawiæ 
+      swój zegar systemowy.
+      Je¶li chcesz jednak u¿ywaæ swojego zegara systemowego ustawionego na 
+      czas miejscowy (poniewa¿, na przyk³ad, masz zainstalowany na swoim 
+      komputerze tak¿e system Windows), musisz o tym powiadomiæ NetBSD, 
+      modyfikuj±c zmienn± systemow± 
+      <varname>kern.rtc_offset</varname> sysctl-variable:</para>
+		 
+    <screen>&rprompt; <userinput>echo kern.rtc_offset=-60 >>/etc/sysctl.conf</userinput>
+&rprompt; <userinput>sh /etc/rc.d/sysctl restart</userinput></screen>
+
+    <para>Warto¶æ (-60) jest numerem minut zachodnich UTC.</para>
+   
+    <para>Aby wy¶wietliæ aktualne ustawienie zmiennej 
+      <varname>rtc_offset</varname>:</para>
+    
+    <screen>&rprompt; <userinput>sysctl kern.rtc_offset</userinput>
+kern.rtc_offset = -60</screen>
+
+    <para>Teraz kernel wie jak zmieniæ ustawienia zegara PC w czasie 
+      systemowym UTC, ale to jeszcze nie koniec, teraz musisz skonfigurowaæ 
+      system dla twojej strefy czasu miejscowego (któr± znajdziesz w 
+      <filename>/usr/share/zoneinfo/</filename>.) 
+      Je¶li zrobi³e¶ to podczas instalacji, mo¿esz opi¶ciæ ten krok 
+      (chocia¿ mo¿esz na wszelki wypadek sprawdziæ czy ustawienie to jest 
+      poprawne.), przyk³adowo, dla W³och:</para>
+		 
+    <screen>&rprompt; <userinput>rm -f /etc/localtime</userinput>
+&rprompt; <userinput>ln -s /usr/share/zoneinfo/Europe/Rome /etc/localtime</userinput></screen>
+
+    <para>Teraz wszystko jest ustawione poprawnie i mo¿esz zmieniæ czas 
+      wydaj±c poni¿sze polecenie:</para>
+		
+    <screen>&rprompt; <userinput>date <replaceable>[[[[[cc]yy]mm]dd]hh]mm</replaceable></userinput></screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-boot-rc-conf">
+    <title>Podstawowa konfiguracja <filename>/etc/rc.conf</filename></title>
+
+    <para>&os; u¿ywa <filename>/etc/rc.conf</filename> dla konfiguracji 
+      systemu w czasie autostartu: plik ten determinuje wszystko to co bêdzie 
+      wykonane podczas uruchamiania systemu, czyli plik ten jest bardzo wa¿ny.
+    </para>
+		
+    <para>Plik <filename>/etc/defaults/rc.conf</filename>, zawiera warto¶ci  
+      domy¶lne dla wielu ustawieñ. Aby zmodyfikowaæ warto¶æ domy¶ln± 
+      u¿ytkownik musi napisaæ now± warto¶æ w pliku 
+      <filename>/etc/rc.conf</filename>: definicja ta nadpisuje jedn± z 
+      <filename>/etc/defaults/rc.conf</filename> (która pozostaje 
+      niezmodyfikowana).</para>
+
+    <para>Rozumiej±c, ¿e plik ten jest bardzo wa¿ny, strona podrêcznika 
+      systemowego zawiera szczegó³owy opis wszystkich opcji.</para>
+
+    <screen>&rprompt; <userinput>man rc.conf</userinput></screen>
+
+    <para>Pierwszymi wa¿nymi modyfikacjami s±:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Ustaw <quote><literal>rc_configured=YES</literal></quote> 
+	  (opcja ta mog³a zostaæju¿ wpisana podczas instalacji systemu).</para>
+      </listitem>
+
+      <listitem>
+        <para>Ustaw <quote><literal>dhclient=yes</literal></quote>
+          je¿eli Twója sieæ u¿ywa DHCP.</para>
+      </listitem>
+
+      <listitem>
+        <para>Set <quote><literal>sshd=yes</literal></quote>
+          to start the Secure Shell server daemon upon system
+	  start. </para>
+        <para>Ustaw <quote><literal>sshd=yes</literal></quote>
+	  aby wystartowaæ serwer Secure Shell (SSH).</para>
+      </listitem>
+
+      <listitem>
+	<para>Zdefiniuj <emphasis>hostname</emphasis> dla Twojej maszyny
+	  (u¿yj pe³nej nazwy hosta, czyli ³±cznie z domen±).
+	  Je¶li masz samodzieln± maszynê mo¿esz u¿yæ jakiejkolwiek nazwy
+          (dla przyk³adu, <hostid>woody.toys.net</hostid>).
+	  Je¶li Twój komputer jest pod³±czony do sieci, powiniene¶ nadaæ mu
+	  poprawn± nazwê sieciow±.</para>	  
+	<note>
+        <para>Upewnij siê, ¿e nazwa hosta jest podana. Niektóre programy nie
+          dzia³aj± poprawnie bez podanej nazwy hosta.</para>
+	</note>
+      </listitem>
+    </itemizedlist>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-boot-enabling-softdep">
+    <title>Uruchomienie soft-dependencies dla FFS</title>
+
+    <para>Nadszed³ czas na uruchomienie soft-dependencies dla systemu plików
+      FFS. Domy¶lnie &os; zapisuje meta-dane synchronicznie w FFS, oznacza to, 
+      ¿e dane s± natychmiast zapisywane na dysku. Soft-dependencies jest 
+      mechanizmem, który nie zapisuje od razu meta-danych, ale s± one
+      zapisywane w uporz±dkowany sposób, który trzyma w spójno¶ci system 
+      plików. Powoduje to znaczny wzrost wydajno¶ci, bez ¿adnego ryzyka.
+      Soft-dependencies mo¿e byæ uruchomione przez dodanie 
+      <varname>softdep</varname> do opcji w <filename>/etc/fstab</filename>.
+      Zobacz jak wygl±da to w przyk³adzie <filename>/etc/fstab</filename>:
+    </para>
+
+<screen>
+/dev/wd0a / ffs rw 1 1
+/dev/wd0b none swap sw 0 0
+/dev/wd0e /var ffs rw 1 2
+/dev/wd0f /tmp ffs rw 1 2
+/dev/wd0g /usr ffs rw 1 2
+</screen>
+
+    <para>
+      Przypuszczalnie bêdziemy chcieli uruchomiæ soft-dependencies dla
+      wszystkich systemów plików, oprócz partycji <filename>/</filename>.
+      Zmieniamy to dla (zmiany s± wyró¿nione):
+    </para>
+
+<screen>
+/dev/wd0a / ffs rw 1 1
+/dev/wd0b none swap sw 0 0
+/dev/wd0e /var ffs rw<emphasis>,softdep</emphasis> 1 2
+/dev/wd0f /tmp ffs rw<emphasis>,softdep</emphasis> 1 2
+/dev/wd0g /usr ffs rw<emphasis>,softdep</emphasis> 1 2
+</screen>
+
+    <para>
+      Poni¿ej znajduj± siê linki do informacji o systemach plików i 
+      soft-dependencies:
+    </para>
+
+    <itemizedlist>
+      <listitem>
+	<para>
+	  System plików w wikipedii:
+	  <ulink url="http://en.wikipedia.org/wiki/File_system" />
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Systemy plików HOWTO:
+	  <ulink url="http://www.tldp.org/HOWTO/Filesystems-HOWTO.html" />
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	    Strona Marshalla Kirk McKusicka o soft-dependencies:
+	  <ulink url="http://www.mckusick.com/softdep/" />
+	</para>
+      </listitem>
+    </itemizedlist>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-boot-rebooting">
+    <title>Ponowne uruchomienie komputera</title>
+  
+    <para>W tym pierwszym rozdziale posiadasz:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Skonfigurowan± klawiaturê</para>
+      </listitem>
+
+      <listitem>
+        <para>Zmienione has³o <username>root'a</username> (opcjonalnie)</para>
+      </listitem>
+
+      <listitem>
+        <para>Zmienion± domy¶ln± pow³okê <username>root'a</username> (opcjonalnie)</para>
+      </listitem>
+
+      <listitem>
+        <para>Zmieniony czas systemowy oraz ustawion± zmienn± RTC offset</para>
+      </listitem>
+
+      <listitem>
+        <para>Ustawiony czas lokalny</para>
+      </listitem>
+
+      <listitem>
+        <para>Skonfigurowany <filename>/etc/rc.conf</filename></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Teraz nadszed³ czas na ponowne uruchomienie komputera, wydaj poni¿sze polecenie:</para>
+
+    <screen>&rprompt; <userinput>reboot</userinput></screen>
+
+  </sect1>
+</chapter>

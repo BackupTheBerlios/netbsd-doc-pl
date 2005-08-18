@@ -1,0 +1,1334 @@
+<!-- $NetBSD: chap-dns.xml,v 1.23 2005/05/05 12:21:22 hrs Exp $ -->
+
+<chapter id="chap-dns">
+  <title>The Domain Name System</title>
+
+  <para>Use of the Domain Name System has been discussed in previous
+    chapters, without going into detail on the setup of the server
+    providing the service.  This chapter describes setting up a
+    simple, small domain with one Domain Name System
+    (<acronym>DNS</acronym>) nameserver on a &os; system. It includes
+    a brief explanation and overview of the DNS; further information
+    can be obtained from the DNS Resources Directory
+    (<acronym>DNSRD</acronym>) at <ulink
+    url="http://www.dns.net/dnsrd/"></ulink>.</para>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-dns-bg">
+    <title>DNS Background and Concepts</title>
+
+    <para>The DNS is a widely used <firstterm>naming service</firstterm>
+      on the Internet and other TCP/IP networks. The network
+      protocols, data and file formats, and other aspects of the DNS
+      are Internet Standards, specified in a number of RFC documents,
+      and described by a number of other reference and tutorial
+      works. The DNS has a distributed, client-server
+      architecture. There are reference implementations for the server
+      and client, but these are not part of the standard. There are a
+      number of additional implementations available for many
+      platforms.</para>
+
+    <sect2 id="chap-dns-bg-nameservice">
+      <title>Naming Services</title>
+
+      <para>Naming services are used to provide a mapping between textual
+        names and configuration data of some form. A
+        <firstterm>nameserver</firstterm> maintains this mapping, and
+        clients request the nameserver to
+        <firstterm>resolve</firstterm> a name into its attached data.</para>
+
+      <para>The reader should have a good understanding of basic hosts to
+        IP address mapping and IP address class specifications, see
+        <xref linkend="chap-net-intro-nsconcepts" />.</para>
+
+      <para>In the case of the DNS, the configuration data bound to a name
+        is in the form of standard <firstterm>Resource
+	  Records</firstterm> (RR's). These textual names conform to
+        certain structural conventions.</para>
+    </sect2>
+
+    <sect2 id="chap-dns-bg-namespace">
+      <title>The DNS namespace</title>
+
+      <para>The DNS presents a hierarchical name space, much like a UNIX
+        filesystem, pictured as an inverted tree with the
+        <firstterm>root</firstterm> at the top.</para>
+
+      <literallayout>TOP-LEVEL                                .org
+                                           |
+MID-LEVEL                             .diverge.org
+                     ______________________|________________________
+                    |                      |                        |
+BOTTOM-LEVEL strider.diverge.org   samwise.diverge.org   wormtongue.diverge.org</literallayout>
+
+      <para>The system can also be logically divided even further if one
+        wishes at different points. The example shown above shows
+        three nodes on the diverge.org domain, but we could even
+        divide diverge.org into subdomains such as
+        "strider.net1.diverge.org", "samwise.net2.diverge.org" and
+        "wormtongue.net2.diverge.org"; in this case, 2 nodes reside in
+        "net2.diverge.org" and one in "net1.diverge.org".</para>
+
+      <para>There are directories of names, some of which may be
+        sub-directories of further names. These directories are
+        sometimes called <firstterm>zones</firstterm>. There is
+        provision for symbolic links, redirecting requests for
+        information on one name to the records bound to another
+        name. Each name recognised by the DNS is called a
+        <firstterm>Domain Name</firstterm>, whether it represents
+        information about a specific host, or a directory of
+        subordinate Domain Names (or both, or something else).</para>
+
+      <para>Unlike most filesystem naming schemes, however, Domain Names
+        are written with the innermost name on the left, and
+        progressively higher-level domains to the right, all the way
+        up to the root directory if necessary. The separator used when
+        writing Domain Names is a period, ".".</para>
+
+      <para>Like filesystem pathnames, Domain Names can be written in an
+        absolute or relative manner, though there are some differences
+        in detail. For instance, there is no way to indirectly refer
+        to the parent domain like with the UNIX
+        <filename>..</filename> directory. Many (but not all)
+        resolvers offer a search path facility, so that
+        partially-specified names can be resolved relative to
+        additional listed sub-domains other than the client's own
+        domain. Names that are completely specified all the way to the
+        root are called <firstterm>Fully Qualified Domain
+        Names</firstterm> or <firstterm>FQDN</firstterm>s. A defining
+        characteristic of an FQDN is that it is written with a
+        terminating period. The same name, without the terminating
+        period, may be considered relative to some other
+        sub-domain. It is rare for this to occur without malicious
+        intent, but in part because of this possibility, FQDNs are
+        required as configuration parameters in some circumstances.</para>
+
+      <para>On the Internet, there are some established conventions for
+        the names of the first few levels of the tree, at which point
+        the hierarchy reaches the level of an individual
+        organisation. This organisation is responsible for
+        establishing and maintaining conventions further down the
+        tree, within its own domain.</para>
+    </sect2>
+
+    <sect2 id="chap-dns-bg-rr">
+      <title>Resource Records</title>
+
+      <para>Resource Records for a domain are stored in a standardised
+        format in an ASCII text file, often called a <firstterm>zone
+        file</firstterm>. The following Resource Records are commonly
+        used (a number of others are defined but not often used, or no
+        longer used). In some cases, there may be multiple RR types
+        associated with a name, and even multiple records of the same
+        type.</para>
+
+      <variablelist>
+        <title>Common DNS Resource Records</title>
+
+        <varlistentry>
+          <term>A: Address</term>
+
+          <listitem>
+            <para>This record contains the numerical IP address associated
+              with the name.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>CNAME: Canonical Name</term>
+
+          <listitem>
+            <para>This record contains the Canonical Name (an FQDN with an
+              associated A record) of the host name to which this
+              record is bound. This record type is used to provide
+              name aliasing, by providing a link to another name with
+              which other appropriate RR's are associated. If a name
+              has a CNAME record bound to it, it is an alias, and no
+              other RR's are permitted to be bound to the same name.</para>
+
+            <para>It is common for these records to be used to point to
+              hosts providing a particular service, such as an FTP or
+              HTTP server. If the service must be moved to another
+              host, the alias can be changed, and the same name will
+              reach the new host.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>PTR: Pointer</term>
+
+          <listitem>
+            <para>This record contains a textual name. These records are
+              bound to names built in a special way from numerical IP
+              addresses, and are used to provide a reverse mapping
+              from an IP address to a textual name. This is described
+              in more detail in <xref linkend="chap-dns-bg-reverse" />.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>NS: Name Server</term>
+
+          <listitem>
+            <para>This record type is used to
+              <firstterm>delegate</firstterm> a sub-tree of the Domain
+              Name space to another nameserver. The record contains
+              the FQDN of a DNS nameserver with information on the
+              sub-domain, and is bound to the name of the
+              sub-domain. In this manner, the hierarchical structure
+              of the DNS is established. Delegation is described in
+              more detail in <xref linkend="chap-dns-bg-delegation" />.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>MX: Mail eXchange</term>
+
+	  <listitem>
+            <para>This record contains the FQDN for a host that will
+              accept SMTP electronic mail for the named domain,
+              together with a priority value used to select an MX host
+              when relaying mail. It is used to indicate other servers
+              that are willing to receive and spool mail for the
+              domain if the primary MX is unreachable for a time. It
+              is also used to direct email to a central server, if
+              desired, rather than to each and every individual
+              workstation.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>HINFO: Host Information</term>
+
+          <listitem>
+            <para>Contains two strings, intended for use to describe the
+              host hardware and operating system platform. There are
+              defined strings to use for some systems, but their use
+              is not enforced. Some sites, because of security
+              considerations, do not publicise this information.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>TXT: Text</term>
+
+          <listitem>
+            <para>A free-form text field, sometimes used as a comment
+              field, sometimes overlaid with site-specific additional
+              meaning to be interpreted by local conventions.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>SOA: Start of Authority</term>
+
+          <listitem>
+            <para>This record is required to appear for each zone file. It
+              lists the primary nameserver and the email address of
+              the person responsible for the domain, together with
+              default values for a number of fields associated with
+              maintaining consistency across multiple servers and
+              caching of the results of DNS queries.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </sect2>
+
+    <sect2 id="chap-dns-bg-delegation">
+      <title>Delegation</title>
+
+      <para>Using NS records, authority for portions of the DNS namespace
+        below a certain point in the tree can be delegated, and
+        further sub-parts below that delegated again. It is at this
+        point that the distinction between a domain and a zone becomes
+        important. Any name in the DNS is called a domain, and the
+        term applies to that name and to any subordinate names below
+        that one in the tree. The boundaries of a zone are narrower,
+        and are defined by delegations. A zone starts with a
+        delegation (or at the root), and encompasses all names in the
+        domain below that point, excluding names below any subsequent
+        delegations.</para>
+
+      <para>This distinction is important for implementation - a zone is a
+        single administrative entity (with a single SOA record), and
+        all data for the zone is referred to by a single file, called
+        a <firstterm>zone file</firstterm>. A zone file may contain
+        more than one period-separated level of the namespace tree, if
+        desired, by including periods in the names in that zone
+        file. In order to simplify administration and prevent
+        overly-large zone files, it is quite legal for a DNS server to
+        delegate to itself, splitting the domain into several zones
+        kept on the same server.</para>
+    </sect2>
+
+    <sect2 id="chap-dns-bg-multidelegation">
+      <title>Delegation to multiple servers</title>
+
+      <para>For redundancy, it is common (and often administratively
+        required) that there be more than one nameserver providing
+        information on a zone. It is also common that at least one of
+        these servers be located at some distance (in terms of network
+        topology) from the others, so that knowledge of that zone does
+        not become unavailable in case of connectivity failure. Each
+        nameserver will be listed in an NS record bound to the name of
+        the zone, stored in the parent zone on the server responsible
+        for the parent domain. In this way, those searching the name
+        hierarchy from the top down can contact any one of the servers
+        to continue narrowing their search. This is occasionally
+        called <firstterm>walking the tree</firstterm>.</para>
+
+      <para>There are a number of nameservers on the Internet which are
+        called <firstterm>root nameservers</firstterm>. These servers
+        provide information on the very top levels of the domain
+        namespace tree. These servers are special in that their
+        addresses must be pre-configured into nameservers as a place
+        to start finding other servers. Isolated networks that cannot
+        access these servers may need to provide their own root
+        nameservers.</para>
+    </sect2>
+
+    <sect2 id="chap-dns-bg-soa">
+      <title>Secondaries, Caching, and the SOA record</title>
+
+      <para>In order to maintain consistency between these servers, one is
+        usually configured as the <firstterm>primary</firstterm>
+        server, and all administrative changes are made on this
+        server. The other servers are configured as
+        <firstterm>secondaries</firstterm>, and transfer the contents
+        of the zone from the primary. This operational model is not
+        required, and if external considerations require it, multiple
+        primaries can be used instead, but consistency must then be
+        maintained by other means. DNS servers that store Resource
+        Records for a zone, whether they be primary or secondary
+        servers, are said to be <firstterm>authoritative</firstterm>
+        for the zone. A DNS server can be authoritative for several
+        zones.</para>
+
+      <para>When nameservers receive responses to queries, they can
+        <firstterm>cache</firstterm> the results. This has a
+        significant beneficial impact on the speed of queries, the
+        query load on high-level nameservers, and network
+        utilisation. It is also a major contributor to the memory
+        usage of the nameserver process.</para>
+
+      <para>There are a number of parameters that are important to
+        maintaining consistency amongst the secondaries and
+        caches. The values for these parameters for a particular
+        domain zone file are stored in the SOA record. These fields
+        are:</para>
+
+      <variablelist>
+        <title>Fields of the SOA Record</title>
+
+	<varlistentry>
+          <term>Serial</term>
+
+          <listitem>
+            <para>A serial number for the zone file. This should be
+              incremented any time the data in the domain is changed.
+              When a secondary wants to check if its data is
+              up-to-date, it checks the serial number on the primary's
+              SOA record.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Refresh</term>
+
+          <listitem>
+            <para>A time, in seconds, specifying how often the secondary
+              should check the serial number on the primary, and start
+              a new transfer if the primary has newer data.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Retry</term>
+
+          <listitem>
+            <para>If a secondary fails to connect to the primary when the
+              refresh time has elapsed (for example, if the host is
+              down), this value specifies, in seconds, how often the
+              connection should be retried.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Expire</term>
+
+          <listitem>
+            <para>If the retries fail to reach the primary within this
+              number of seconds, the secondary destroys its copies
+              of the zone data file(s), and stops answering requests
+              for the domain. This stops very old and potentially
+              inaccurate data from remaining in circulation.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>TTL</term>
+
+          <listitem>
+            <para>This field specifies a time, in seconds, that the
+              resource records in this zone should remain valid in
+              the caches of other nameservers. If the data is
+              volatile, this value should be short. TTL is a
+              commonly-used acronym, that stands for "Time To Live".</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </sect2>
+
+    <sect2 id="chap-dns-bg-resolution">
+      <title>Name Resolution</title>
+
+      <para>DNS clients are configured with the addresses of DNS
+        servers. Usually, these are servers which are authoritative
+        for the domain of which they are a member. All requests for
+        name resolution start with a request to one of these local
+        servers. DNS queries can be of two forms:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>A <firstterm>recursive</firstterm> query asks the
+            nameserver to resolve a name completely, and return the
+            result. If the request cannot be satisfied directly, the
+            nameserver looks in its configuration and caches for a
+            server higher up the domain tree which may have more
+            information. In the worst case, this will be a list of
+            pre-configured servers for the root domain.  These
+            addresses are returned in a response called a
+            <firstterm>referral</firstterm>. The local nameserver must
+            then send its request to one of these servers.</para>
+        </listitem>
+
+        <listitem>
+          <para>Normally, this will be an <firstterm>iterative</firstterm>
+            query, which asks the second nameserver to either respond
+            with an authoritative reply, or with the addresses of
+            nameservers (NS records) listed in its tables or caches as
+            authoritative for the relevant zone. The local nameserver
+            then makes iterative queries, walking the tree downwards
+            until an authoritative answer is found (either positive or
+            negative) and returned to the client.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>In some configurations, such as when firewalls prevent direct
+        IP communications between DNS clients and external
+        nameservers, or when a site is connected to the rest of the
+        world via a slow link, a nameserver can be configured with
+        information about a <firstterm>forwarder</firstterm>. This is
+        an external nameserver to which the local nameserver should
+        make requests as a client would, asking the external
+        nameserver to perform the full recursive name lookup, and
+        return the result in a single query (which can then be
+        cached), rather than reply with referrals.</para>
+    </sect2>
+
+    <sect2 id="chap-dns-bg-reverse">
+      <title>Reverse Resolution</title>
+
+      <para>The DNS provides resolution from a textual name to a resource
+        record, such as an A record with an IP address. It does not
+        provide a means, other than exhaustive search, to match in the
+        opposite direction; there is no mechanism to ask which name is
+        bound to a particular RR.</para>
+
+      <para>For many RR types, this is of no real consequence, however it
+        is often useful to identify by name the host which owns a
+        particular IP address. Rather than complicate the design and
+        implementation of the DNS database engine by providing
+        matching functions in both directions, the DNS utilises the
+        existing mechanisms and creates a special namespace, populated
+        with PTR records, for IP address to name resolution. Resolving
+        in this manner is often called <firstterm>reverse
+        resolution</firstterm>, despite the inaccurate implications of
+        the term.</para>
+
+      <para>The manner in which this is achieved is as follows:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>A normal domain name is reserved and defined to be for the
+            purpose of mapping IP addresses. The domain name used is
+            "in-addr.arpa." which shows the historical origins of the
+            Internet in the US Government's Defence Advanced Research
+            Projects Agency's funding program.</para>
+        </listitem>
+
+        <listitem>
+          <para>This domain is then subdivided and delegated according to
+            the structure of IP addresses. IP addresses are often
+            written in <firstterm>decimal dotted quad
+            notation</firstterm>, where each octet of the 4-octet long
+            address is written in decimal, separated by dots. IP
+            address ranges are usually delegated with more and more of
+            the left-most parts of the address in common as the
+            delegation gets smaller. Thus, to allow delegation of the
+            reverse lookup domain to be done easily, this is turned
+            around when used with the hierarchical DNS namespace,
+            which places higher level domains on the right of the
+            name.</para>
+        </listitem>
+
+        <listitem>
+          <para>Each byte of the IP address is written, as an ASCII text
+            representation of the number expressed in decimal, with
+            the octets in reverse order, separated by dots and
+            appended with the in-addr.arpa. domain name. For example,
+            to determine the hostname of a network device with IP
+            address 11.22.33.44, this algorithm would produce the
+            string "44.33.22.11.in-addr.arpa." which is a legal,
+            structured Domain Name. A normal nameservice query would
+            then be sent to the nameserver asking for a PTR record
+            bound to the generated name.</para>
+        </listitem>
+
+        <listitem>
+          <para>The PTR record, if found, will contain the FQDN
+	    of a host.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>One consequence of this is that it is possible for mismatch to
+        occur. Resolving a name into an A record, and then resolving
+        the name built from the address in that A record to a PTR
+        record, may not result in a PTR record which contains the
+        original name. There is no restriction within the DNS that the
+        "reverse" mapping must coincide with the "forward"
+        mapping. This is a useful feature in some circumstances,
+        particularly when it is required that more than one name has
+        an A record bound to it which contains the same IP address.</para>
+
+      <para>While there is no such restriction within the DNS, some
+        application server programs or network libraries will reject
+        connections from hosts that do not satisfy the following test:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>the state information included with an incoming connection
+            includes the IP address of the source of the request.</para>
+        </listitem>
+
+        <listitem>
+          <para>a PTR lookup is done to obtain an FQDN of the host making
+            the connection</para>
+        </listitem>
+
+        <listitem>
+          <para>an A lookup is then done on the returned name, and the
+            connection rejected if the source IP address is not listed
+            amongst the A records that get returned.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>This is done as a security precaution, to help detect and
+        prevent malicious sites impersonating other sites by
+        configuring their own PTR records to return the names of hosts
+        belonging to another organisation.</para>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-dns-files">
+    <title>The DNS Files</title>
+
+    <para>Now let's look at actually setting up a small DNS enabled
+      network. We will continue to use the examples mentioned in
+      <xref linkend="chap-net-practice" />, i.e. we assume that:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Our IP networking is working correctly</para>
+      </listitem>
+
+      <listitem>
+        <para>We have IPNAT working correctly</para>
+      </listitem>
+
+      <listitem>
+        <para>Currently all hosts use the ISP for DNS</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Our Name Server will be the <quote>strider</quote> host which
+      also runs IPNAT, and our two clients use "strider" as a gateway.
+      It is not really relevant as to what type of interface is on
+      "strider", but for argument's sake we will say a 56k dial up
+      connection.</para>
+
+    <para>So, before going any further, let's look at our
+      <filename>/etc/hosts</filename> file on
+      "strider" before we have made the alterations to use DNS.</para>
+
+    <example id="chap-dns-files-hosts-example">
+      <title>strider's <filename>/etc/hosts</filename> file</title>
+
+      <programlisting>127.0.0.1       localhost
+192.168.1.1     strider
+192.168.1.2     samwise sam
+192.168.1.3     wormtongue worm</programlisting>
+    </example>
+
+    <para>This is not exactly a huge network, but it is worth noting
+      that the same rules apply for larger networks as we discuss in
+      the context of this section.</para>
+
+    <para>The other assumption we want to make is that the domain we want
+      to set up is <literal>diverge.org</literal>, and that the domain
+      is only known on our internal network, and not worldwide. Proper
+      registration of the nameserver's IP address as primary would be
+      needed in addition to a static IP. These are mostly
+      administrative issues which are left out here.</para>
+
+    <para>The &os; operating system provides a set of config files for you
+      to use for setting up DNS. They are stored in the
+      <filename>/etc/namedb</filename> directory, I strongly suggest
+      making a backup copy of this directory for reference
+      purposes.</para>
+
+    <para>The default directory contains the following files:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><filename>named.conf</filename></para>
+      </listitem>
+
+      <listitem>
+        <para><filename>localhost </filename></para>
+      </listitem>
+
+      <listitem>
+        <para><filename>127</filename></para>
+      </listitem>
+
+      <listitem>
+        <para><filename>loopback.v6</filename></para>
+      </listitem>
+
+      <listitem>
+        <para><filename>root.cache</filename></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>You will see modified versions of these files in this
+      section.</para>
+
+    <note>
+      <para>The examples in this chapter refer to <acronym>BIND</acronym>
+        major version 8, however, it should be noted that format of
+        the name database and other config files are almost 100%
+        compatible between version. The only difference I noticed was
+        that the <quote>$TTL</quote> information was not
+        required.</para>
+    </note>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-dns-files-named-conf">
+      <title><filename>/etc/namedb/named.conf</filename></title>
+
+      <para>The first file we want to look at is
+	<filename>/etc/namedb/named.conf</filename>. This file is the
+	config file for <application>bind</application> (hence the
+	catchy name). Setting up system like the one we are doing is
+	relatively simple.  First, here is what mine looks like:</para>
+
+      <programlisting>options {
+        directory "/etc/namedb";
+        allow-transfer { 192.168.1.0/24; };
+        allow-query { 192.168.1.0/24; };
+        listen-on port 53 { 192.168.1.1; };
+};
+
+zone "localhost" {
+   type master;
+   notify no;
+   file "localhost";
+};
+
+zone "127.IN-ADDR.ARPA" {
+   type master;
+   notify no;
+   file "127";
+};
+
+zone "0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.int" {
+   type master;
+   file "loopback.v6";
+};
+
+zone "diverge.org" {
+   type master;
+   notify no;
+   file "diverge.org";
+};
+
+zone "1.168.192.in-addr.arpa" {
+   type master;
+   notify no;
+   file "1.168.192";
+};
+
+zone "." in {
+   type hint;
+   file "root.cache";
+};</programlisting>
+
+      <para>Note that in my <filename>named.conf</filename> the root (".")
+        section is last, that is because there is another domain
+        called diverge.org on the internet (I happen to own it) so I
+        want the resolver to look out on the internet last. This is
+        not normally the case on most systems.</para>
+
+      <para>Another very important thing to remember here is that if you
+        have an internal setup, in other words no live internet
+        connection and/or no need to do root server lookups, comment
+        out the root (".") zone. It may cause lookup problems if a
+        particular client decides it wants to reference a domain on
+        the internet, which our server couldn't resolve itself.</para>
+
+      <para>Looks like a pretty big mess, upon closer examination it is
+        revealed that many of the lines in each section are somewhat
+        redundant. So we should only have to explain them a few
+	times.</para>
+
+      <para>Lets go through the sections of
+        <filename>named.conf</filename>:</para>
+
+      <sect3 id="chap-dns-files-named-conf-options">
+        <title>options</title>
+
+        <para>This section defines some global parameters, most noticeable
+          is the location of the DNS tables, on this particular
+          system, they will be put in
+          <filename>/etc/namedb</filename> as indicated by the
+          "directory" option.</para>
+
+        <para>Following are the rest of the params:</para>
+
+        <variablelist>
+          <varlistentry>
+            <term>allow-transfer</term>
+
+            <listitem>
+              <para>This option lists which remote DNS servers acting
+                as secondaries are allowed to do zone transfers,
+                i.e. are allowed to read all DNS data at once. For
+                privacy reasons, this should be restricted to
+                secondary DNS servers only. </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>allow-query</term>
+
+            <listitem>
+              <para>This option defines hosts from what network may
+                query this name server at all. Restricting queries
+                only to the local network (192.168.1.0/24) prevents
+                queries arriving on the DNS server's external
+                interface, and prevent possible privacy issues.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>listen-on port</term>
+
+            <listitem>
+              <para>This option defined the port and associated IP
+                addresses this server will run &man.named.8;
+	        on. Again, the "external" interface is not listened
+	        here, to prevent queries getting received from
+	        "outside".</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+
+        <para>The rest of the <filename>named.conf</filename> file
+	  consists of <quote>zone</quote>s. A zone is an area that can
+	  have items to resolve attached, e.g. a domain can have
+	  hostnames attached to resolve into IP addresses, and a
+	  reverse-zone can have IP addresses attached that get
+	  resolved back into hostnames.  Each zone has a file
+	  associated with it, and a table within that file for
+	  resolving that particular zone. As is readily apparent,
+	  their format in <filename>named.conf</filename> is
+	  strikingly similar, so I will highlight just one of their
+	  records:</para>
+      </sect3>
+
+      <sect3 id="chap-dns-files-named-conf-diverge-zone">
+        <title>zone <quote>diverge.org</quote></title>
+
+        <variablelist>
+          <varlistentry>
+            <term>type</term>
+
+            <listitem>
+              <para>The type of a zone is usually of type
+	        "master" in all cases except for the root zone
+	        <quote>.</quote> and for zones that a secondary
+	        (backup) service is provided - the type obviously is
+	        "secondary" in the latter case.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>notify</term>
+
+            <listitem>
+              <para>Do you want to send out notifications to
+	        secondaries when your zone changes? Obviously not in
+	        this setup, so this is set to "no".</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>file</term>
+
+            <listitem>
+              <para>This option sets the filename in our
+	        <filename>/etc/namedb</filename> directory
+	        where records about this particular zone may be
+	        found. For the "diverge.org" zone, the file
+	        <filename>/etc/namedb/diverge.org</filename> is used.</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </sect3>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-dns-files-localhost">
+      <title><filename>/etc/namedb/localhost</filename></title>
+
+      <para>For the most part, the zone files look quite similar, however,
+        each one does have some unique properties. Here is what the
+        <filename>localhost</filename> file looks like:</para>
+
+      <example id="chap-dns-files-localhost-example">
+        <title><filename>localhost</filename></title>
+
+        <programlisting> 1|$TTL    3600
+ 2|@              IN SOA  strider.diverge.org. root.diverge.org. (
+ 3|                        1       ; Serial
+ 4|                        8H      ; Refresh
+ 5|                        2H      ; Retry
+ 6|                        1W      ; Expire
+ 7|                        1D)     ; Minimum TTL
+ 8|               IN NS   localhost.
+ 9|localhost.     IN      A       127.0.0.1
+10|               IN      AAAA    ::1</programlisting>
+      </example>
+
+      <para>Line by line:</para>
+
+      <variablelist>
+	<varlistentry>
+	  <term>Line 1:</term>
+
+	  <listitem>
+	    <para>This is the Time To Live for lookups, which defines
+	        how long other DNS servers will cache that value
+	        before discarding it. This value is generally
+	        the same in all the files.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Line 2:</term>
+
+          <listitem>
+            <para>This line is generally the same in all zone files except
+              <filename>root.cache</filename>.  It defines a so-called
+	      "Start Of Authority" (SOA) header, which contains some
+	      basic information about a zone. Of specific interest
+	      on this line are
+              "strider.diverge.org." and "root.diverge.org." (note the
+	      trailing dots!). Obviously one
+              is the name of this server and the other is the contact
+              for this DNS server, in most cases root seems a little
+              ambiguous, it is preferred that a regular email account
+              be used for the contact information, with the "@"
+	      replaced by a "." (for example, mine
+              would be "jrf.diverge.org.").</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Line 3:</term>
+
+          <listitem>
+            <para>This line is the serial number identifying the
+              "version" of the zone's data set (file).
+	      The serial number should be incremented
+              each time there is a change to the file, the usual forat
+              is to either start with a value of "1" and increase it
+              for every change, or use a value of "YYYYMMDDNN" to
+              encode year (YYYY), month (MM), day (DD) and change
+              within one day (NN) in the serial number.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Line 4:</term>
+
+          <listitem>
+            <para>This is the refresh rate of the server, in this file it is
+              set to once every 8 hours.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Line 5:</term>
+
+          <listitem>
+            <para>The retry rate.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Line 6:</term>
+
+          <listitem>
+            <para>Lookup expiry.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Line 7:</term>
+
+          <listitem>
+            <para>The minimum Time To Live.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Line 8:</term>
+
+          <listitem>
+            <para>This is the Nameserver line, which uses a "NS"
+              ressource record to show that "localhost" is the only
+              DNS server handing out data for this zone (which is "@", which
+              indicates the zone name used in the
+              <filename>named.conf</filename> file,
+              i.e. "diverge.org") is, well, "localhost".</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Line 9:</term>
+
+          <listitem>
+            <para>This is the localhost entry, which uses an "A"
+              ressource record to indicate that the name "localhost"
+              should be resolved into the IP-address 127.0.0.1 for
+              IPv4 queries (which specifically ask for the "A"
+              record).</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Line 10:</term>
+
+          <listitem>
+            <para>This line is the IPv6 entry, which returns ::1
+	      when someone asks for an IPv6-address (by specifically
+              asking for the AAAA record) of "localhost.".</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-dns-files-zone-loopback">
+      <title><filename>/etc/namedb/zone.127.0.0</filename></title>
+
+      <para>This is the reverse lookup file (or zone) to resolve the
+        special IP address 127.0.0.1 back to "localhost": </para>
+
+      <programlisting> 1| $TTL    3600
+ 2| @              IN SOA  strider.diverge.org. root.diverge.org. (
+ 3|                        1       ; Serial
+ 4|                        8H      ; Refresh
+ 5|                        2H      ; Retry
+ 6|                        1W      ; Expire
+ 7|                        1D)     ; Minimum TTL
+ 8|                 IN NS   localhost.
+ 9| 1.0.0           IN PTR  localhost.</programlisting>
+
+      <para>In this file, all of the lines are the same as the
+        localhost zonefile with exception of line 9, this is the
+        reverse lookup (PTR) record. The zone used here is "@" again,
+        which got set to the value given in
+        <filename>named.conf</filename>, i.e. "127.in-addr.arpa". This
+        is a special "domain" which is used to do reverse-lookup of IP
+        addresses back into hostnames. For it to work, the four bytes
+        of the IPv4 address are reserved, and the domain
+        "in-addr.arpa" attached, so to resolve the IP address
+        "127.0.0.1", the PTR record of "1.0.0.127.in-addr.arpa" is
+        queried, which is what is defined in that line.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-dns-files-zone-diverge">
+      <title><filename>/etc/namedb/diverge.org</filename></title>
+
+      <para>This zone file is populated by records for all of our
+        hosts. Here is what it looks like:</para>
+
+      <programlisting> 1| $TTL    3600
+ 2| @              IN SOA  strider.diverge.org. root.diverge.org. (
+ 3|                         1       ; serial
+ 4|                         8H      ; refresh
+ 5|                         2H      ; retry
+ 6|                         1W      ; expire
+ 7|                         1D )    ; minimum seconds
+ 8|                 IN NS   strider.diverge.org.
+ 9|                 IN MX   10 maila.diverge.org.   ; primary mail server
+10|                 IN MX   20 mailb.diverge.org.   ; secondary mail server
+11| strider         IN A     192.168.1.1
+12| maila           IN CNAME strider.diverge.org.
+13| samwise         IN A     192.168.1.2
+14| www             IN CNAME samwise.diverge.org.
+15| mailb           IN CNAME samwise.diverge.org.
+16| worm            IN A     192.168.1.3</programlisting>
+
+      <para>There is a lot of new stuff here, so lets just look over each
+        line that is new here:</para>
+
+      <variablelist>
+        <varlistentry>
+          <term>Line 9</term>
+
+          <listitem>
+            <para>This line shows our mail exchanger (MX), in this
+              case it is "strider", but for scaling reasons, we want
+              to call it "maila". The number that precedes
+              "maila.diverge.org." is the priority number, the lower
+              the number their higher the priority. The way we are
+              setup here is if "strider" cannot handle the mail, then
+              "mailb" (which is really "samwise") will.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Line 12</term>
+
+          <listitem>
+            <para>CNAME stands for canonical name, or an
+              alias for an existing hostname, which must have an A
+              record. So we have aliased the following:</para>
+
+            <literallayout>maila.diverge.org to strider.diverge.org
+mailb.diverge.org to samwise.diverge.org
+www.diverge.org   to samwise.diverge.org</literallayout>
+          </listitem>
+	</varlistentry>
+      </variablelist>
+
+      <para>The rest of the records are simply mappings of IP address to a
+        full name (A records).</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-dns-files-zone-reverse">
+      <title><filename>/etc/namedb/1.168.192</filename></title>
+
+      <para>This zone file is the reverse file for all of the host
+        records, to map their IP numbers we use on our private network
+        back into hostnames. The format is similar to that of the
+        "localhost" version with the obvious exception being the
+        addresses are different via the different zone given in the
+        <filename>named.conf</filename> file,
+        i.e. "0.168.192.in-addr.arpa"  here:</para>
+
+      <programlisting> 1|$TTL    3600
+ 2|@              IN SOA  strider.diverge.org. root.diverge.org. (
+ 3|                     1       ; serial
+ 4|                     8H      ; refresh
+ 5|                     2H      ; retry
+ 6|                     1W      ; expire
+ 7|                     1D )    ; minimum seconds
+ 8|               IN NS   strider.diverge.org.
+ 9|1              IN PTR  strider.diverge.org.
+10|2              IN PTR  samwise.diverge.org.
+11|3              IN PTR  worm.diverge.org.</programlisting>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-dns-files-zone-cache">
+      <title><filename>/etc/namedb/root.cache</filename></title>
+
+      <para>This file contains a list of root name servers for your
+        server to query when it gets requests outside of its own
+        domain that it cannot answer itself. Here are
+        first few lines of a root zone file:</para>
+
+      <programlisting>;
+;       This file holds the information on root name servers needed to
+;       initialize cache of Internet domain name servers
+;       (e.g. reference this file in the "cache  .  &lt;file&gt;"
+;       configuration file of BIND domain name servers).
+;
+;       This file is made available by InterNIC
+;       under anonymous FTP as
+;           file                /domain/db.cache
+;           on server           FTP.INTERNIC.NET
+;       -OR-                    RS.INTERNIC.NET
+;
+;       last update:    Jan 29, 2004
+;       related version of root zone:   2004012900
+;
+;
+; formerly NS.INTERNIC.NET
+;
+.                        3600000  IN  NS    A.ROOT-SERVERS.NET.
+A.ROOT-SERVERS.NET.      3600000      A     198.41.0.4
+;
+; formerly NS1.ISI.EDU
+;
+.                        3600000      NS    B.ROOT-SERVERS.NET.
+B.ROOT-SERVERS.NET.      3600000      A     192.228.79.201
+;
+; formerly C.PSI.NET
+;
+.                        3600000      NS    C.ROOT-SERVERS.NET.
+C.ROOT-SERVERS.NET.      3600000      A     192.33.4.12
+;
+...</programlisting>
+
+      <para>This file can be obtained from ISC at <ulink
+        url="http://www.isc.org/"></ulink> and
+        usually comes with a distribution of BIND. A
+        <filename>root.cache</filename> file is included in the &os;
+        operating system's "etc" set.</para>
+
+      <para>This section has described the most important files and settings
+        for a DNS server. Please see the BIND documentation in
+        <filename>/usr/src/dist/bind/doc/bog</filename> and
+        &man.named.conf.5; for more information.</para>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-dns-using-dns">
+    <title>Using DNS</title>
+
+    <para>In this section we will look at how to get DNS going and setup
+      "strider" to use its own DNS services.</para>
+
+    <para>Setting up named to start automatically is quite simple.
+      In <filename>/etc/rc.conf</filename> simply set
+      <varname>named=yes</varname>. Additional
+      options can be specified in <varname>named_flags</varname>, for
+      example, I like to use <literal>-g nogroup -u nobody</literal>,
+      so a non-root account runs the "named" process.</para>
+
+    <para>In addition to being able to startup "named" at boot time,
+      it can also be controlled with the <command>ndc</command>
+      command. In a nutshell the <command>ndc</command> command
+      can stop, start or restart the named server process. It can also
+      do a great many other things. Before use, it has to be setup to
+      communicate with the "named" process, see the &man.ndc.8; and
+      &man.named.conf.5; man pages for more details on setting up
+      communication channels between "ndc" and the "named"
+      process.</para>
+
+    <para>Next we want to point "strider" to
+      itself for lookups. We have two simple steps, first, decide on
+      our resolution order. On a network this small, it is likely that
+      each host has a copy of the hosts table, so we can get away with
+      using <filename>/etc/hosts</filename> first, and then
+      DNS. However, on larger networks it is much
+      easier to use DNS. Either way, the file where order of
+      name services used for resolution is determined
+      is <filename>/etc/nsswitch.conf</filename>
+      (see <xref linkend="ex-nsswitch" />).  Here is part of a
+      typical <filename>nsswitch.conf</filename>:</para>
+
+    <programlisting>. . .
+group_compat:   nis
+hosts:          files dns
+netgroup:       files [notfound=return] nis
+. . .</programlisting>
+
+    <para>The line we are interested in is the "hosts" line. "files"
+      means the system uses the <filename>/etc/hosts</filename> file
+      first to determine ip to name translation, and if it can't find
+      an entry, it will try DNS.</para>
+
+    <para>The next file to look at is
+      <filename>/etc/resolv.conf</filename>, which is used to
+      configure DNS lookups ("resolution") on the client side. The
+      format is pretty self explanatory but we will go over it
+      anyway:</para>
+
+    <programlisting>domain diverge.org
+search diverge.org
+nameserver 192.168.1.1</programlisting>
+
+    <para>In a nutshell this file is telling the resolver that this machine
+      belongs to the "diverge.org" domain, which means that lookups
+      that contain only a hostname without a "." gets this domain
+      appended to build a FQDN. If that lookup doesn't succeed, the
+      domains in the "search" line are tried next. Finally, the
+      "nameserver" line gives the IP addresses of one or more DNS
+      servers that should be used to resolve DNS queries. </para>
+
+    <para>To test our nameserver we can use several commands, for
+      example:</para>
+
+    <screen>&rprompt; <userinput>host sam</userinput>
+sam.diverge.org has address 192.168/1.2</screen>
+
+    <para>As can be seen, the domain was appended automatically here,
+      using the value from <filename>/etc/resolv.conf</filename>. Here
+      is another example, the output of running <command>host
+      www.yahoo.com</command>:</para>
+
+    <screen>&uprompt; <userinput>host www.yahoo.com</userinput>
+www.yahoo.com is an alias for www.yahoo.akadns.net.
+www.yahoo.akadns.net has address 68.142.226.38
+www.yahoo.akadns.net has address 68.142.226.39
+www.yahoo.akadns.net has address 68.142.226.46
+www.yahoo.akadns.net has address 68.142.226.50
+www.yahoo.akadns.net has address 68.142.226.51
+www.yahoo.akadns.net has address 68.142.226.54
+www.yahoo.akadns.net has address 68.142.226.55
+www.yahoo.akadns.net has address 68.142.226.32</screen>
+
+    <para>Other commands for debugging DNS besides &man.host.1; are
+      &man.nslookup.8; and &man.dig.1;. Note that &man.ping.8; is
+      <emphasis>not</emphasis> useful for debugging DNS, as it will
+      use whatever is configured in
+      <filename>/etc/nsswitch.conf</filename> to do the name-lookup.</para>
+
+    <para>At this point the server is configured properly.
+      The procedure for setting up the client hosts are are easier,
+      you only need to setup <filename>/etc/nsswitch.conf</filename>
+      and <filename>/etc/resolv.conf</filename> to the same values as
+      on the server. </para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-dns-dnscache">
+    <title>Setting up a caching only name server</title>
+
+    <para>A caching only name server has no local zones; all the
+      queries it receives are forwarded to the root servers and the
+      replies are accumulated in the local cache.  The next time the
+      query is performed the answer will be faster because the data is
+      already in the server's cache.  Since this type of server
+      doesn't handle local zones, to resolve the names of the local
+      hosts it will still be necessary to use the already known
+      <filename>/etc/hosts</filename> file.</para>
+
+    <para>Since &os; supplies defaults for all the files needed by a
+      caching only server, it only needs to be enabled and started and
+      is immediately ready for use! To enable named, put
+      <varname>named=yes</varname> into
+      <filename>/etc/rc.conf</filename>, and tell the system to use it
+      adding the following line to the
+      <filename>/etc/resolv.conf</filename> file:</para>
+
+    <screen>&rprompt; <userinput>cat /etc/resolv.conf</userinput>
+nameserver 127.0.0.1</screen>
+
+    <para>Now we can start named:</para>
+
+    <screen>&rprompt; <userinput>sh /etc/rc.d/named restart</userinput></screen>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-dns-dnscache-testing-server">
+      <title>Testing the server</title>
+
+      <para>Now that the server is running we can test it using the
+	&man.nslookup.8; program:</para>
+
+      <screen>&uprompt; <userinput>nslookup</userinput>
+Default server: localhost
+Address: 127.0.0.1
+
+&gt;</screen>
+
+      <para>Let's try to resolve a host name, for example
+	"www.NetBSD.org":</para>
+
+      <screen>&gt; <userinput>www.NetBSD.org</userinput>
+Server:  localhost
+Address:  127.0.0.1
+
+Name:    www.NetBSD.org
+Address:  204.152.190.12</screen>
+
+      <para>If you repeat the query a second time, the result is
+	slightly different:</para>
+
+      <screen>&gt; <userinput>www.NetBSD.org</userinput>
+Server:  localhost
+Address:  127.0.0.1
+
+Non-authoritative answer:
+Name:    www.NetBSD.org
+Address:  204.152.190.12</screen>
+
+      <para>As you've probably noticed, the address is the same, but the
+	message <quote>Non-authoritative answer</quote> has appeared.
+	This message indicates that the answer is not coming from an
+	authoritative server for the domain NetBSD.org but from the
+	cache of our own server.</para>
+
+      <para>The results of this first test confirm that the server is
+	working correctly.</para>
+
+      <para>We can also try the &man.host.1; and &man.dig.1; commands,
+	which give the following result.</para>
+
+      <screen>&uprompt; <userinput>host www.NetBSD.org</userinput>
+www.NetBSD.org has address 204.152.190.12
+&uprompt;
+&uprompt; <userinput>dig www.NetBSD.org</userinput>
+
+; <<>> DiG 8.3 <<>> www.NetBSD.org
+;; res options: init recurs defnam dnsrch
+;; got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 19409
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 5, ADDITIONAL: 0
+;; QUERY SECTION:
+;;      www.NetBSD.org, type = A, class = IN
+
+;; ANSWER SECTION:
+www.NetBSD.org.         23h32m54s IN A  204.152.190.12
+
+;; AUTHORITY SECTION:
+NetBSD.org.             23h32m54s IN NS  uucp-gw-1.pa.dec.com.
+NetBSD.org.             23h32m54s IN NS  uucp-gw-2.pa.dec.com.
+NetBSD.org.             23h32m54s IN NS  ns.NetBSD.org.
+NetBSD.org.             23h32m54s IN NS  adns1.berkeley.edu.
+NetBSD.org.             23h32m54s IN NS  adns2.berkeley.edu.
+
+;; Total query time: 14 msec
+;; FROM: miyu to SERVER: 127.0.0.1
+;; WHEN: Thu Nov 25 22:59:36 2004
+;; MSG SIZE  sent: 32  rcvd: 175 </screen>
+
+      <para>As you can see &man.dig.1; gives quite a bit of output, the
+        expected answer can be found in the "ANSWER SECTION". The
+        other data given may be of interest when debugging DNS
+        problems.</para>
+    </sect2>
+  </sect1>
+</chapter>

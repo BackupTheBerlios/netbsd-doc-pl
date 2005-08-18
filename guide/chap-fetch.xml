@@ -1,0 +1,542 @@
+<!-- $NetBSD: chap-fetch.xml,v 1.12 2005/08/12 16:57:29 rpaulo Exp $ -->
+
+<chapter id="chap-fetch">
+
+  <title>Obtaining the sources</title>
+
+  <para>To read the &os; sources from your local disk or to build
+    the system or parts of it, you need to download the &os;
+    sources. This chapter explains how to get the &os; source using
+    a number of different ways, although the prefered one is to
+    get the tarballs and then update via &man.cvs.1;.</para>
+
+  <sect1 id="chap-fetch-dirs">
+    <title>Preparing directories</title>
+
+    <para>Kernel and userland sources are usually placed in
+      <filename>/usr/src</filename>. This directory is not present by
+      default in the &os; installation and you will need to create it
+      first. As it is in a system directory, you will need root access
+      to create the directory and make sure  your normal user account
+      can write to it. For demonstration purposes, it is assumed that
+      your non-root login is <quote>&myuser;</quote>:</para>
+
+    <screen>&cprompt; <userinput>su</userinput>
+Password: <userinput>*****</userinput>
+&rprompt; <userinput>mkdir /usr/src</userinput>
+&rprompt; <userinput>chown &myuser; /usr/src</userinput></screen>
+
+    <para>If you want to use pkgsrc (which is most likely), you can
+      prepare <filename>/usr/pkgsrc</filename> at the same time:</para>
+
+    <screen>&rprompt; <userinput>mkdir /usr/pkgsrc</userinput>
+&rprompt; <userinput>chown &myuser; /usr/pkgsrc</userinput></screen>
+
+    <para>Also, if you want X11R6 sources, you can prepare
+      <filename>/usr/xsrc</filename>:</para>
+
+    <screen>&rprompt; <userinput>mkdir /usr/xsrc</userinput>
+&rprompt; <userinput>chown &myuser; /usr/xsrc</userinput></screen>
+
+    <para>Please note that for the subsequent
+      steps, root access is neither needed nor recommended, so this
+      preparation step should be done first. All CVS operations can
+      (and should) be done as normal user and you don't need root
+      privileges any more:</para>
+
+    <screen>&rprompt; <userinput>exit</userinput>
+&cprompt; </screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-fetch-term">
+    <title>Terminology</title>
+
+    <para><emphasis role="bold">Before starting to fetch or download
+      the required files, you may want to know the definitions of
+      <quote>Formal releases</quote>, <quote>Maintenance branches</quote>
+      and other related terms</emphasis>. That information is available
+      under the <ulink
+	url="http://www.NetBSD.org/Releases/release-map.html">NetBSD release glossary and graphs</ulink>.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-fetch-tarball">
+    <title>Downloading tarballs</title>
+
+    <para>It's sometimes faster to download a tarball and then continue
+      updating with &man.cvs.1;.
+      You can download tarballs (see &man.tar.1;) from ftp.NetBSD.org
+      (or any other mirror) for a number of releases or
+      branches.</para>
+
+    <para>The only drawback is that the tarballs are updated less
+      often. Normally, every three days.</para>
+
+    <para>Also, please note that these tarballs include the
+      <filename>CVS</filename> directories, so you can download them
+      and then update your source tree using &man.cvs.1;, as explained
+      in the CVS section.</para>
+
+    <sect2 id="chap-fetch-tarball-netbsd-release">
+      <title>Downloading a &os; release</title>
+
+      <para>The tarball files for a specific release are available
+	under
+	<filename>/pub/NetBSD/NetBSD-<replaceable>RELEASE-NUMBER</replaceable>/source/sets/</filename>
+	on ftp.NetBSD.org (or a mirror), where 
+	<replaceable>RELEASE-NUMBER</replaceable> is the release 
+	you want to fetch (for example, 2.0.2).</para>
+
+      <para>To fetch a &os; release using tarballs (make sure you have
+	enough hard disk space under <filename>/tmp</filename>),
+	simply do:</para>
+
+      <screen>&cprompt; <userinput>cd /tmp</userinput>
+&cprompt; <userinput>ftp -i ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-2.0.2/source/sets/</userinput>
+Trying 2001:4f8:4:7:2e0:81ff:fe21:6563...
+Connected to ftp.NetBSD.org.
+220 ftp.NetBSD.org FTP server (NetBSD-ftpd 20040809) ready.
+331 Guest login ok, type your name as password.
+[...]
+250 CWD command successful.
+250 CWD command successful.
+250 CWD command successful.
+ftp> <userinput>mget *.tgz</userinput>
+local: gnusrc.tgz remote: gnusrc.tgz
+229 Entering Extended Passive Mode (|||58302|)
+150 Opening BINARY mode data connection for 'gnusrc.tgz' (79233899 bytes).
+[...]
+ftp> <userinput>quit</userinput>
+221-
+    Data traffic for this session was 232797304 bytes in 5 files.
+    Total traffic for this session was 232803039 bytes in 6 transfers.
+221 Thank you for using the FTP service on ftp.NetBSD.org.</screen>
+
+      <para>You should now have 5 files:</para>
+      <screen>&cprompt; <userinput>ls *.tgz</userinput>
+gnusrc.tgz      sharesrc.tgz    src.tgz         syssrc.tgz      xsrc.tgz</screen>
+      <para>You now must extract them all to
+	<filename>/</filename>:</para>
+      <screen>&cprompt; <userinput>foreach file (*.tgz)</userinput>
+?   <userinput>tar -xzf $file -C /</userinput>
+? <userinput>end</userinput></screen>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-fetch-tarball-netbsd-stable">
+      <title>Downloading snapshots from a &os stable branch</title>
+
+      <screen>&cprompt; <userinput>ftp -i ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-release-2-0/tar_files/src/</userinput>
+Trying 2001:4f8:4:7:2e0:81ff:fe21:6563...
+Connected to ftp.NetBSD.org.
+220 ftp.NetBSD.org FTP server (NetBSD-ftpd 20040809) ready.
+331 Guest login ok, type your name as password.
+[...]
+250 CWD command successful.
+250 CWD command successful.
+250 CWD command successful.
+250 CWD command successful.
+ftp> <userinput>mget *.tar.gz</userinput>
+local: bin.tar.gz remote: bin.tar.gz
+229 Entering Extended Passive Mode (|||56011|)
+150 Opening BINARY mode data connection for 'bin.tar.gz' (914202 bytes).
+[...]
+ftp> <userinput>quit</userinput>
+221-
+    Data traffic for this session was 149221420 bytes in 22 files.
+    Total traffic for this session was 149231539 bytes in 23 transfers.
+221 Thank you for using the FTP service on ftp.NetBSD.org.</screen>
+
+      <para>You should now have 22 files:</para>
+      <screen>&cprompt; <userinput>ls *.tar.gz</userinput>
+bin.tar.gz          doc.tar.gz          libexec.tar.gz      tools.tar.gz
+config.tar.gz       etc.tar.gz          regress.tar.gz      top-level.tar.gz
+contrib.tar.gz      games.tar.gz        rescue.tar.gz       usr.bin.tar.gz
+crypto.tar.gz       gnu.tar.gz          sbin.tar.gz         usr.sbin.tar.gz
+dist.tar.gz         include.tar.gz      share.tar.gz
+distrib.tar.gz      lib.tar.gz          sys.tar.gz</screen>
+
+      <para>You now must extract them all to
+	<filename>/usr</filename>:</para>
+      <screen>&cprompt; <userinput>foreach file (*.tar.gz)</userinput>
+?   <userinput>tar -xzf $file -C /usr</userinput>
+? <userinput>end</userinput></screen>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-fetch-tarball-netbsd-current">
+      <title>Downloading the &os;-current development branch</title>
+
+      <para>To download the &os;-current tarballs, located under
+	<filename>/pub/NetBSD/NetBSD-current/tar_files/src</filename>,
+	just follow the same steps as in the previous section, but
+	now on a different directory.</para>
+
+      <para>You may also want to fetch the X11R6 source, available under:
+	<filename>/pub/NetBSD/NetBSD-current/tar_files/xsrc</filename>.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-fetch-tarball-pkgsrc-stable">
+      <title>Downloading a pkgsrc-200xQy stable branch</title>
+
+      <para>Pkgsrc (<quote>package source</quote>) is the &os; packages
+	collection which can be used to easily install and deinstall
+	software on your &os; system.  See <xref linkend="chap-pack"/> for
+	more information.</para>
+
+      <para>You should follow the stable branch, unless you're
+	developing new package or adding a new feature.</para>
+
+      <para>To download a pkgsrc stable tarball, run:</para>
+
+      <screen>&cprompt; <userinput>cd /tmp</userinput>
+&cprompt; <userinput>ftp ftp://ftp.NetBSD.org/pub/pkgsrc/200xQy/pkgsrc-200xQy.tar.gz</userinput></screen>
+      <para>Where <replaceable>&lt;pkgsrc-200xQy&gt;</replaceable> is the
+	stable branch to be downloaded, for example, 
+	<quote>pkgsrc-2004Q1</quote> or 
+	<quote>pkgsrc-2005Q2</quote>.</para>
+
+      <para>Then, extract it with:</para>
+      <screen>&cprompt; <userinput>tar -xzf pkgsrc-200xQy.tar.gz -C /usr</userinput></screen>
+
+      <para>This will create the directory <filename>pkgsrc</filename> in your
+	<filename>/usr</filename> (if not already created) and all the
+	package source will be stored under
+	<filename>/usr/pkgsrc</filename>.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-fetch-tarball-pkgsrc-current">
+      <title>Downloading the pkgsrc-current development branch</title>
+
+      <para>To download pkgsrc-current, run:</para>
+
+      <screen>&cprompt; <userinput>ftp ftp://ftp.NetBSD.org/pub/pkgsrc/current/pkgsrc.tar.gz</userinput></screen>
+
+      <para>Then extract it with:</para>
+
+      <screen>&cprompt; <userinput>tar -xzf pkgsrc.tar.gz -C /usr</userinput></screen>
+
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-fetch-cvs">
+    <title>Fetching by CVS</title>
+
+    <para><acronym>CVS</acronym> (Concurrent Versions System) can be used
+      to fetch the &os; source tree or to keep the &os; source
+      tree up to date with respect to changes made to the &os;
+      sources.  There are three trees maintained for which you can use
+      CVS to obtain them or keep them up to date:</para>
+
+    <para>The list of currently maintained branches is available under
+      <filename role="cvsweb">src/doc/BRANCHES</filename> (see the
+      <quote>Status</quote> entry on <quote>Release branches</quote>
+      section).</para>
+
+<!-- XXX Seems like 'cvs -zX' is buggy and has a performance impact on the
+ cvs server. Please don't uncomment this section without discussing it.
+
+    <para><acronym>CVS</acronym> is usually quite fast for fetching
+      sources if you have decent internet connectivity. However, in a
+      case you are using a modem, you may wish to compress data for
+      the update. In that case use the <option>-z</option> option. For
+      example:</para>
+    
+    <screen>&cprompt; <userinput>cvs -z3 checkout ...</userinput></screen>
+    
+    <para>or</para>
+    
+    <screen>&cprompt; <userinput>cvs -z3 update ...</userinput></screen>
+
+    <para>The 3 is the level of compression, you can use any number
+      between 1 and 9 where 1 is the fastest compression method and
+      9 the best but slowest compression method. Keep in mind that
+      this will put extra load on the CVS server!</para>
+-->
+
+    <para><acronym>CVS</acronym> also supports several connection
+      methods. If you want to use the <quote>external</quote> method
+      (only available with &man.ssh.1;) you should do:</para>
+
+    <screen>&cprompt; <userinput>setenv CVS_RSH ssh</userinput>
+&cprompt; <userinput>setenv CVSROOT :ext:anoncvs@anoncvs.NetBSD.org:/cvsroot</userinput></screen>
+
+    <para>Otherwise, if you want to use the <quote>pserver</quote>
+      method:</para>
+    <screen>&cprompt; <userinput>unsetenv CVS_RSH</userinput>
+&cprompt; <userinput>setenv CVSROOT :pserver:anoncvs@anoncvs.NetBSD.org:/cvsroot</userinput></screen>
+
+    <para>We'll also use the <option>-P</option> option in the examples
+      below since it's used to prune empty directories.</para>
+
+    <!-- ........................................................... -->
+    
+    <sect2 id="chap-fetch-get-cvs">
+      <title>Getting CVS</title>
+
+      <para>The CVS program (<ulink url="http://www.CVShome.org/"/>)
+	is part of &os;. If you have an old release which didn't come
+	with CVS, you can install it either by using
+	<command>pkg_add</command>, or building from pkgsrc.</para>
+
+	<para>To install via <command>pkg_add</command>, just do:</para>
+
+      <screen>&cprompt; <userinput>pkg_add ftp://ftp.NetBSD.org/pub/NetBSD/packages/<replaceable>OS Ver</replaceable>/<replaceable>arch</replaceable>/All/cvs</userinput></screen>
+
+      <para>where <replaceable>OS Ver</replaceable> and 
+	<replaceable>arch</replaceable> can be obtained by
+	running.</para>
+
+      <screen>&cprompt; <userinput>sysctl kern.osrelease hw.machine_arch</userinput></screen>
+
+	<para>Otherwise, if you want to build &man.cvs.1; from pkgsrc,
+	  (assuming you already <link
+	    linkend="chap-fetch-tarball-pkgsrc-stable">fetched a stable pkgsrc branch</link> 
+	  or <link
+	    linkend="chap-fetch-tarball-pkgsrc-current">pkgsrc-current</link>) 
+	  you would do:</para>
+
+	<screen>&cprompt; <userinput>cd /usr/pkgsrc/devel/cvs</userinput>
+&cprompt; <userinput>make install</userinput></screen>
+
+    </sect2>
+
+    <!-- ============================================================= -->
+
+    <sect2 id="chap-fetch-cvs-netbsd-release">
+      <title>Fetching a &os; release</title>
+
+      <para>A release is a set of particular versions of source files,
+        and once released does not change over time.</para>
+      
+      <para>To get the &os; (kernel and userland) sources from a
+        specific release, run the following command after the
+	preparations done above:</para>
+
+      <screen>&cprompt; <userinput>cd /usr</userinput>
+&cprompt; <userinput>cvs checkout -r <replaceable>&lt;BRANCH&gt;</replaceable> -P src</userinput></screen>
+
+      <para>Where <replaceable>&lt;BRANCH&gt;</replaceable> is the
+	release branch to be checked out, for example, 
+	<quote>netbsd-2-0-RELEASE</quote>,
+	<quote>netbsd-2-1-RELEASE</quote> or
+	<quote>netbsd-3-0-RELEASE</quote>. If you want to
+	fetch a different patchlevel, you would use
+	<quote>netbsd-2-0-1-RELEASE</quote> or
+	<quote>netbsd-2-0-2-RELEASE</quote>.</para>
+
+      <para>For example, in order to fetch
+	<quote>netbsd-2-0-RELEASE</quote> you would use:</para>
+
+	<screen>&cprompt; <userinput>cvs checkout -r netbsd-2-0-RELEASE -P src</userinput></screen>
+
+      <para>To fetch the X11R6 source, just <quote>checkout</quote> the
+	  <quote>xsrc</quote> module. For example:</para>
+
+      <screen>&cprompt; <userinput>cvs checkout -r netbsd-2-0-RELEASE -P xsrc</userinput></screen>
+
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-fetch-cvs-netbsd-stable">
+      <title>Fetching a &os; stable branch</title>
+
+      <para>&os; stable branches are also called <quote>Maintenance
+	  branches</quote>. Please consult the 
+	<xref linkend="chap-fetch-term"/>.</para>
+
+      <para>If you want to follow a stable branch, just pass the
+	branch name to the &man.cvs.1; <option>-r</option>
+	option.</para>
+
+      <para>For example, if you want to fetch the most recent version of
+	<quote>netbsd-2</quote>, you just need to use that tag:</para>
+
+      <screen>&cprompt; <userinput>cd /usr</userinput>
+&cprompt; <userinput>cvs checkout -r netbsd-2 -P src</userinput></screen>
+
+      <para>And for the <quote>xsrc</quote> module:</para>
+      <screen>&cprompt; <userinput>cvs checkout -r netbsd-2 -P xsrc</userinput></screen>
+
+      <para>If you have checked out sources from a stable branch in
+	<filename>/usr/src</filename> and want
+	to update them to get the latest security-fixes and bug-fixes,
+	run:</para>
+      
+      <screen>&cprompt; <userinput>cd /usr/src</userinput>
+&cprompt; <userinput>cvs update -Pd</userinput></screen>
+
+      <para>The same applies to the <quote>xsrc</quote> module, but in
+	that case you'll have to change your working directory to
+	<filename>/usr/xsrc</filename> first.</para> 
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-fetch-cvs-netbsd-current">
+      <title>Fetching the &os;-current development branch</title>
+
+      <para>To obtain the &os;-current source just omit
+	<quote><option>-r</option> <replaceable>BRANCH</replaceable></quote>
+	and replace it by <quote><option>-A</option></quote>:</para>
+      
+      <screen>&cprompt; <userinput>cd /usr</userinput>
+&cprompt; <userinput>cvs checkout -A -P src</userinput></screen>
+
+      <para>The <quote>xsrc</quote> is also available:</para>
+
+      <screen>&cprompt; <userinput>cd /usr</userinput>
+&cprompt; <userinput>cvs checkout -A -P xsrc</userinput></screen>
+
+      <para>To update your &os;-current source tree, add the 
+	<option>-A</option> flag:
+	<screen>&cprompt; <userinput>cd /usr/src</userinput>
+&cprompt; <userinput>cvs update -A -Pd</userinput></screen></para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-fetch-cvs-pkgsrc-stable">
+      <title>Fetching a pkgsrc-200xQy stable branch</title>
+
+      <para>Pkgsrc (<quote>package source</quote>) is the &os; packages
+	collection which can be used to easily install and deinstall
+	software on your &os; system.  See <xref linkend="chap-pack"/> for
+	more information.</para>
+
+      <para>Stable pkgsrc branches are created every quarter, hence
+	the naming <quote>&lt;year&gt;-Q&lt;quarter&gt;</quote>. You should
+	follow the stable branch, unless you're developing new package
+	or adding a new feature.</para>
+
+      <para>To know the pkgsrc branches for the current year,
+	run:</para>
+
+      <screen>&cprompt; <userinput>cd /usr/pkgsrc</userinput>
+&cprompt; <userinput>cvs log Makefile | grep pkgsrc-`date +%Y`Q.:</userinput>
+        pkgsrc-2005Q2: 1.73.0.2
+        pkgsrc-2005Q1: 1.67.0.2</screen>
+
+      <para>Given this example, you should choose
+	<quote>pkgsrc-2005Q2</quote> since older branches are no
+	longer maintained.</para>
+
+      <para>To fetch a specific pkgsrc stable branch from scratch into
+	<filename>/usr/pkgsrc</filename>, run:</para>
+      
+      <screen>&cprompt; <userinput>cd /usr</userinput>
+&cprompt; <userinput>cvs checkout -r &lt;pkgsrc-200xQy&gt; -P pkgsrc</userinput></screen>
+      <para>Where <replaceable>&lt;pkgsrc-200xQy&gt;</replaceable> is the
+	stable branch to be checked out, for example, 
+	<quote>pkgsrc-2004Q1</quote> or 
+	<quote>pkgsrc-2005Q2</quote>.</para>
+
+      <para>This will create the directory <filename>pkgsrc</filename> in your
+	<filename>/usr</filename> (if not already created by
+	preparation steps above) and all the package source will be
+	stored under <filename>/usr/pkgsrc</filename>.</para>
+      
+      <para>To update pkgsrc just do:</para>
+      
+      <screen>&cprompt; <userinput>cd /usr/pkgsrc</userinput>
+&cprompt; <userinput>cvs update -Pd</userinput></screen>
+
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-fetch-cvs-pkgsrc-current">
+      <title>Fetching the pkgsrc-current development branch</title>
+
+      <para>To obtain pkgsrc-current, run:</para>
+      
+      <screen>&cprompt; <userinput>cd /usr</userinput>
+&cprompt; <userinput>cvs checkout -A -P pkgsrc</userinput></screen>
+
+      <para>To update pkgsrc-current just replace
+	<option>-r..</option> with <option>-A</option>:</para>
+      
+      <screen>&cprompt; <userinput>cd /usr/pkgsrc</userinput>
+&cprompt; <userinput>cvs update -A -Pd</userinput></screen>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-fetch-cvs-cvsrc">
+      <title>Saving some &man.cvs.1; options</title>
+
+      <para>If you find yourself typing some options to cvs over and over
+	again, you can as well put them into a file
+	<filename>.cvsrc</filename> in your home directory.  The
+	following example is taken from my
+	<filename>$HOME/.cvsrc</filename>, it is useful for just typing
+	<command>cvs update</command> on a directory with a branch
+	checked out to update it (adding <option>-A</option> would revert
+	the branch to
+	the -current branch, which is not what I usually want!), I
+	prefer unified diffs, transfers should do some compression and
+	<quote>cvs update</quote> should be mostly quiet:</para>
+      
+      <example id="chap-fetch-cvs-cvsrc-example">
+	<title><filename>.cvsrc</filename></title>
+	
+      <programlisting>#update -dPA
+update  -dP
+rdiff   -u
+diff    -u
+cvs     -q</programlisting>
+      </example>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-fetch-source-cd">
+    <title>Sources on CD (ISO)</title>
+
+    <para>If you prefer to download (and maybe burn) a CD-ROM image
+      with the &os; source, just fetch
+      <filename>sourcecd.iso</filename> from ftp.NetBSD.org or any
+      other mirror.</para>
+
+    <para>The <filename>sourcecd.iso</filename> file is located under
+      /pub/NetBSD/iso/<replaceable>RELEASE</replaceable>, where 
+      <replaceable>RELEASE</replaceable> is a &os; release available
+      under ISO9660 format (for example, 1.6.2, 2.0 or 2.0.2)</para>
+
+    <para>The next step is to burn the ISO image or mount it with the
+      help of &man.vnconfig.8;. Please see <xref linkend="chap-rmmedia"/>
+      as it explains in detail how to do it.</para>
+
+    <para>Assuming you have mounted the CD under
+      <filename>/mnt</filename>, <filename>/mnt/source/sets</filename>
+      should have everything you need to extract:</para>
+
+    <screen>&cprompt; <userinput>ls /mnt/source/sets</userinput>
+BSDSUM          MD5             gnusrc.tgz      src.tgz         xsrc.tgz
+CKSUM           SYSVSUM         sharesrc.tgz    syssrc.tgz</screen>
+
+    <para>All tarballs should be extracted to the root file system
+      (<filename>/</filename>). The following command will do it:</para>
+
+    <screen>&cprompt; <userinput>foreach file (*.tgz)</userinput>
+? <userinput>  tar -xzf $file -C /</userinput>
+? <userinput>end</userinput></screen>
+
+    <para>After that, you should have <filename>/usr/src</filename>
+      and <filename>/usr/xsrc</filename> populated with the &os;
+      sources.</para>
+  </sect1>
+</chapter>

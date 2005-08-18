@@ -1,0 +1,313 @@
+<!-- $NetBSD: ap-contrib.xml,v 1.16 2004/12/14 03:02:14 minskim Exp $ -->
+
+<appendix id="ap-contrib">
+  <title>Rozwijanie podrêcznika &os;</title>
+  
+  <para>Dla &os; istnieje interesuj±ca dokumentacja wprowadzaj±ca, jak i 
+    zaawansowana:
+    Jest to najprawdopodobniej potwierdzenie wzrastaj±cej popularno¶ci tego
+    systemu operacyjnego i rosn±cego grona uzytkowników.
+    Dlatego te¿ wa¿ne jest to by wci±¿ dodawaæ nowy materia³ do podrêcznika i 
+    ulepszaæ ju¿ istniej±ce dokonania.</para>
+
+  <para>Niezale¿nie jaki jest Twój poziom wiedzy o &os;, mo¿esz mieæ swój wk³ad 
+    w rozwijanie tego podrêcznika. Ten dodatek wyja¶nia jak mo¿esz przyczyniæ 
+    siê do rozwoju podrêcznika &os; i co powiniene¶ wiedzieæ nim 
+    rozopczniesz</para>
+
+  <para>Je¿eli jeste¶ pocz±tkuj±cym i znalaz³e¶ w tym podrêczniku co¶ 
+    pomocnego, wy¶lij proszê swoje komentarze i sugestie do 
+    <email>www@NetBSD.org</email>. Dla przyk³adu, je¿eli próbowa³e¶ czego¶ 
+    opisanego tutaj i nie dzia³a³o to u Ciebie, lub je¶li uwa¿asz, ¿e co¶ nie 
+    jest do¶æ jasno wyt³umaczone, lub je¶li masz pomys³ na nowy rozdzia³ etc: 
+    taki odzew jest bardzo u¿yteczny.</para>
+			  
+  <para>Je¿eli jeste¶ ¶rednim, lub zaawansowanym u¿ytkownikiem, proszê rozwa¿ 
+    swój udzia³ w tworzeniu nowego materia³u dla podrêcznika: mo¿esz napisaæ 
+    nowy rozdzia³ lub ulepszyæ ju¿ istniej±cy.</para>
+
+  <para>Je¿eli masz trochê wolnego czasu, mo¿esz przet³umaczyæ podrêcznik na 
+    inny jêzyk.</para>
+	
+  <para>Cokolwiek wybierzesz do  zrobienia, nie zaczynaj bez uprzedniego
+    kontaktowania siê z namii, po to by zapobiec dublowaniu wysi³ków.</para>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="ap-contrib-translating">
+    <title>T³umaczenie podrêcznika</title>
+
+    <para>Je¿eli chcesz przet³umaczyæ podrêcznik to pierwsz± rzecz± któr± zrób
+      to, jak ju¿ zosta³o powiedziane, skontaktuj siê z 
+      <email>www@NetBSD.org</email>, lub napisz na listê dyskusyjn± 
+      <email>netbsd-docs@NetBSD.org</email>. Jest kilka mo¿liwych 
+      scenariuszy:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>kto¶ inny aktualnie pracuje nad t³umaczeniem na Twój jêzyk;
+	  najprawdopodobniej mo¿esz mu pomóc.</para>
+      </listitem>
+
+      <listitem>
+        <para>nikt aktualnie nie pracuje nad t³umaczeniem na Twój jêzyk,
+          ale niektóre rozdzia³y zosta³y ju¿ przet³umaczone, a Ty
+          mo¿esz przet³umaczyæ pozosta³e.</para>
+      </listitem>
+
+      <listitem>
+        <para>rozpoczynasz nowe t³umaczenie. Oczywi¶cie, nie musisz
+          t³umaczyæ ca³ego podrêcznika: to wielki wysi³ek, ale je¶li zaczniesz
+	  t³umaczyc jeden, lub dwa rozdzia³y, bêdzie to dobry punkt startu dla
+	  kogo¶ innego.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Nawet je¶li t³umaczenie jest ju¿ dostêpne, zawsze niezbêdne jest
+      pozostawanie na bie¿±co w stosunku do wzorcowej wersji, gdy dodawany 
+      jest nowy materia³, lub gdy czynione s± poprawki: mo¿esz byæ opiekunem 
+      t³umaczenia.</para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="ap-contrib-translating-what-you-need">
+      <title>Co potrzebujesz by rozpocz±æ t³umaczenie</title>
+      
+      <para>Krótko, wszystko czego potrzebujesz to :</para>
+      
+      <itemizedlist>
+	<listitem>
+          <para>¼ród³a podrêcznika. Jest on czê¶ci± <quote>htdocs</quote>,
+	    mo¿esz go pobraæ poprzez (anonimowy) CVS, tak jak by¶ pobiera³
+            <quote>src</quote> lub <quote>pkgsrc</quote>. Jak to zrobiæ 
+    	    opisane jest to w <xref linkend="chap-fetch" />.</para>
+	</listitem>
+
+	<listitem>
+	  <para>edytor tekstu, taki jak <application>vi</application> lub
+	  <application>emacs</application>.</para>
+	</listitem>
+      </itemizedlist>
+
+      <important>
+  	<para>nie rozpoczynaj pracy w HTML'u, lub w innym formacie:
+	  bêdzie trudno przet³umaczyæ Twoj± pracê na SGML/DocBook,
+	  który to format jest u¿ywany przez podrêcznik &os;</para>
+      </important>
+
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="ap-contrib-translating-writing-docbook">
+      <title>Pisanie w SGML/DocBook</title>
+
+      <para>W przypadku t³umaczenia podrêcznika nie musisz
+	<emphasis>umieæ</emphasis> SGML/DocBook; zdob±d¼ ¼ród³a SGML/DocBook i 
+	pracuj bezpo¶rednio na nich, u¿ywaj±c istniej±cego formatu
+	(np. znaczników) w swojej pracy. Dla przyk³adu, by przet³umaczyæ 
+	poprzedni± notê, powiniene¶:</para>
+
+      <procedure>
+	<step>
+	  <para>Wyedytowaæ angielskie ¼ród³a bie¿±cego rozdzia³u,
+	    <filename>ap-contrib.xml</filename>, w Twoim edytorze.</para>
+	</step>
+        <step>
+          <para>
+	    znale¼æ tekst poprzedniej noty.
+	    Powiniene¶ widzieæ co¶ takiego:</para>
+
+          <programlisting>&lt;important&gt;
+  &lt;para&gt;
+    Don't start working with HTML or other formats:
+    it will be very difficult to convert you work
+    to XML/DocBook, the format used by the &os;
+    guide.
+  &lt;/para&gt;
+  &lt;/important&gt;</programlisting>
+
+        </step>
+
+        <step>
+	  <para>dodaj swoje t³umaczenie pomiêdzy znaczniki, pod orginaln± 
+	    wersj±.
+	    Nowy tekst powinien wygl±daæ tak:</para>
+          <programlisting>&lt;imporant&gt;
+  &lt;para&gt;
+    Don't start working with HTML or other formats:
+    it will be very difficult to convert you work
+    to XML/DocBook, the format used by the &os;
+    guide.
+    <emphasis>Tu Twoje t³umaczenie</emphasis>
+    <emphasis>Tu Twoje t³umaczenie</emphasis>
+    <emphasis>Tu Twoje t³umaczenie</emphasis>
+  &lt;/para&gt;
+  &lt;/important&gt;</programlisting>
+        </step>
+
+        <step>
+	  <para>skasuj cztery linie angielskiego tekstu pomiêdzy 
+	    <emphasis>znacznikami</emphasis> pozostawiaj±c sowje t³umaczenie.
+	  </para>
+
+          <programlisting>&lt;important&gt;
+  &lt;para&gt;
+    <emphasis>Tu Twoje t³umaczenie</emphasis>
+    <emphasis>Tu Twoje t³umaczenie</emphasis>
+    <emphasis>Tu Twoje t³umaczenie</emphasis>
+  &lt;/para&gt;
+  &lt;/important&gt;</programlisting>
+        </step>
+      </procedure>
+
+      <para>Gdy piszesz t³umaczenie u¿ywaj proszê tego samego stylu
+	wciêæ i formatowania jaki ma tekst oryginalny.
+        Zobacz dla przyk³adu <xref linkend="ap-contrib-xmltemplate" />.</para>
+
+      <para>Problem z którym najprawdopodobniej spotkasz siê
+	przy pisaniu tekstów DocBook to problem znaków narodowych
+        (np. litery z akcentem jak <quote>&egrave;</quote>).
+	Mo¿esz uzywaæ tych znaków w swoim dokumencie ¼ród³owym, ale
+	preferowane jest zast±pienie ich <firstterm>jednostkami</firstterm>
+	SGML.
+	Dla przyk³adu, <quote>&egrave;</quote> zapisane zostanie jako
+	<quote>&amp;egrave;</quote>.
+	Oczywi¶cie powoduje to Twoje ¼ród³a tekstu trudniejszymi
+	do pisania i odczytywania; pierwszy problem, zapisywanie, mo¿e
+	zostaæ rozwi±zany przez u¿ywanie dobrego edytora z mo¿liwo¶ci±			tworzenia makr.									<application>Vi</application> i
+	<application>emacs</application>, które s± bardzo popularne
+	posiadaj± ten dodatek. Mo¿esz zmapowaæ akcentowane
+	klawisze klawiatury do automatycznego tworzenia wymaganych
+	jednostek.
+	Dla przyk³adu, dla vi mo¿esz wstawiæ liniê tak± jak nastêpuj±ca
+	do swojego pliku <filename>.exrc</filename></para>
+
+      <programlisting>map! &egrave; &amp;egrave;</programlisting>
+
+      <para><xref linkend="ap-xml" /> wyja¶nia jak zainstalowaæ programy
+	narzêdziowe do generowania HTML'a i innych formatów ze
+	¼róde³ DocBook.
+	Jest to u¿yteczne je¶li chcesz sprawdziæ swoj± pracê
+	(np. upewniæ siê, ¿e nie usun±³e¶ niechc±cy niektórych znaczników)
+	lub obejrzeæ wyniki. Nie jest to niezbêdne dla t³umaczenia.
+	Je¿eli nie chcesz instalowaæ programów narzêdziowych, prze¶lij mi
+	¼ród³a, a ja sprawdzê je i przetworzê na ró¿ne formaty.</para>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="ap-contrib-sending-contributions">
+    <title>Nadsy³anie publikacji</title>
+    
+    <para>Je¿eli chcesz opublikowaæ jaki¶ materia³ w podrêczniku,
+      masz kilka mo¿liwo¶ci, zale¿nych od ilo¶ci tekstu jaki zamierzasz
+      napisaæ.
+      Je¶li chcesz wys³aæ tylko ma³± poprawkê, najprostszym sposobem by
+      wtr±ciæ j± do podrêcznika jest wys³anie jej do 
+      <email>www@NetBSD.org</email> przez e-mail.
+      Je¿eli planujesz napisanie znacznej ilo¶ci tekstu, jak sekcjê, lub
+      rozdzia³, mo¿esz wybieraæ pomiêdzy formatami:</para>
+    <itemizedlist>
+      <listitem>
+        <para>SGML/DocBook; jest to format preferowany.
+          Je¶li wybierzesz ten format, zaopatrz siê proszê w
+          ¼ród³a podrêcznika i u¿ywaj ich jako schematu dla
+          wciêæ i uk³adu tekstu, w porz±dku by utrzymaæ
+          spójno¶æ formatowania.</para>
+      </listitem>
+
+      <listitem>
+        <para>text; je¶li formatowanie jest proste, to nie jest
+	  trudno konwertowaæ tekst do formatu SGML.</para>
+      </listitem>
+
+      <listitem>
+        <para>inne formaty s± równie¿ dostêpne, je¶li naprawdê nie mo¿esz
+       	  u¿ywaæ ¿adnego z powy¿szych.</para>
+      </listitem>
+    </itemizedlist>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="ap-contrib-xmltemplate">
+    <title>XML/DocBook szablon</title>
+    <para>W podrêczniku u¿ywam stylu formatowania podobnego do programu.
+      Schemat jest nastêpuj±cy:</para>
+
+    <programlisting>&lt;chapter id="chap-xxxxx"&gt;
+  &lt;title&gt;<emphasis>To jest tytu³ rozdzia³u</emphasis>&lt;/title&gt;
+
+  &lt;para&gt;
+    <emphasis>To jest tekst paragrafu. To jest tekst paragrafu.</emphasis>
+    <emphasis>To jest tekst paragrafu. To jest tekst paragrafu..</emphasis>
+    <emphasis>To jest tekst paragrafu.</emphasis>
+  &lt;/para&gt;
+
+  &lt;!-- ============================================================= --&gt;
+
+  &lt;sect1&gt;
+    &lt;title&gt;<emphasis>To jest tytu³ sekcji 1</emphasis>&lt;/title&gt;
+
+    &lt;para&gt;
+      <emphasis>To jest tekst paragrafu. To jest tekst paragrafu.</emphasis>
+      <emphasis>To jest tekst paragrafu. To jest tekst paragrafu..</emphasis>
+      <emphasis>To jest tekst paragrafu.</emphasis>    
+    &lt;/para&gt;
+
+    &lt;!-- ........................................................... --&gt;
+
+    &lt;sect2&gt;
+      &lt;title&gt;<emphasis>To jest tytu³ sekcji 2</emphasis>&lt;/title&gt;
+
+      &lt;para&gt;
+	<emphasis>Sekcja 2 jest zagnie¿d¿ona wewn±trz sekcji 1.</emphasis>
+      &lt;/para&gt;
+    &lt;/sect2&gt;
+
+  &lt;/sect1&gt;
+
+  &lt;!-- ============================================================= --&gt;
+
+  &lt;sect1&gt;
+    &lt;title&gt;<emphasis>To jest tytu³ innej sekcji 1</emphasis>&lt;/title&gt;
+
+    &lt;para&gt;
+      <emphasis>Zwyk³a lista:</emphasis>
+      &lt;itemizedlist&gt;
+	&lt;listitem&gt;
+	  &lt;para&gt;
+	    <emphasis>tekst</emphasis>
+	  &lt;/para&gt;
+	&lt;/listitem&gt;
+	&lt;listitem&gt;
+	  &lt;para&gt;
+	    <emphasis>tekst</emphasis>
+	  &lt;/para&gt;
+	&lt;/listitem&gt;
+      &lt;/itemizedlist&gt;
+    &lt;/para&gt;
+
+  &lt;/sect1&gt;
+&lt;/chapter&gt;</programlisting>
+
+    <para>Warto¶ci domy¶lne to:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>dwie spacje na ka¿dy poziom wciêæ.</para>
+      </listitem>
+
+      <listitem>
+        <para>linie nie d³u¿sze ni¿ 72 znaki.</para>
+      </listitem>
+
+      <listitem>
+	      <para>u¿ywanie linii separuj±cych (komentarze) pomiêdzy 
+		sect1/sect2.</para>
+      </listitem>
+    </itemizedlist>
+  </sect1>
+</appendix>

@@ -1,0 +1,1472 @@
+<!-- $NetBSD: chap-rf.xml,v 1.34 2005/08/11 01:50:06 oster Exp $ -->
+
+<!-- I should have written this 2 years ago.  With the import of Vinum
+and recent enhancements to sysinst, this document may be depreciated
+before I finish it.  Hopefully it will be useful for the lifetime of
+NetBSD 2.0 ~BAS/lava -->
+
+<chapter id="chap-rf">
+  <title>NetBSD RAIDframe</title>
+
+  <sect1 id="chap-rf-intro">
+    <title>RAIDframe Introduction</title>
+
+    <sect2 id="chap-rf-intro-about">
+      <title>About RAIDframe</title>
+
+      <para>&os; uses the <ulink
+	  url="http://www.pdl.cmu.edu/RAIDframe/">CMU RAIDframe</ulink>
+	subsystem.  Although &os; is the primary platform for RAIDframe
+	development, RAIDframe can also be found in OpenBSD and FreeBSD. &os;
+	also has other in-kernel RAID systems called <ulink
+	  url="http://www.vinumvm.org/">Vinum</ulink> and <xref
+	  linkend="chap-ccd" />, but they will not be discussed here.  You
+	should possess some <ulink
+	  url="http://www.acnc.com/04_00.html">basic knowledge</ulink>
+	about RAID concepts and terminology before continuing.  You
+	should also be at least familiar with the different levels of
+	RAID - Adaptec provides an <ulink
+	  url="http://www.adaptec.com/worldwide/product/markeditorial.html?sess=no&amp;prodkey=quick_explanation_of_raid">
+	  excellent reference</ulink>, and the &man.raid.4; manpage
+	contains a short overview too.</para>
+    </sect2>
+
+    <sect2 id="chap-rf-intro-warning">
+      <title>A warning about Data Integrity, Backups, and High
+	Availability </title>
+
+      <para>Firstly, because RAIDframe is a Software RAID implementation,
+	as opposed to Hardware RAID, which needs special disk
+	controllers some of which are supported by &os; System
+	administrators should give a
+	great deal of consideration to its implementation in
+	<quote>Mission Critical</quote> applications. For such projects,
+	you might consider the use of many of the hardware RAID devices
+	<ulink url="http://www.NetBSD.org/Hardware/">supported by
+	  &os;</ulink>.  It is truly at your discretion what type of RAID
+	you use, but I recommend you consider factors such as:
+	manageability, commercial vendor support, load-balancing and
+	failover, etc.</para>
+
+      <para>Secondly, depending on the RAID level used, RAIDframe does
+	provide redundancy in the event of a hardware failure.  However,
+	it is <emphasis>not</emphasis> a replacement for reliable backups!
+	Software and user-error can still cause data loss.  RAIDframe may
+	be used as a mechanism for facilitating backups in systems without
+	backup hardware.  Finally, with regard  to "high availability",
+	RAID is only a very small component to ensuring data
+	availability.</para>
+
+      <para>Once more for good measure: <emphasis>Back up your
+	  data!</emphasis></para>
+    </sect2>
+
+    <sect2 id="chap-rf-intro-gettingHelp">
+      <title>Getting Help</title>
+
+      <para>If you encounter problems using RAIDframe, you have several
+	options for obtaining help. </para>
+
+      <procedure>
+        <step>
+	  <para>Read the RAIDframe man pages: &man.raid.4 and
+	    &man.raidctl.8 thoroughly.  </para>
+	</step>
+
+        <step>
+	  <para>Search the mailing list archives.  Unfortunately,
+	    there is no &os; list dedicated to RAIDframe support.
+	    Depending on the nature of the problem, posts tend to end up in
+	    a variety of lists.  At a very minimum, search <ulink
+	      url="http://mail-index.NetBSD.org/netbsd-help/">netbsd-help@NetBSD.org</ulink>,
+	    <ulink
+	      url="http://mail-index.NetBSD.org/netbsd-users/">netbsd-users@NetBSD.org</ulink>,
+	    <ulink
+	      url="http://mail-index.NetBSD.org/current-users/">current-users@NetBSD.org</ulink>.
+	    Also search the list for the &os; platform on which you are
+	    using RAIDframe:
+	    port-<replaceable>${ARCH}</replaceable>@NetBSD.org.</para>
+
+	  <caution>
+	    <para>Because RAIDframe is constantly undergoing
+	      development, some information in mailing list archives has the
+	      potential of being dated and inaccurate.</para>
+	  </caution>
+        </step>
+
+        <step>
+	  <para>Search the <ulink
+	      url="http://www.NetBSD.org/Misc/send-pr.html">Problem Report
+	      database</ulink>.</para>
+	</step>
+
+        <step>
+	  <para>If your problem persists: Post to the mailing list
+	    most appropriate (judgment call).  Collect as much verbosely
+	    detailed information as possible before posting: Include your
+	    &man.dmesg.8 output from <filename>
+	      /var/run/dmesg.boot</filename>, your kernel &man.config.8 , your
+	    <filename>/etc/raid[0-9].conf</filename>, any relevant errors on
+	    <filename>/dev/console</filename>,
+	    <filename>/var/log/messages</filename>, or to
+	    <filename>stdout/stderr</filename> of &man.raidctl.8 .  Also
+	    include details on the troubleshooting steps you've taken thus
+	    far, exactly when the problem started, and any notes on recent
+	    changes that may have prompted the problem to develop.  Remember
+	    to be patient when waiting for a response.</para>
+	</step>
+      </procedure>
+    </sect2>
+  </sect1>
+
+  <sect1 id="chap-rf-initsetup">
+    <title>Setup RAIDframe Support</title>
+
+    <para>The use of RAID will require software and hardware
+      configuration changes.</para>
+
+    <sect2 id="chap-rf-init-kern">
+      <title>Kernel Support</title>
+
+      <para>Next we need to make sure we have RAID support in the
+	kernel, which is the case for the GENERIC kernel. If you have
+	already built a custom kernel for your environment, the kernel
+	configuration must have the following options:</para>
+
+      <programlisting>pseudo-device   raid            8       # RAIDframe disk driver
+options         RAID_AUTOCONFIG         # auto-configuration of RAID components</programlisting>
+
+      <para>The RAID support must be detected by the &os; kernel, which
+	can be checked by looking at the output of the &man.dmesg.8
+	command.</para>
+
+      <screen>&rprompt; <command>dmesg|grep -i raid</command>
+Kernelized RAIDframe activated</screen>
+
+      <para>Historically, the kernel must also contain static mappings between bus
+	addresses and device nodes in <filename>/dev</filename>. This
+	used to 
+	ensure consistency of devices within RAID sets in the event of a
+	device failure after reboot.  Since &os; 1.6, however, using
+	the auto-configuration features of RAIDframe has been
+	recommended over statically mapping devices.  The
+	auto-configuration features allow drives to move around on the
+	system, and RAIDframe will automatically determine which
+	components belong to which RAID sets.</para>
+
+
+    </sect2>
+
+    <sect2 id="chap-rf-init-powercache">
+      <title>Power Redundancy and Disk Caching</title>
+
+      <para>If your system has an Uninterruptible Power Supply (UPS),
+	and/or if your system has redundant power supplies, you should
+	consider enabling the read and write caches on your drives.  On
+	systems with redundant power, this will improve drive performance.
+	On systems without redundant power, the write cache could endanger
+	the integrity of RAID data in the event of a power loss.</para>
+
+      <para>For drives on the SCSI bus, you can use &man.scsictl.8
+	utility:</para>
+
+      <screen>&rprompt; <command>scsictl /dev/<replaceable>rsd0{c,d}</replaceable> getcache</command>
+/dev/rsd0d: no caches enabled
+/dev/rsd0d: caching parameters are savable
+&rprompt; <command>scsictl /dev/<replaceable>rsd0{c,d}</replaceable> setcache rw save </command>
+&rprompt; <command>scsictl /dev/<replaceable>rsd0{c,d}</replaceable> getcache</command>
+/dev/rsd0d: read cache enabled
+/dev/rsd0d: write-back cache enabled
+/dev/rsd0d: caching parameters are savable</screen>
+
+      <para>For drives on non-SCSI buses (EIDE, SATA, USB, IEEE1394),
+	&man.atactl.8; may be available or a virtual SCSI bus may be
+	attached which should allow for access.</para>
+    </sect2>
+  </sect1>
+
+  <!-- Start beginning of tabbing audit here -->
+
+  <sect1 id="chap-rf-ex-raid1root">
+    <title>Example: RAID-1 Root Disk</title>
+
+    <para>This example explains how to setup RAID-1 root disk.  With
+      RAID-1 components are mirrored and therefore the server can be fully
+      functional in the event of a single component failure.  The goal is
+      to provide a level of redundancy that will allow the system  to
+      encounter a component failure on either component disk in the RAID
+      and:</para>
+
+    <itemizedlist>
+      <listitem>
+	<para>Continue normal operations until a maintenance
+	  window can be scheduled.</para>
+      </listitem>
+
+      <listitem>
+	<para>Or, in the unlikely event that the component
+	  failure causes a system reboot, be able to quickly reconfigure the
+	  system to boot from the remaining component (platform dependant).
+	</para>
+      </listitem>
+     </itemizedlist>
+
+    <figure id="RL1-DLD">
+      <title>RAID-1 Disk Logical Layout</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/rf-raidL1-diskdia.eps" format="EPS" />
+        </imageobject>
+
+        <imageobject>
+          <imagedata fileref="&imagesdir;/rf-raidL1-diskdia.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Because RAID-1 provides both redundancy and performance
+      improvements, its most practical application is on critical
+      "system" partitions such as <filename>/</filename>,
+      <filename>/usr</filename>, <filename>/var</filename>,
+      <filename>swap</filename>, etc., where read operations are more
+      frequent than write operations.  For other file systems, such as
+      <filename>/home</filename> or
+      <filename>/var/<replaceable>{application}</replaceable></filename>,
+      other RAID levels might be considered (see the references above).
+      If one were simply creating a generic RAID-1 volume for a non-root
+      file system, the cookie-cutter examples from the man page could be
+      followed, but because the root volume must be bootable, certain
+      special steps must be taken during initial setup. </para>
+
+    <note>
+      <para>This example will outline a process that differs only
+        slightly between the i386 and sparc64 platforms.  In an attempt to
+        reduce excessive duplication of content, where differences do exist
+        and are cosmetic in nature, they will be pointed out using a section
+        such as this. If the process is drastically different, the process
+        will branch into separate, platform dependant steps.</para>
+
+      <para>A bug in NetBSD 1.6.2 renders RAID-1 booting on sparc64
+	unusable, see <ulink
+          url="http://mail-index.NetBSD.org/port-sparc64/2004/06/22/0001.html">this
+          message</ulink>. To use RAID-1 with full functionality on
+	sparc64, please use NetBSD 2.0.</para>
+    </note>
+
+    <sect2 id="chap-rf-ex-raid1root-PPO">
+      <title>Pseudo-Process Outline </title>
+
+      <para>Although a much more refined process could be developed
+	using a custom copy of &os; installed on custom-developed
+	removable media, presently the &os; install media lacks
+	RAIDframe tools and support, so the following pseudo process has
+	become the de facto standard for setting up RAID-1 Root.</para>
+
+      <procedure>
+	<step>
+	  <para>Install a stock &os; onto Disk0 of your system.</para>
+
+	  <figure id="R1R-PP0-1">
+	    <title>Perform generic install onto Disk0/wd0</title>
+
+	    <mediaobject>
+	      <imageobject>
+		<imagedata fileref="&imagesdir;/rf-r1r-pp1.eps" format="EPS" />
+	      </imageobject>
+
+	      <imageobject>
+		<imagedata fileref="&imagesdir;/rf-r1r-pp1.png" format="PNG" />
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+	</step>
+
+	<step>
+	  <para>Use the installed system on Disk0/wd0 to setup
+	    a RAID Set composed of Disk1/wd1 only.</para>
+
+	  <figure id="R1R-PP0-2">
+	    <title>Setup RAID Set</title>
+
+            <mediaobject>
+              <imageobject>
+                <imagedata fileref="&imagesdir;/rf-r1r-pp2.eps" format="EPS" />
+              </imageobject>
+
+              <imageobject>
+                <imagedata fileref="&imagesdir;/rf-r1r-pp2.png" format="PNG" />
+              </imageobject>
+            </mediaobject>
+	  </figure>
+	</step>
+
+	<step>
+	  <para>Reboot the system off the Disk1/wd1 with the newly
+	    created RAID volume. </para>
+
+	  <figure id="R1R-PP0-3">
+	    <title>Reboot using Disk1/wd1 of RAID</title>
+
+	    <mediaobject>
+	      <imageobject>
+		<imagedata fileref="&imagesdir;/rf-r1r-pp3.eps" format="EPS" />
+	      </imageobject>
+
+	      <imageobject>
+		<imagedata fileref="&imagesdir;/rf-r1r-pp3.png" format="PNG" />
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+	</step>
+
+	<step>
+	  <para>Add / re-sync Disk0/wd0 back into the RAID set.</para>
+
+          <figure id="R1R-PP0-4">
+	    <title>Mirror Disk1/wd1 back to Disk0/wd0</title>
+
+            <mediaobject>
+              <imageobject>
+                <imagedata fileref="&imagesdir;/rf-r1r-pp4.eps" format="EPS" />
+              </imageobject>
+
+              <imageobject>
+                <imagedata fileref="&imagesdir;/rf-r1r-pp4.png" format="PNG" />
+              </imageobject>
+            </mediaobject>
+          </figure>
+        </step>
+      </procedure>
+    </sect2>
+
+    <sect2 id="chap-rf-ex-raid1root-hardware">
+      <title>Hardware Review</title>
+
+      <para>At present, the i386 and sparc64 &os; platforms support
+	booting from RAID-1.  Booting is not supported from any other RAID
+	level.  Booting from a RAID set is accomplished by teaching the
+	1st stage boot loader to understand both 4.2BSD/FFS and RAID
+	partitions.  The 1st boot block code only needs to know enough
+	about the disk partitions and file systems to be able to read the
+	2nd stage boot blocks.  Therefore, at any time, the system's BIOS
+	/ firmware must be able to read a drive with 1st stage boot blocks
+	installed.  On the i386 platform, configuring this is entirely
+	dependant on the vendor of the controller card / host bus adapter
+	to which your disks are connected.  On sparc64 this is controlled
+	by the IEEE 1275 Sun OpenBoot Firmware.</para>
+
+      <para>This article assumes two identical
+	IDE disks (<devicename>/dev/wd<replaceable>{0,1}</replaceable></devicename>)
+	which we are going to mirror (RAID-1). These disks are identified
+	as:</para>
+
+      <screen>&rprompt; <command>grep ^wd /var/run/dmesg.boot</command>
+<![CDATA[wd0 at atabus0 drive 0: <WDC WD100BB-75CLB0>
+wd0: drive supports 16-sector PIO transfers, LBA addressing
+wd0: 9541 MB, 19386 cyl, 16 head, 63 sec, 512 bytes/sect x 19541088 sectors
+wd0: drive supports PIO mode 4, DMA mode 2, Ultra-DMA mode 5 (Ultra/100)
+wd0(piixide0:0:0): using PIO mode 4, Ultra-DMA mode 2 (Ultra/33) (using DMA data transfers)
+
+wd1 at atabus1 drive 0: <WDC WD100BB-75CLB0>
+wd1: drive supports 16-sector PIO transfers, LBA addressing
+wd1: 9541 MB, 19386 cyl, 16 head, 63 sec, 512 bytes/sect x 19541088 sectors
+wd1: drive supports PIO mode 4, DMA mode 2, Ultra-DMA mode 5 (Ultra/100)
+wd1(piixide0:1:0): using PIO mode 4, Ultra-DMA mode 2 (Ultra/33) (using DMA data transfers)]]></screen>
+
+      <note>
+	<para>If you are using SCSI, replace
+	  <filename>/dev/{,r}wd{0,1} </filename> with
+	  <filename>/dev/{,r}sd{0,1}</filename></para>
+      </note>
+
+      <para>In this example, both disks are jumpered as Master on
+	separate channels on the same controller.  You would never want to
+	have both disks on the same bus on the same controller; this
+	creates a single point of failure.  Ideally you would have the
+	disks on separate channels on separate controllers.  Some SCSI
+	controllers have multiple channels on the same controller,
+	however, a SCSI bus reset on one channel could adversely affect
+	the other channel if the ASIC/IC becomes overloaded.  The
+	trade-off with two controllers is that twice the bandwidth is used
+	on the system bus. For purposes of simplification, this example
+	shows two disks on different channels on the same
+	controller.</para>
+
+      <note>
+	<para>RAIDframe requires that all components be of the same
+	  size.  Actually, it will use the lowest common denominator among
+	  components of dissimilar sizes.  For purposes of illustration, the
+	  example uses two disks of identical geometries.  Also, consider
+	  the availability of replacement disks if a component suffers a
+	  critical hardware failure.</para>
+      </note>
+
+      <tip>
+	<para>Two disks of identical vendor model numbers could have
+          different geometries if the drive possesses "grown defects".  Use
+          a low-level program to examine the grown defects table of the
+          disk.  These disks are obviously suboptimal candidates for use in
+          RAID and should be avoided.</para>
+      </tip>
+    </sect2>
+
+    <sect2 id="chap-rf-install">
+      <title>Initial Install on Disk0/wd0</title>
+
+      <para>Perform a very generic installation onto your Disk0/wd0.
+	Follow the INSTALL instructions for your platform.  Install all
+	the sets but do not bother customizing anything other than the
+	kernel as it will be overwritten.  </para>
+
+      <tip>
+	<para>On i386, during the sysinst install, when prompted if
+	  you want to "use the entire disk for &os;", answer
+	  "yes".</para>
+      </tip>
+
+      <itemizedlist>
+        <listitem>
+	  <para><xref linkend="chap-inst" /></para>
+	</listitem>
+
+        <listitem>
+	  <para><ulink
+	      url="ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-2.0/i386/INSTALL.html">
+	      &os;/i386 Install Directions</ulink></para>
+	</listitem>
+
+        <listitem>
+	  <para><ulink
+	      url="ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-2.0/sparc64/INSTALL.html">&os;/sparc64
+	      Install Directions</ulink></para>
+	</listitem>
+      </itemizedlist>
+
+      <para>Once the installation is complete, you should examine the
+	&man.disklabel.8; and &man.fdisk.8; / &man.sunlabel.8; outputs on
+	the system: </para>
+
+      <screen>&rprompt; <command>df</command>
+Filesystem  1K-blocks     Used     Avail Capacity  Mounted on
+/dev/wd0a     9343708   191717   8684806     2%    /</screen>
+
+      <para>On i386:</para>
+
+      <screen>&rprompt; <command>disklabel -r wd0</command>
+<![CDATA[type: unknown
+disk: Disk00
+label:
+flags:
+bytes/sector: 512
+sectors/track: 63
+tracks/cylinder: 16
+sectors/cylinder: 1008
+cylinders: 19386
+total sectors: 19541088
+rpm: 3600
+interleave: 1
+trackskew: 0
+cylinderskew: 0
+headswitch: 0           # microseconds
+track-to-track seek: 0  # microseconds
+drivedata: 0
+
+16 partitions:
+#        size    offset     fstype [fsize bsize cpg/sgs]
+ a:  19276992        63     4.2BSD   1024  8192 46568  # (Cyl.      0* - 19124*)
+ b:    264033  19277055       swap                     # (Cyl.  19124* - 19385)
+ c:  19541025        63     unused      0     0        # (Cyl.      0* - 19385)
+ d:  19541088         0     unused      0     0        # (Cyl.      0 - 19385)
+]]>
+&rprompt; <command>fdisk /dev/rwd0d</command>
+<![CDATA[Disk: /dev/rwd0d
+NetBSD disklabel disk geometry:
+cylinders: 19386, heads: 16, sectors/track: 63 (1008 sectors/cylinder)
+total sectors: 19541088
+
+BIOS disk geometry:
+cylinders: 1023, heads: 255, sectors/track: 63 (16065 sectors/cylinder)
+total sectors: 19541088
+
+Partition table:
+0: NetBSD (sysid 169)
+    start 63, size 19541025 (9542 MB, Cyls 0-1216/96/1), Active
+1: <UNUSED>
+2: <UNUSED>
+3: <UNUSED>
+Bootselector disabled.
+]]></screen>
+
+      <para>On Sparc64 the command / output differs slightly: </para>
+
+      <screen>&rprompt; <command>disklabel -r wd0</command>
+<![CDATA[type: unknown
+disk: Disk0
+[...snip...]
+8 partitions:
+#        size    offset     fstype [fsize bsize cpg/sgs]
+ a:  19278000         0     4.2BSD   1024  8192 46568  # (Cyl.      0 -  19124)
+ b:    263088  19278000       swap                     # (Cyl.  19125 -  19385)
+ c:  19541088         0     unused      0     0        # (Cyl.      0 -  19385)
+]]>
+&rprompt; <command>sunlabel /dev/rwd0c</command>
+<![CDATA[sunlabel> P
+a: start cyl =      0, size = 19278000 (19125/0/0 - 9413.09Mb)
+b: start cyl =  19125, size =   263088 (261/0/0 - 128.461Mb)
+c: start cyl =      0, size = 19541088 (19386/0/0 - 9541.55Mb)
+]]></screen>
+    </sect2>
+
+    <sect2 id="chap-rf-second-disk">
+      <title>Preparing Disk1/wd1</title>
+
+      <para>Once you have a stock install of &os; on Disk0/wd0, you
+	are ready to begin.  Disk1/wd1 will be visible and unused by the
+	system.  To setup Disk1/wd1, you will use &man.disklabel.8; to
+	allocate the entire second disk to the RAID-1 set.</para>
+
+      <tip>
+	<para>The best way to ensure that Disk1/wd1 is completely
+          empty is to 'zero' out the first few sectors of the disk with
+          &man.dd.1; .  This will erase the MBR (i386) or Sun disk label
+          (sparc64), as well as the &os; disk label. If you make a mistake
+          at any point during the RAID setup process, you can always refer
+          to this process to restore the disk to an empty state.</para>
+      </tip>
+
+      <note>
+	<para>On sparc64, use <filename>/dev/rwd1c</filename> instead of
+	  <filename>/dev/rwd1d</filename>!</para>
+      </note>
+
+      <screen>&rprompt; <command>dd if=/dev/zero of=/dev/rwd1d bs=8k count=1</command>
+1+0 records in
+1+0 records out
+8192 bytes transferred in 0.003 secs (2730666 bytes/sec)</screen>
+
+      <para>Once this is complete, on i386, verify that both the MBR and
+	&os; disk labels are gone.  On sparc64, verify that the Sun Disk
+	label is gone as well.</para>
+
+      <para>On i386:</para>
+
+      <screen>&rprompt; <command>fdisk /dev/rwd1d</command>
+<![CDATA[
+fdisk: primary partition table invalid, no magic in sector 0
+Disk: /dev/rwd1d
+NetBSD disklabel disk geometry:
+cylinders: 19386, heads: 16, sectors/track: 63 (1008 sectors/cylinder)
+total sectors: 19541088
+
+BIOS disk geometry:
+cylinders: 1023, heads: 255, sectors/track: 63 (16065 sectors/cylinder)
+total sectors: 19541088
+
+Partition table:
+0: <UNUSED>
+1: <UNUSED>
+2: <UNUSED>
+3: <UNUSED>
+Bootselector disabled.
+]]>
+&rprompt; <command>disklabel -r wd1</command>
+<![CDATA[
+[...snip...]
+16 partitions:
+#        size    offset     fstype [fsize bsize cpg/sgs]
+ c:  19541025        63     unused      0     0        # (Cyl.      0* - 19385)
+ d:  19541088         0     unused      0     0        # (Cyl.      0 - 19385)
+]]></screen>
+
+      <para>On sparc64:</para>
+
+      <screen>&rprompt; <command>sunlabel /dev/rwd1c</command>
+<![CDATA[
+sunlabel: bogus label on `/dev/wd1c' (bad magic number)
+]]>
+&rprompt; <command>disklabel -r wd1</command>
+<![CDATA[
+[...snip...]
+3 partitions:
+#        size    offset     fstype [fsize bsize cpg/sgs]
+ c:  19541088         0     unused      0     0        # (Cyl.      0 -  19385)
+disklabel: boot block size 0
+disklabel: super block size 0
+]]></screen>
+
+      <para>Now that you are certain the second disk is empty, on i386
+	you must establish the MBR on the second disk using the values
+	obtained from Disk0/wd0 above.  We must remember to mark the &os;
+	partition active or the system will not boot. You must also create
+	a &os; disklabel on Disk1/wd1 that will enable a RAID volume to
+	exist upon it. On sparc64, you will need to simply
+	&man.disklabel.8; the second disk which will write the proper Sun
+	Disk Label.</para>
+
+      <tip>
+	<para>&man.disklabel.8; will use your shell' s environment
+	  variable <varname>$EDITOR</varname> variable to edit the
+	  disklabel.  The default is &man.vi.1; </para>
+      </tip>
+
+      <para>On i386:</para>
+
+      <screen>&rprompt; <command>fdisk -0ua /dev/rwd1d</command>
+<![CDATA[fdisk: primary partition table invalid, no magic in sector 0
+Disk: /dev/rwd1d
+NetBSD disklabel disk geometry:
+cylinders: 19386, heads: 16, sectors/track: 63 (1008 sectors/cylinder)
+total sectors: 19541088
+
+BIOS disk geometry:
+cylinders: 1023, heads: 255, sectors/track: 63 (16065 sectors/cylinder)
+total sectors: 19541088
+
+Do you want to change our idea of what BIOS thinks? [n]
+
+Partition 0:
+<UNUSED>
+The data for partition 0 is:
+<UNUSED>
+sysid: [0..255 default: 169]
+start: [0..1216cyl default: 63, 0cyl, 0MB]
+size: [0..1216cyl default: 19541025, 1216cyl, 9542MB]
+bootmenu: []
+Do you want to change the active partition? [n] y
+Choosing 4 will make no partition active.
+active partition: [0..4 default: 0] 0
+Are you happy with this choice? [n] y
+
+We haven't written the MBR back to disk yet.  This is your last chance.
+Partition table:
+0: NetBSD (sysid 169)
+    start 63, size 19541025 (9542 MB, Cyls 0-1216/96/1), Active
+1: <UNUSED>
+2: <UNUSED>
+3: <UNUSED>
+Bootselector disabled.
+Should we write new partition table? [n] y
+]]>
+&rprompt; <command>disklabel -r -e -I wd1</command>
+<![CDATA[type: unknown
+disk: Disk1
+label:
+flags:
+bytes/sector: 512
+sectors/track: 63
+tracks/cylinder: 16
+sectors/cylinder: 1008
+cylinders: 19386
+total sectors: 19541088
+[...snip...]
+16 partitions:
+#        size    offset     fstype [fsize bsize cpg/sgs]
+ a:  19541025        63       RAID                     # (Cyl.      0*-19385)
+ c:  19541025        63     unused      0     0        # (Cyl.      0*-19385)
+ d:  19541088         0     unused      0     0        # (Cyl.      0 -19385)
+]]></screen>
+
+      <para>On sparc64:</para>
+
+      <screen>&rprompt; <command>disklabel -r -e -I wd1</command>
+<![CDATA[type: unknown
+disk: Disk1
+label:
+flags:
+bytes/sector: 512
+sectors/track: 63
+tracks/cylinder: 16
+sectors/cylinder: 1008
+cylinders: 19386
+total sectors: 19541088
+[...snip...]
+3 partitions:
+#        size    offset     fstype [fsize bsize cpg/sgs]
+ a:  19541088         0       RAID                     # (Cyl.      0 -  19385)
+ c:  19541088         0     unused      0     0        # (Cyl.      0 -  19385)
+]]>
+&rprompt; <command>sunlabel /dev/rwd1c </command>
+<![CDATA[sunlabel> P
+a: start cyl =      0, size = 19541088 (19386/0/0 - 9541.55Mb)
+c: start cyl =      0, size = 19541088 (19386/0/0 - 9541.55Mb)
+]]></screen>
+
+      <note>
+	<para>On i386, the <command>c:</command> and
+	  <command>d:</command> slices are reserved. <command>c:</command>
+	  represents the &os; portion of the disk. <command>d:</command>
+	  represents the entire disk.  Because we want to allocate the
+	  entire &os; MBR partition to RAID, and because
+	  <command>a:</command> resides within the bounds of
+	  <command>c:</command>, the <command>a:</command> and
+	  <command>c:</command> slices have same size and offset values and
+	  sizes.  The offset must start at a track boundary (an increment of
+	  sectors matching the sectors/track value in the disk label). On
+	  sparc64 however, <command>c:</command> represents the entire
+	  &os; partition in the Sun disk label and <command>d:</command>
+	  is not reserved.  Also note that sparc64's <command>c:</command>
+	  and <command>a:</command> require no offset from the beginning of
+	  the disk, however if they should need to be, the offset must start
+	  at a cylinder boundary (an increment of sectors matching the
+	  sectors/cylinder value).</para>
+      </note>
+    </sect2>
+
+    <sect2 id="chap-rf-configuring-raid">
+      <title>Initializing the RAID Device</title>
+
+      <para>Next we create the configuration file for the RAID set /
+	volume.  Traditionally, RAIDframe configuration files belong in
+	<filename>/etc </filename> and would be read and initialized at
+	boot time, however, because we are creating a bootable RAID
+	volume, the configuration data will actually be written into the
+	RAID volume using the "auto-configure" feature.  Therefore, files
+	are needed only during the initial setup and should not reside in
+	<filename>/etc</filename>.</para>
+
+      <screen>&rprompt; <command>vi /var/tmp/raid0.conf</command>
+START array
+1 2 0
+
+START disks
+/dev/wd9a
+/dev/wd1a
+
+START layout
+128 1 1 1
+
+START queue
+fifo 100</screen>
+
+      <para>Note that <filename>wd9</filename> is a non-existing disk.
+        This will allow us to  establish the RAID volume with a bogus
+        component that we will substitute for  Disk0/wd0 at a later
+        time.  Regardless, a device node in <filename>/dev</filename>
+        for <filename>wd9</filename> must exist.</para>
+
+      <screen>&rprompt; <command>cd /dev</command>
+&rprompt; <command>sh MAKEDEV wd9</command>
+&rprompt; <command>cd -</command></screen>
+
+      <tip>
+	<para>On systems running &os; 2.0+, you may substitute a
+	  "bogus" component such as <filename>/dev/wd9a</filename> for a
+	  special disk name <emphasis>"absent"</emphasis> </para>
+      </tip>
+
+      <para>Next we configure the RAID device and initialize the serial
+	number to something unique.  In this example we use a
+	"YYYYMMDD<replaceable>Revision</replaceable>" scheme.  The format
+	you choose is entirely at your discretion, however the scheme you
+	choose should ensure that no two RAID sets use the same serial
+	number at the same time.</para>
+
+      <para>After that we initialize the RAID set for the first time,
+	safely ignoring the errors regarding the bogus component.</para>
+
+      <screen>&rprompt; <command>raidctl -v -C /var/tmp/raid0.conf raid0</command>
+raidlookup on device: /dev/wd9a failed!
+raid0: Component /dev/wd9a being configured at col: 0
+         Column: 0 Num Columns: 0
+         Version: 0 Serial Number: 0 Mod Counter: 0
+         Clean: No Status: 0
+Number of columns do not match for: /dev/wd9a
+/dev/wd9a is not clean!
+raid0: Component /dev/wd1a being configured at col: 1
+         Column: 0 Num Columns: 0
+         Version: 0 Serial Number: 0 Mod Counter: 0
+         Clean: No Status: 0
+Column out of alignment for: /dev/wd1a
+Number of columns do not match for: /dev/wd1a
+/dev/wd1a is not clean!
+raid0: There were fatal errors
+raid0: Fatal errors being ignored.
+raid0: RAID Level 1
+raid0: Components: /dev/wd9a[**FAILED**] /dev/wd1a
+raid0: Total Sectors: 19540864 (9541 MB)
+&rprompt; <command>raidctl -v -I 2004082401 raid0</command>
+&rprompt; <command>raidctl -v -i raid0</command>
+Initiating re-write of parity
+&rprompt; <command>tail -1 /var/log/messages</command>
+raid0: Error re-writing parity!
+&rprompt; <command>raidctl -v -s raid0</command>
+Components:
+           /dev/wd9a: failed
+           /dev/wd1a: optimal
+No spares.
+/dev/wd9a status is: failed.  Skipping label.
+Component label for /dev/wd1a:
+   Row: 0, Column: 1, Num Rows: 1, Num Columns: 2
+   Version: 2, Serial Number: 2004082401, Mod Counter: 7
+   Clean: No, Status: 0
+   sectPerSU: 128, SUsPerPU: 1, SUsPerRU: 1
+   Queue size: 100, blocksize: 512, numBlocks: 19540864
+   RAID Level: 1
+   Autoconfig: No
+   Root partition: No
+   Last configured as: raid0
+Parity status: DIRTY
+Reconstruction is 100% complete.
+Parity Re-write is 100% complete.
+Copyback is 100% complete.</screen>
+    </sect2>
+
+    <sect2 id="chap-rf-setup-filesystems">
+      <title>Setting up Filesystems</title>
+
+      <para>The RAID device is now configured and available.  The RAID
+	device is a pseudo disk-device.  It will be created with a default
+	disk label.  You must now determine the proper sizes for disklabel
+	slices for your production environment.  For purposes of
+	simplification in this example, our system will have 8.5 gigabytes
+	dedicated to <filename>/</filename> as
+	<command>/dev/raid0a</command> and the   rest allocated to
+	<filename>swap</filename> as
+	<command>/dev/raid0b</command>.</para>
+
+      <caution>
+	<para>This is an unrealistic disk layout for a production
+          server; the &os; Guide can expand on proper partitioning
+          technique. See <xref linkend="chap-inst" /></para>
+      </caution>
+
+      <note>
+	<para>Note that 1 GB is 2*1024*1024=2097152 blocks (1 block
+          is 512 bytes, or 0.5 kilobytes). Despite what the
+          underlying hardware composing a RAID set is, the RAID pseudo disk
+          will always have 512 bytes/sector.</para>
+      </note>
+
+      <note>
+	<para>In our example, the space allocated to the underlying
+          <filename>a:</filename> slice composing the RAID set differed
+          between i386 and sparc64, therefore the total sectors of the RAID
+          volumes differs:</para>
+      </note>
+
+      <para>On i386:</para>
+
+      <screen> &rprompt; <command>disklabel -r -e -I raid0</command>
+type: RAID
+disk: raid
+label: fictitious
+flags:
+bytes/sector: 512
+sectors/track: 128
+tracks/cylinder: 8
+sectors/cylinder: 1024
+cylinders: 19082
+total sectors: 19540864
+rpm: 3600
+interleave: 1
+trackskew: 0
+cylinderskew: 0
+headswitch: 0 # microseconds
+track-to-track seek: 0 # microseconds
+drivedata: 0
+
+#        size    offset     fstype [fsize bsize cpg/sgs]
+ a:  19015680         0     4.2BSD      0     0     0  # (Cyl.      0 - 18569)
+ b:    525184  19015680       swap                     # (Cyl.  18570 - 19082*)
+ d:  19540864         0     unused      0     0        # (Cyl.      0 - 19082*)</screen>
+
+      <para>On sparc64:</para>
+
+      <screen>&rprompt; <command>disklabel -r -e -I raid0</command>
+[...snip...]
+total sectors: 19539968
+[...snip...]
+3 partitions:
+#        size    offset     fstype [fsize bsize cpg/sgs]
+ a:  19251200         0     4.2BSD      0     0     0  # (Cyl.      0 -  18799)
+ b:    288768  19251200       swap                     # (Cyl.  18800 -  19081)
+ c:  19539968         0     unused      0     0        # (Cyl.      0 -  19081)</screen>
+
+      <para>Next, format the newly created <filename>/</filename>
+	partition as a 4.2BSD FFSv1 File System:</para>
+
+<screen>&rprompt; <command>newfs -O 1 /dev/raid0a</command>
+/dev/rraid0a: 9285.0MB (19015680 sectors) block size 16384, fragment size 2048
+        using 51 cylinder groups of 182.06MB, 11652 blks, 22912 inodes.
+super-block backups (for fsck -b #) at:
+       32,   372896,   745760,  1118624,  1491488,  1864352,  2237216, 2610080,
+  2982944,  3355808,  3728672,  4101536,  4474400,  4847264,  5220128, 5592992,
+  5965856,  6338720,  6711584,  7084448,  7457312,  7830176,  8203040, 8575904,
+  8948768,  9321632,  9694496, 10067360, 10440224, 10813088, 11185952,11558816,
+ 11931680, 12304544, 12677408, 13050272, 13423136, 13796000, 14168864,14541728,
+ 14914592, 15287456, 15660320, 16033184, 16406048, 16778912, 17151776,17524640,
+ 17897504, 18270368, 18643232,
+
+&rprompt; <command>fsck -fy /dev/rraid0a</command>
+** /dev/rraid0a
+** File system is already clean
+** Last Mounted on
+** Phase 1 - Check Blocks and Sizes
+** Phase 2 - Check Pathnames
+** Phase 3 - Check Connectivity
+** Phase 4 - Check Reference Counts
+** Phase 5 - Check Cyl groups
+1 files, 1 used, 4680062 free (14 frags, 585006 blocks, 0.0% fragmentation)</screen>
+    </sect2>
+
+    <sect2 id="chap-rf-setup-kerneldump">
+      <title>Setting up kernel dumps</title>
+
+      <para>The normal swap area in our case is on raid0b but this can 
+        not be used for crash dumps as process scheduling is stopped 
+	when dumps happen.
+        Therefore we must use a real disk device. However, nothing stops 
+	us from defining a dump area which overlaps with raid0b. The 
+	trick here is to calculate the correct start offset for our 
+	crash dump area. This is dangerous and it is possible to 
+	destroy valuable data if we make a mistake in these calculations!
+	Data corruption will happen when the kernel writes its memory 
+	dump over a normal filesystem. So we must be extra careful here.
+        (The author destroyed his 100+ GB <filename>/home</filename> 
+	with a kernel crash dump!)</para>
+
+      <para>First we need to take a look at the disklabel for swap (raid0b)
+        and the real physical disk (wd1).</para>
+
+      <para>On i386:</para>
+
+  <screen>
+  &rprompt; <command>disklabel raid0</command>
+
+  8 partitions:
+  #        size    offset     fstype  [fsize bsize cpg/sgs]
+   a:  19015680         0     4.2BSD   1024  8192    64
+   b:    525184  19015680     swap
+   d:  19540864         0     unused      0     0     0
+
+
+  &rprompt; <command>disklabel wd1</command>
+
+  8 partitions:
+  #        size    offset     fstype  [fsize bsize cpg/sgs]
+   a:  19541025        63     RAID
+   c:  19541025        63     unused      0     0
+   d:  19541088         0     unused      0     0
+   </screen>
+
+      <para>
+        Each RAID set has a 64 block reserved area (see RF_PROTECTED_SECTORS in
+        &lt;dev/raidframe/raidframevar.h&gt;) in the beginning of the set
+        to store the internal RAID structures.
+      </para>
+
+  <screen>
+  &rprompt; <command>dc</command>
+  63              # offset of wd1a
+  64              # RF_PROTECTED_SECTORS
+  +
+  19015680        # offset of raid0b
+  +p
+  19015807        # offset of swap within wd1
+  q
+  </screen>
+
+      <para>We know now that real offset of the still-nonexisting wd1b 
+        is 19015807 and size is 525184. Next we need to add wd1b to 
+	wd1's disklabel.</para>
+
+  <screen>
+  &rprompt; <command>disklabel wd1 &gt; disklabel.wd1</command>
+  &rprompt; <command>vi disklabel.wd1</command>
+
+  8 partitions:
+  #        size    offset     fstype  [fsize bsize cpg/sgs]
+   a:  19541025        63       RAID
+   b:   2097152  19015807       swap
+   c:  19541025        63     unused      0     0
+   d:  19541088         0     unused      0     0
+  </screen>
+
+      <para>Next we install the new disklabel.</para>
+
+  <screen>
+  &rprompt; <command>disklabel -R -r wd1 disklabel.wd1</command>
+  </screen>
+
+      <para>Why isn't sizeof(raid0d) == (sizeof(wd1a) -
+                      RF_PROTECTED_SECTORS)?  Size of raid0d is based on
+      the largest multiple of the stripe size used for a RAID set. As an
+      example, with stripe width of 128, size of raid0d is: </para>
+
+  <screen>
+  &rprompt; <command>dc</command>
+  19541025    # size of wd1a
+  64          # RF_PROTECTED_SECTORS
+  -
+  128         # stripe width
+  /p
+  152663      # number of stripes
+  128         # number of blocks per stripe
+  *p
+  19540864    # size of raid0d
+  </screen>
+
+    </sect2>
+
+    <sect2 id="chap-rf-moving-files">
+      <title>Migrating System to RAID</title>
+
+      <para>The new RAID filesystems are now ready for use. We mount
+	them under <filename>/mnt</filename> and copy all files from the
+	old system.  This can be done using &man.dump.8; or &man.pax.1;.</para>
+
+      <screen>&rprompt; <command>mount /dev/raid0a /mnt</command>
+&rprompt; <command>df -h /mnt</command>
+Filesystem    Size     Used     Avail Capacity  Mounted on
+/dev/raid0a   9.0G     2.0K      8.6G     0%    /mnt
+&rprompt; <command>cd /; pax -v -X -rw -pe / /mnt</command>
+[...snip...]</screen>
+
+      <para>The &os; install now exists on the RAID filesystem.  We need
+	to fix the mount-points in the new copy of
+	<filename>/etc/fstab</filename> or the system will not come up
+	correctly.  Replace instances of <filename>wd0 </filename> with
+	<filename>raid0</filename>.</para>
+
+      <para>Note that the kernel crash dumps must not be saved on a RAID
+        device but on a real physical disk (wd0b). This dump area was
+        created in the previous chapter on the second disk (wd1b) but we
+        will make wd0 an identical copy of wd1 later so wd0b and wd1b
+        will have the same size and offset. If wd0 fails and is removed
+        from the server wd1 becomes wd0 after reboot and crash dumps
+        will still work as we are using wd0b in
+        <filename>/etc/fstab</filename>. The only fault in this
+        configuration is when the original, failed wd0 is replaces by a
+        new drive and we haven't initialized it yet with fdisk and
+        disklabel. In this short period of time we can not make crash
+        dumps in case of kernel panic.  Note how the dump device has the
+        <quote>dp</quote> keyword on the 4th field.</para>
+
+      <screen>&rprompt; <command>vi /mnt/etc/fstab</command>
+
+/dev/raid0a  /  ffs  rw  1  1
+/dev/raid0b  none  swap  sw  0  0
+/dev/wd0b  none  swap  dw  0  0
+kernfs    /kern  kernfs  rw
+procfs    /proc  procfs  rw</screen>
+
+      <para>The swap should be unconfigured upon shutdown to avoid
+	parity errors on the RAID device. This can be done with a simple,
+	one-line setting in <filename>/etc/rc.conf</filename>.</para>
+
+      <screen>&rprompt; <command>vi /mnt/etc/rc.conf</command>
+swapoff=YES</screen>
+
+      <para>Next the boot loader must be installed on Disk1/wd1.
+	Failure to install the loader on Disk1/wd1 will render the system
+	un-bootable if Disk0/wd0 fails making the RAID-1 pointless.</para>
+
+      <tip>
+	<para>Because the BIOS/CMOS menus in many i386 based systems
+          are misleading with regard to device boot order.  I highly
+          recommend utilizing the "-o timeout=X" option supported by the
+          i386 1st stage boot loader.  Setup unique values for each disk as
+          a point of reference so that you can easily determine from which
+          disk the system is booting.</para>
+      </tip>
+
+      <caution>
+        <para>Although it may seem logical to install the 1st
+          stage boot block into
+          <filename>/dev/rwd1<replaceable>{c,d}</replaceable></filename>
+          (which is historically correct with &os; 1.6.x
+          &man.installboot.8; , this is no longer the case.  If you make
+          this mistake, the boot sector will become irrecoverably damaged
+          and you will need to start the process over
+          again.</para>
+      </caution>
+
+      <para>On i386, install the boot loader into <filename>/dev/rwd1a
+	</filename>:</para>
+
+      <screen>&rprompt; <command>/usr/sbin/installboot -o timeout=30 -v /dev/rwd1a /usr/mdec/bootxx_ffsv1</command>
+File system:         /dev/rwd1a
+File system type:    raw (blocksize 8192, needswap 1)
+Primary bootstrap:   /usr/mdec/bootxx_ffsv1
+Preserving 51 (0x33) bytes of the BPB</screen>
+
+      <para>On sparc64, install the boot loader into
+	<filename>/dev/rwd1a </filename> as well, however the "-o" flag is
+	unsupported (and un-needed thanks to OpenBoot):</para>
+
+      <screen>&rprompt; <command>/usr/sbin/installboot -v /dev/rwd1a /usr/mdec/bootblk</command>
+File system:         /dev/rwd1a
+File system type:    raw (blocksize 8192, needswap 0)
+Primary bootstrap:   /usr/mdec/bootblk
+Bootstrap start sector: 1
+Bootstrap byte count:   4915
+Writing bootstrap</screen>
+
+      <para>Finally the RAID set must be made auto-configurable and the
+	system should be rebooted. After the reboot everything is mounted
+	from the RAID devices.</para>
+
+      <screen>&rprompt; <command>raidctl -v -A root raid0</command>
+raid0: Autoconfigure: Yes
+raid0: Root: Yes
+&rprompt; <command>tail -2 /var/log/messages</command>
+raid0: New autoconfig value is: 1
+raid0: New rootpartition value is: 1
+&rprompt; <command>raidctl -v -s raid0</command>
+[...snip...]
+   Autoconfig: Yes
+   Root partition: Yes
+   Last configured as: raid0
+[...snip...]
+&rprompt; <command>shutdown -r now</command></screen>
+
+      <warning>
+	<para>Always use &man.shutdown.8; &nbsp;when shutting
+          down.  Never simply use &man.reboot.8;. &man.reboot.8; &nbsp;will
+          not properly run shutdown RC scripts and will not safely disable
+          swap.  This will cause dirty parity at every
+          reboot.</para>
+      </warning>
+    </sect2>
+
+    <sect2 id="chap-rf-boot-with-raid1">
+      <title>The first boot with RAID</title>
+
+      <para>At this point, temporarily configure your system to boot
+	Disk1/wd1.  See notes in
+	<xref linkend="chap-rf-adding-test-boot" />
+	for details on this process.  The system should boot now and
+	all filesystems should be on the RAID devices.  The RAID will be
+	functional with a single component, however the set is not fully
+	functional because the bogus drive (wd9) has failed.</para>
+
+      <screen>&rprompt; <command>egrep -i "raid|root" /var/run/dmesg.boot</command>
+raid0: RAID Level 1
+raid0: Components: component0[**FAILED**] /dev/wd1a
+raid0: Total Sectors: 19540864 (9541 MB)
+boot device: raid0
+root on raid0a dumps on raid0b
+root file system type: ffs
+
+&rprompt; <command>df -h</command>
+Filesystem    Size     Used     Avail Capacity  Mounted on
+/dev/raid0a   8.9G     196M      8.3G     2%    /
+kernfs        1.0K     1.0K        0B   100%    /kern
+
+&rprompt; <command>swapctl -l</command>
+Device      1K-blocks     Used    Avail Capacity  Priority
+/dev/raid0b    262592        0   262592     0%    0
+&rprompt; <command>raidctl -s raid0</command>
+Components:
+          component0: failed
+           /dev/wd1a: optimal
+No spares.
+component0 status is: failed.  Skipping label.
+Component label for /dev/wd1a:
+   Row: 0, Column: 1, Num Rows: 1, Num Columns: 2
+   Version: 2, Serial Number: 2004082401, Mod Counter: 65
+   Clean: No, Status: 0
+   sectPerSU: 128, SUsPerPU: 1, SUsPerRU: 1
+   Queue size: 100, blocksize: 512, numBlocks: 19540864
+   RAID Level: 1
+   Autoconfig: Yes
+   Root partition: Yes
+   Last configured as: raid0
+Parity status: DIRTY
+Reconstruction is 100% complete.
+Parity Re-write is 100% complete.
+Copyback is 100% complete.</screen>
+    </sect2>
+
+    <sect2 id="chap-rf-adding-first-disk">
+      <title>Adding Disk0/wd0 to RAID</title>
+
+      <para>We will now add Disk0/wd0 as a component of the RAID.  This
+	will destroy the original file system structure.  On i386, the MBR
+	disklabel will be unaffected (remember we copied wd0's label to
+	wd1 anyway) , therefore there is no need to "zero"
+	Disk0/wd0. However, we need to relabel Disk0/wd0 to have an
+	identical &os; disklabel layout as Disk1/wd1. Then we add
+	Disk0/wd0 as "hot-spare" to  the RAID set and initiate the parity
+	reconstruction for all RAID devices,  effectively bringing
+	Disk0/wd0 into the RAID-1 set and "synching up"  both disks.</para>
+
+      <screen>&rprompt; <command>disklabel -r wd1 > /tmp/disklabel.wd1</command>
+&rprompt; <command>disklabel -R -r wd0 /tmp/disklabel.wd1</command></screen>
+
+      <para>As a last-minute sanity check, you might want to use
+	&man.diff.1; to ensure that the disklabels of Disk0/wd0 match
+	Disk1/wd1.  You should also backup these files for reference in
+	the event of an emergency.</para>
+
+      <screen>&rprompt; <command>disklabel -r wd0 > /tmp/disklabel.wd0</command>
+&rprompt; <command>disklabel -r wd1 > /tmp/disklabel.wd1</command>
+&rprompt; <command>diff /tmp/disklabel.wd0 /tmp/disklabel.wd1</command>
+&rprompt; <command>fdisk /dev/rwd0 > /tmp/fdisk.wd0</command>
+&rprompt; <command>fdisk /dev/rwd1 > /tmp/fdisk.wd1</command>
+&rprompt; <command>diff /tmp/fdisk.wd0 /tmp/fdisk.wd1</command>
+&rprompt; <command>mkdir /root/RFbackup</command>
+&rprompt; <command>cp -p /tmp/{disklabel,fdisk}* /root/RFbackup</command></screen>
+
+      <para>Once you are certain, add Disk0/wd0 as a spare
+	component, and start reconstruction:</para>
+
+      <screen>&rprompt; <command>raidctl -v -a /dev/wd0a raid0</command>
+/netbsd: Warning: truncating spare disk /dev/wd0a to 241254528 blocks
+&rprompt; <command>raidctl -v -s raid0</command>
+Components:
+          component0: failed
+           /dev/wd1a: optimal
+Spares:
+           /dev/wd0a: spare
+[...snip...]
+&rprompt; <command>raidctl -F component0 raid0</command>
+RECON: initiating reconstruction on col 0 -> spare at col 2
+ 11% |****                                   | ETA:    04:26 \</screen>
+
+      <para>Depending on the speed of your hardware, the reconstruction
+	time will vary.  You may wish to watch it on another
+	terminal:</para>
+
+      <screen>&rprompt; <command>raidctl -S raid0</command>
+Reconstruction is 0% complete.
+Parity Re-write is 100% complete.
+Copyback is 100% complete.
+Reconstruction status:
+  17% |******                                 | ETA: 03:08 -</screen>
+
+      <para>After reconstruction, both disks should be
+	<quote>optimal</quote>.</para>
+
+      <screen>&rprompt; <command>tail -f /var/log/messages</command>
+raid0: Reconstruction of disk at col 0 completed
+raid0: Recon time was 1290.625033 seconds, accumulated XOR time was 0 us (0.000000)
+raid0:  (start time 1093407069 sec 145393 usec, end time 1093408359 sec 770426 usec)
+raid0: Total head-sep stall count was 0
+raid0: 305318 recon event waits, 1 recon delays
+raid0: 1093407069060000 max exec ticks
+
+&rprompt; <command>raidctl -v -s raid0</command>
+Components:
+           component0: spared
+           /dev/wd1a: optimal
+Spares:
+     /dev/wd0a: used_spare
+     [...snip...]</screen>
+
+      <para>When the reconstruction is finished we need to install the
+	boot loader on the Disk0/wd0.  On i386, install the boot loader
+	into <filename>/dev/rwd0a</filename>:</para>
+
+      <screen>&rprompt; <command>/usr/sbin/installboot -o timeout=15 -v /dev/rwd0a /usr/mdec/bootxx_ffsv1</command>
+File system:         /dev/rwd1a
+File system type:    raw (blocksize 8192, needswap 1)
+Primary bootstrap:   /usr/mdec/bootxx_ffsv1
+Preserving 51 (0x33) bytes of the BPB
+</screen>
+
+      <para>On sparc64:</para>
+
+      <screen>&rprompt; <command>/usr/sbin/installboot -v /dev/rwd0a /usr/mdec/bootblk</command>
+File system:         /dev/rwd0a
+File system type:    raw (blocksize 8192, needswap 0)
+Primary bootstrap:   /usr/mdec/bootblk
+Bootstrap start sector: 1
+Bootstrap byte count:   4915
+Writing bootstrap</screen>
+
+      <para>And finally, reboot the machine one last time before
+	proceeding.  This is required to migrate Disk0/wd0 from status
+	"used_spare" as "Component0" to state "optimal".  Refer to notes
+	in the next section regarding verification of clean parity after
+	each reboot.</para>
+
+      <screen>&rprompt; <command>shutdown -r now</command></screen>
+    </sect2>
+
+    <sect2 id="chap-rf-adding-test-boot">
+      <title>Testing Boot Blocks</title>
+
+      <para>At this point, you need to ensure that your system's
+	hardware can properly boot using the boot blocks on either disk.
+	On i386, this is a hardware- dependant process that may be done
+	via your motherboard CMOS/BIOS menu or your controller card's
+	configuration menu.</para>
+
+      <para>On i386, use the menu system on your machine to set the boot
+	device order / priority to Disk1/wd1 before Disk0/wd0. The
+	examples here depict a generic Award BIOS.</para>
+
+      <figure id="Award-BIOS-2">
+        <title>Award BIOS i386 Boot Disk1/wd1</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="&imagesdir;/rf-awardbios2.eps" format="EPS" />
+          </imageobject>
+
+          <imageobject>
+            <imagedata fileref="&imagesdir;/rf-awardbios2.png" format="PNG" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+
+      <para>Save changes and exit.</para>
+
+      <screen>>> NetBSD/i386 BIOS Boot, Revision 3.1
+>> (seklecki@localhost, Fri Aug 13 08:08:47 EDT 2004)
+>> Memory: 640/31744 k
+Press return to boot now, any other key for boot menu
+booting hd0a:netbsd - starting in 30</screen>
+
+
+      <para>You can determine that the BIOS is reading Disk1/wd1 because
+	the timeout of the boot loader is 30 seconds instead of 15.  After
+	the reboot, re-enter the BIOS and configure the drive boot order
+	back to the default:</para>
+
+      <figure id="Award-BIOS-1">
+        <title>Award BIOS i386 Boot Disk0/wd0</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="&imagesdir;/rf-awardbios1.eps" format="EPS" />
+          </imageobject>
+
+          <imageobject>
+            <imagedata fileref="&imagesdir;/rf-awardbios1.png" format="PNG" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+
+      <para>Save changes and exit.</para>
+
+<screen>>> NetBSD/i386 BIOS Boot, Revision 3.1
+>> (seklecki@localhost, Fri Aug 13 08:08:47 EDT 2004)
+>> Memory: 640/31744 k
+Press return to boot now, any other key for boot menu
+booting hd0a:netbsd - starting in 15</screen>
+
+      <para>Notice how your custom kernel detects controller/bus/drive
+	assignments independent of what the BIOS assigns as the boot disk.
+	This is the expected behavior.</para>
+
+      <para>On sparc64, use the Sun OpenBoot <command>devalias</command>
+	to confirm that both disks are bootable:</para>
+
+      <screen>Sun Ultra 5/10 UPA/PCI (UltraSPARC-IIi 400MHz), No Keyboard
+OpenBoot 3.15, 128 MB memory installed, Serial #nnnnnnnn.
+Ethernet address 8:0:20:a5:d1:3b, Host ID: nnnnnnnn.
+
+<command>ok devalias</command>
+[...snip...]
+cdrom /pci@1f,0/pci@1,1/ide@3/cdrom@2,0:f
+disk /pci@1f,0/pci@1,1/ide@3/disk@0,0
+disk3 /pci@1f,0/pci@1,1/ide@3/disk@3,0
+disk2 /pci@1f,0/pci@1,1/ide@3/disk@2,0
+disk1 /pci@1f,0/pci@1,1/ide@3/disk@1,0
+disk0 /pci@1f,0/pci@1,1/ide@3/disk@0,0
+[...snip...]
+
+<command>ok boot disk0 netbsd</command>
+Initializing Memory [...]
+Boot device /pci/pci/ide@3/disk@0,0 File and args: netbsd
+NetBSD IEEE 1275 Bootblock
+>> NetBSD/sparc64 OpenFirmware Boot, Revision 1.8
+>> (lavalamp@j8, Thu Aug 19: 15:45:42 EDT 2004)
+loadfile: reading header
+elf64_exec: Booting [...]
+symbols @ [....]
+ Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001
+     The NetBSD Foundation, Inc.  All rights reserved.
+ Copyright (c) 1982, 1986, 1989, 1991, 1993
+     The Regents of the University of California.  All rights reserved.
+[...snip...]</screen>
+
+      <para>And the second disk:</para>
+
+      <screen><command>ok boot disk2 netbsd</command>
+Initializing Memory [...]
+Boot device /pci/pci/ide@3/disk@2,0: File and args:netbsd
+NetBSD IEEE 1275 Bootblock
+>> NetBSD/sparc64 OpenFirmware Boot, Revision 1.8
+>> (lavalamp@j8, Thu Aug 19: 15:45:42 EDT 2004)
+loadfile: reading header
+elf64_exec: Booting [...]
+symbols @ [....]
+ Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001
+     The NetBSD Foundation, Inc.  All rights reserved.
+ Copyright (c) 1982, 1986, 1989, 1991, 1993
+     The Regents of the University of California.  All rights reserved.
+[...snip...]</screen>
+
+      <para>At each boot, the following should appear in the &os;
+	kernel &man.dmesg.8; :</para>
+
+      <screen>raid0: RAID Level 1
+raid0: Components: /dev/wd0a /dev/wd1a
+raid0: Total Sectors: 19540864 (9541 MB)
+boot device: raid0
+root on raid0a dumps on raid0b
+root file system type: ffs</screen>
+
+      <para>Once you are certain that both disks are bootable, verify
+	the RAID parity is clean after each reboot:</para>
+
+      <screen>&rprompt; <command>raidctl -v -s raid0</command>
+Components:<emphasis><command>
+          /dev/wd0a: optimal
+          /dev/wd1a: optimal</command></emphasis>
+No spares.
+[...snip...]
+Component label for /dev/wd0a:
+   Row: 0, Column: 0, Num Rows: 1, Num Columns: 2
+   Version: 2, Serial Number: 2004082401, Mod Counter: 67
+   Clean: No, Status: 0
+   sectPerSU: 128, SUsPerPU: 1, SUsPerRU: 1
+   Queue size: 100, blocksize: 512, numBlocks: 19540864
+   RAID Level: 1
+   Autoconfig: Yes
+   Root partition: Yes
+   Last configured as: raid0
+Component label for /dev/wd1a:
+   Row: 0, Column: 1, Num Rows: 1, Num Columns: 2
+   Version: 2, Serial Number: 2004082401, Mod Counter: 67
+   Clean: No, Status: 0
+   sectPerSU: 128, SUsPerPU: 1, SUsPerRU: 1
+   Queue size: 100, blocksize: 512, numBlocks: 19540864
+   RAID Level: 1
+   Autoconfig: Yes
+   Root partition: Yes
+   Last configured as: raid0
+<emphasis><command>Parity status: clean</command></emphasis>
+Reconstruction is 100% complete.
+Parity Re-write is 100% complete.
+Copyback is 100% complete.</screen>
+    </sect2>
+  </sect1>
+
+  <sect1 id="chap-rf-test-kernel-dumps">
+    <title>Testing kernel dumps</title>
+    
+    <para>It is also important to test the kernel crash dumps so that
+      they work correctly and do not overwrite any important
+      filesystems (like the raid0e filesystem).</para>
+
+    <para>Press Ctrl+Alt+Esc to test the kernel crash dump. This will 
+      invoke the kernel debugger. Type <command>sync</command> or 
+      <command>reboot 0x104</command> and press Enter. This will save 
+      the current kernel memory to the dump area (wd0b) for further 
+      analysis. Most likely the offset and/or size of wd0b is wrong if 
+      the system will not come up correctly after reboot (unable to 
+      mount /home, corrupted super-blocks, etc).
+      It is very important to test this now, not when we have lots of
+      valuable files in <filename>/home</filename>. As an example, the 
+      author destroyed his 100+ GB <filename>/home</filename> partition 
+      with a kernel crash dump! No real harm was caused by this because of
+      up-to-date backups (backup was made just before converting to RAID-1).
+      One more time: take a backup of all your files before following these
+      instructions!</para>
+  </sect1>
+</chapter>

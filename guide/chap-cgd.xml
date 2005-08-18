@@ -1,0 +1,907 @@
+<!-- $NetBSD: chap-cgd.xml,v 1.27 2005/07/19 12:50:57 rpaulo Exp $ -->
+
+<!-- from %Geek: cgdhack.txt,v 1.7 2004/02/21 00:46:58 dan Exp % -->
+
+<chapter id="chap-cgd">
+
+  <title>The cryptographic device driver (CGD)</title>
+
+  <para>The <devicename>cgd</devicename> driver provides functionality
+    which allows you to use disks or partitions for encrypted storage.
+    After providing the appropriate key, the encrypted partition is
+    accessible using <devicename>cgd</devicename> pseudo-devices.</para>
+
+  <sect1 id="chap-cgd-overview">
+    <title>Overview</title>
+
+    <para>People often store sensitive information on their hard disks and
+      are concerned about this information falling into the wrong hands.
+      This is particularly relevant to users of laptops and other
+      portable devices, or portable media, which might be stolen or
+      accidentally misplaced.</para>
+
+    <sect2 id="chap-cgd-overview-why">
+      <title>Why use disk encryption?</title>
+
+      <para>File-oriented encryption tools like
+        <application>GnuPG</application> are great for encrypting
+        individual files, which can then be sent across untrusted
+        networks as well as stored encrypted on disk.  But sometimes
+        they can be inconvenient, because the file must be decrypted
+        each time it is to be used; this is especially cumbersome when
+        you have a large collection of files to protect.  Any time a
+        security tool is cumbersome to use, there's a chance you'll
+        forget to use it properly, leaving the files unprotected for
+        the sake of convenience.</para>
+
+      <para>Worse, readable copies of the encrypted contents might still exist
+        on the hard disk.  Even if you overwrite these files (using
+        <command>rm -P</command>) before unlinking them, your application
+        software might make temporary copies you don't know about, or have
+        been paged to swapspace - and even your hard disk might have
+        silently remapped failing sectors with data still in them.</para>
+
+      <para>The solution is to simply never write the information unencrypted
+        to the hard disk.  Rather than taking a file-oriented approach to
+        encryption, consider a block-oriented approach - a virtual hard
+        disk, that looks just like a normal hard disk with normal
+        filesystems, but which encrypts and decrypts each block on the way
+        to and from the real disk.</para>
+    </sect2>
+
+    <sect2 id="chap-cgd-overview-logicaldriver">
+      <title>Logical Disk Drivers</title>
+
+      <para>The <devicename>cgd</devicename> device looks and behaves to the rest of
+        the operating system like any other disk driver. Rather than
+        driving real hardware directly, it provides a logical function
+        layered on top of another block device. It has a special
+        configuration program, <command>cgdconfig</command>, to create and
+        configure a <devicename>cgd</devicename> device and point it at the
+        underlying disk device that will hold the encrypted data.</para>
+
+      <para>&os; includes several other similar logical block devices, each
+        of which provides some other function where <devicename>cgd</devicename>
+        provides encryption.  You can stack several of these logical block
+        devices together:
+
+<!--
+
+vnd is presently broken, and putting cgd on top of it exposes the
+issue; don't suggest this usage yet
+
+        <devicename>cgd</devicename> on top of
+        <devicename>vnd</devicename> is handy to make an encrypted volume in a
+        regular file without repartitioning, or
+-->
+        you can make an encrypted
+        <devicename>raid</devicename> to protect your encrypted data against
+        hard disk failure as well.</para>
+
+      <para>Once you have created a <devicename>cgd</devicename> disk, you can
+        use <command>disklabel</command> to divide it up into
+        partitions, <command>swapctl</command> to enable swapping to
+        those partitions or <command>newfs</command> to make
+        filesystems, then <command>mount</command> and use those
+        filesystems, just like any other new disk.</para>
+    </sect2>
+
+    <sect2 id="chap-cgd-overview-availability">
+      <title>Availability</title>
+
+      <para>The <devicename>cgd</devicename> driver was written by Roland
+        C. Dowdeswell, and introduced in NetBSD-current between the 1.6
+        and 2.0 release branches. As a result, it is not in the 1.6
+        release series; it is in the 2.0 release.</para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="chap-cgd-components">
+    <title>Components of the Crypto-Graphic Disk system</title>
+
+    <para>A number of components and tools work together to make the
+      <devicename>cgd</devicename> system effective.</para>
+
+    <sect2 id="chap-cgd-component-kernel">
+      <title>Kernel driver pseudo-device</title>
+
+      <para>To use <devicename>cgd</devicename> you need a kernel with support
+        for the <devicename>cgd</devicename> pseudo-device. Make sure the
+        following line is in the kernel configuration file:</para>
+<!-- leave indentation for existing text alone for now, to make diffs saner -->
+
+    <programlisting>pseudo-device   cgd     4       # cryptographic disk driver</programlisting>
+
+      <para>The number specifies how many <devicename>cgd</devicename>
+	devices may be configured at the same time. After configuring
+	the <devicename>cgd</devicename> pseudo-device you can recompile
+	the kernel and boot it to enable <devicename>cgd</devicename>
+	support.</para>
+    </sect2>
+
+<!-- add subsection on cgdconfig(8) -->
+<!-- add subsection on parameters files -->
+
+    <sect2 id="chap-cgd-components-ciphers">
+      <title>Ciphers</title>
+
+      <para>The <devicename>cgd</devicename> driver provides the following
+        encryption algorithms:</para>
+
+      <variablelist>
+        <title>Encryption Methods</title>
+
+        <varlistentry>
+          <term><literal>aes-cbc</literal></term>
+
+          <listitem>
+            <para>AES (Rijndael). AES uses a 128 bit blocksize and
+              accepts 128, 192 or 256 bit keys.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><literal>blowfish-cbc</literal></term>
+
+          <listitem>
+            <para>Blowfish uses a 64 bit blocksize and accepts 128 bit
+              keys</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><literal>3des-cbc</literal></term>
+
+          <listitem>
+            <para>Triple DES uses a 64 bit blocksize and accepts
+               192 bit keys (only 168 bits are actually used for encryption)</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <para>All three ciphers are used in CBC mode. This means each block
+        is XORed with the previous encrypted block before
+        encryption. This reduces the risk that a pattern can be found,
+        which can be used to break the encryption.</para>
+    </sect2>
+
+    <sect2 id="chap-cgd-overview-verification">
+      <title>Verification Methods</title>
+
+      <para>Another aspect of <devicename>cgd</devicename> that needs some
+        attention are the verification methods
+        <command>cgdconfig</command> provides.  These verification
+        methods are used to verify the passphrase is correct. The
+        following verification methods are available:</para>
+
+      <variablelist>
+        <title>Verification Methods</title>
+
+        <varlistentry>
+          <term><literal>none</literal></term>
+
+          <listitem>
+            <para>no verification is performed. This can be dangerous,
+              because the key is not verified at all. When a wrong key
+              is entered <command>cgdconfig</command> configures the
+              <devicename>cgd</devicename> device as normal, but data
+              which was available on the volume will be destroyed
+              (decrypting blocks with a wrong key will result in
+              random data, which will result in a regeneration of the
+              disklabel with the current key).</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><literal>disklabel</literal></term>
+
+          <listitem>
+            <para><command>cgdconfig</command> scans for a valid
+              disklabel. If a valid disklabel is found with the key
+              that is provided authentication will succeed.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><literal>ffs</literal></term>
+
+          <listitem>
+            <para><command>cgdconfig</command> scans for a valid FFS file
+              system. If a valid FFS file system is found with the key
+              that is provided authentication will succeed.</para>
+          </listitem>
+        </varlistentry>
+<!-- add re-enter verify method -->
+      </variablelist>
+    </sect2>
+  </sect1>
+
+  <sect1 id="chap-cgd-example">
+    <title>Example: encrypting your disk</title>
+
+    <para>This section works through a step-by-step example of converting
+      an existing system to use <devicename>cgd</devicename>,
+      performing the following actions:</para>
+
+    <orderedlist>
+      <listitem>
+        <para>Preparing the disk and partitions</para>
+      </listitem>
+
+      <listitem>
+        <para>Scrub off all data</para>
+      </listitem>
+
+      <listitem>
+        <para>Create the cgd</para>
+      </listitem>
+
+      <listitem>
+        <para>Adjust config-files</para>
+      </listitem>
+
+      <listitem>
+        <para>Restoring your backed-up files to the encrypted disk</para>
+      </listitem>
+    </orderedlist>
+
+    <sect2 id="chap-cgd-example-prepare">
+      <title>Preparing the disk</title>
+
+      <para>First, decide which filesystems you want to move to an encrypted
+        device. You're going to need to leave at least the small root
+        (<filename>/</filename>) filesystem unencrypted, in order to load
+        the kernel and run <command>init</command>,
+        <command>cgdconfig</command> and the <command>rc.d</command>
+        scripts that configure your <devicename>cgd</devicename>. In this
+        example, we'll encrypt everything except the root
+        (<filename>/</filename>) filesystem.</para>
+
+      <para>We are going to delete and re-make partitions and filesystems,
+        and will require a backup to restore the data.  So make sure
+        you have a current, reliable backup stored on a different disk
+        or machine. Do your backup in single-user mode, with the
+        filesystems unmounted, to ensure you get a clean
+        <command>dump</command>. Make sure you back up the disklabel
+        of your hard disk as well, so you have a record of the
+        partition layout before you started.</para>
+
+      <para>With the system at single user, <filename>/</filename> mounted
+        read-write and everything else unmounted, use
+        <command>disklabel</command> to delete all the data partitions
+        you want to move into <devicename>cgd</devicename>.</para>
+
+      <para>Then make a single new partition in all the space you just
+        freed up, say, <replaceable>wd0e</replaceable>. Set the
+        partition type for this partition to <devicename>ccd</devicename>
+        (there's no code specifically for <devicename>cgd</devicename>, but
+        <devicename>ccd</devicename> is very similar. Though it doesn't
+        really matter what it is, it will help remind you that it's
+        not a normal filesystem later). When finished, label the disk
+        to save the new partition table.</para>
+    </sect2>
+
+    <sect2 id="chap-cgd-example-scrubbing">
+      <title>Scrubbing the disk</title>
+
+      <para>We have removed the partition table information, but the
+        existing filesystems and data are still on disk.  Even after
+        we make a <devicename>cgd</devicename> device, create filesystems,
+        and restore our data, some of these disk blocks might not yet
+        be overwritten and still contain our data in plaintext.  This
+        is especially likely if the filesystems are mostly empty.  We
+        want to scrub the disk before we go further.</para>
+
+      <para>We could use <command>dd</command> to copy
+        <filename>/dev/zero</filename> over the new
+        <replaceable>wd0e</replaceable> partition, but this will leave
+        our disk full of zeros, except where we've written encrypted
+        data later.  We might not want to give an attacker any clues
+        about which blocks contain real data, and which are free
+        space, so we want to write "noise" into all the disk
+        blocks. So we'll create a temporary <devicename>cgd</devicename>,
+        configured with a random, unknown key.</para>
+
+      <para>First, we configure a <devicename>cgd</devicename> to use a random key:</para>
+
+      <screen>&rprompt; <userinput>cgdconfig -s cgd0 /dev/wd0e aes-cbc 128 &lt; /dev/urandom </userinput></screen>
+
+      <para>Now we can write zeros into the raw partition of our
+        <devicename>cgd</devicename> (<filename>/dev/rcgd0d</filename> on
+        NetBSD/i386, <filename>/dev/rcgd0c</filename> on most other
+        platforms):</para>
+
+      <screen>&rprompt; <userinput>dd if=/dev/zero of=/dev/rcgd0d bs=32k</userinput></screen>
+
+      <para>The encrypted zeros will look like random data on disk.  This might
+        take a while if you have a large disk. Once finished, unconfigure the
+        random-key <devicename>cgd</devicename>:</para>
+
+      <screen>&rprompt; <userinput>cgdconfig -u cgd0</userinput></screen>
+    </sect2>
+
+    <sect2 id="chap-cgd-example-creating">
+      <title>Creating the <devicename>cgd</devicename></title>
+
+      <para>The <command>cgdconfig</command> program, which manipulates
+        <devicename>cgd</devicename> devices, uses parameters files to store
+        such information as the encryption type, key length, and a
+        random password salt for each <devicename>cgd</devicename>.  These
+        files are very important, and need to be kept safe - without
+        them, you will not be able to decrypt the data!</para>
+
+      <para>We'll generate a parameters file and write it into the default
+        location (make sure the directory
+        <filename>/etc/cgd</filename> exists and is mode 700):</para>
+
+      <screen>&rprompt; <userinput>cgdconfig -g -V disklabel -o /etc/cgd/wd0e aes-cbc 256</userinput></screen>
+
+      <para>This creates a parameters file
+        <filename>/etc/cgd/wd0e</filename> describing a
+        <devicename>cgd</devicename> using the
+        <literal>aes-cbc</literal> cipher method, a key
+        verification method of <literal>disklabel</literal>,
+        and a key length of <literal>256</literal>
+        bits.  It will look something like this:</para>
+
+      <programlisting>algorithm aes-cbc;
+iv-method encblkno;
+keylength 256;
+verify_method disklabel;
+keygen pkcs5_pbkdf2/sha1 {
+        iterations 6275;
+        salt AAAAgHTg/jKCd2ZJiOSGrgnadGw=;
+};</programlisting>
+
+      <note>
+        <para>Remember, you'll want to save this file somewhere safe
+          later.</para>
+      </note>
+
+      <tip>
+        <para>When creating the parameters file,
+          <command>cgdconfig</command> reads from
+          <filename>/dev/random</filename> to create the password
+          salt. This read may block if there is not enough collected
+          entropy in the random pool. This is unlikely, especially if
+          you just finished overwriting the disk as in the previous
+          step, but if it happens you can press keys on the console
+	  and/or move your mouse until the
+          <devicename>rnd</devicename> device gathers enough
+          entropy.</para>
+      </tip>
+
+      <para>Now it's time to create our <devicename>cgd</devicename>, for which
+        we'll need a passphrase.  This passphrase needs to be entered
+        every time the <devicename>cgd</devicename> is opened, which is
+        usually at each reboot. The encryption key is derived from this
+        passphrase and the salt.  Make sure you choose something you won't
+        forget, and others won't guess.</para>
+
+      <para>The first time we configure the <devicename>cgd</devicename>, there
+        is no valid disklabel on the logical device, so the validation
+        mechanism we want to use later won't work. We override it this
+        one time:</para>
+
+<screen>&rprompt; <userinput>cgdconfig -V re-enter cgd0 /dev/wd0e</userinput></screen>
+
+      <para>This will prompt twice for a matching passphrase, just in case
+        you make a typo, which would otherwise leave you with a
+        <devicename>cgd</devicename> encrypted with a passphrase that's
+        different to what you expected.</para>
+
+      <para>Now that we have a new <devicename>cgd</devicename>, we need to
+        partition it and create filesystems. Recreate your previous
+        partitions with all the same sizes, with the same letter
+        names.</para>
+
+      <tip>
+        <para>Remember to use the <command>disklabel -I</command>
+          argument, because you're creating an initial label for a new
+          disk.</para>
+      </tip>
+
+      <note>
+        <para>Although you want the sizes of your new partitions to be
+          the same as the old, unencrypted ones, the offsets will be
+          different because they're starting at the beginning of this
+          virtual disk.</para>
+      </note>
+
+      <para>Then, use <command>newfs</command> to create filesystems on
+        all the relevant partitions. This time your partitions will
+        reflect the <devicename>cgd</devicename> disk names, for example:</para>
+
+      <screen>&rprompt; <userinput>newfs /dev/rcgd0h</userinput></screen>
+    </sect2>
+
+    <sect2 id="chap-cgd-example-configfiles">
+      <title>Modifying configuration files</title>
+
+      <para>We've moved several filesystems to another (logical) disk, and
+        we need to update <filename>/etc/fstab</filename>
+        accordingly. Each partition will have the same letter (in this
+        example), but will be on <devicename>cgd0</devicename> rather than
+        <devicename>wd0</devicename>. So you'll have
+        <filename>/etc/fstab</filename> entries something like this:</para>
+
+      <programlisting>/dev/wd0a   /     ffs     rw,softdep    1 1
+/dev/cgd0b  none  swap    sw            0 0
+/dev/cgd0b  /tmp  mfs     rw,-s=132m    0 0
+/dev/cgd0e  /var  ffs     rw,softdep    1 2
+/dev/cgd0f  /usr  ffs     rw,softdep    1 2
+/dev/cgd0h  /home ffs     rw,softdep    1 2</programlisting>
+
+      <note>
+        <para><filename>/tmp</filename> should be a separate filesystem,
+          either <devicename>mfs</devicename> or <devicename>ffs</devicename>,
+          inside the <devicename>cgd</devicename>, so that your temporary
+          files are not stored in plain text in the
+          <filename>/</filename> filesystem.</para>
+      </note>
+
+      <para>Each time you reboot, you're going to need your
+        <devicename>cgd</devicename> configured early, before
+        <command>fsck</command> runs and filesystems are mounted.</para>
+
+      <para>Put the following line in
+        <filename>/etc/cgd/cgd.conf</filename>:</para>
+
+      <programlisting>cgd0    /dev/wd0e</programlisting>
+
+      <para>This will use <filename>/etc/cgd/wd0e</filename> as config
+        file for <devicename>cgd0</devicename>.</para>
+
+      <para>To finally enable cgd on each boot, put the following line
+        into <filename>/etc/rc.conf</filename>:</para>
+
+      <programlisting>cgd=YES</programlisting>
+
+      <para>You should now be prompted for
+        <filename>/dev/cgd0</filename>'s passphrase whenever
+        <filename>/etc/rc</filename> starts.</para>
+    </sect2>
+
+    <sect2 id="chap-cgd-example-restore">
+      <title>Restoring data</title>
+
+      <para>Next, <command>mount</command> your new filesystems, and
+        <command>restore</command> your data into them. It often helps
+        to have <filename>/tmp</filename> mounted properly first, as
+        <command>restore</command> can use a fair amount of temporary
+        space when extracting a large dumpfile.</para>
+
+      <para>To test your changes to the boot configuration,
+        <command>umount</command> the filesystems and unconfigure the
+        <devicename>cgd</devicename>, so when you exit the single-user
+        shell, <command>rc</command> will run like on a clean boot,
+        prompting you for the passphrase and mounting your filesystems
+        correctly.  Now you can bring the system up to multi-user, and
+        make sure everything works as before.</para>
+     </sect2>
+  </sect1>
+
+  <sect1 id="cryptocds">
+    <title>Example: encrypted CDs/DVDs</title>
+
+    <sect2 id="cryptocds-intro">
+      <title>Introduction</title>
+
+      <para>This section explains how to create and use encrypted CDs/DVDs
+	with NetBSD (all I say about "CDs" here does also apply to
+	"DVDs"). I assume that you have basic knowledge of cgd(4), so
+	I will not explain what cgd is or what's inside it in
+	detail. The same applies to vnd(4). One can make use of
+	encrypted CDs after reading this howto, but for more detailed
+	information about different cgd configuration options, please
+	read <xref linkend="chap-cgd" /> or the manpages.</para>
+    </sect2>
+
+    <sect2 id="cryptocds-create">
+      <title>Creating an encrypted CD/DVD</title>
+
+      <para>cgd(4) provides highly secure encryption of whole partitions
+        or disks. Unfortunately, creating "normal" CDs is not
+        disklabling something and running newfs on it. Neither can you
+        just put a CDR into the drive, configure cgd and assume it to
+        write encrypted data when syncing. Standard CDs contain at
+        least an ISO-9660 filesystem created with mkisofs(8) from the
+        <filename role="pkg">sysutils/cdrecord</filename> package. 
+	ISO images may <emphasis>not</emphasis> contain disklabels or 
+	cgd partitions.</para>
+
+      <para>But of course CD reader/writer hardware doesn't care about
+        filesystems at all. You can write raw data to the CD if you
+        like - or an encrypted FFS filesystem, which is what we'll do
+        here. But be warned, there is NO way to read this CD with any
+        OS except NetBSD - not even other BSDs due to the lack of cgd.</para>
+
+      <para>The basic steps when creating an encrypted CD are:</para>
+
+      <itemizedlist>
+	<listitem><para>Create an (empty) imagefile</para></listitem>
+	<listitem><para>Register it as a virtual disk using vnd(4)</para></listitem>
+	<listitem><para>Configure cgd inside the vnd disk</para></listitem>
+	<listitem><para>Copy content to the cgd</para></listitem>
+	<listitem><para>Unconfigure all (flush!)</para></listitem>
+	<listitem><para>Write the image on a CD</para></listitem>
+      </itemizedlist>
+
+      <para>The first step when creating an encrypted CD is to create a
+        single image file with dd. The image may not grow, so make it
+        large enough to allow all CD content to fit into. Note that
+        the whole image gets written to the CD later, so creating a
+        700 MB image for 100 MB content will still require a 700 MB
+        write operation to the CD. Some info on DVDs here: DVDs are
+        only 4.7 GB in marketing language. 4.7GB = 4.7 x 1024 x 1024 x
+        1024 = 5046586573 bytes.  In fact, a DVD can only
+        approximately hold 4.7 x 1000 x 1000 x 1000 = 4700000000
+        bytes, which is about 4482 MB or about 4.37 GB. Keep this in
+        mind when creating DVD images. Don't worry for CDs, they hold
+        "real" 700 MB (734003200 Bytes).</para>
+
+      <para>Invoke all following commands as root!</para>
+
+      <para>For a CD:</para>
+
+      <screen>&rprompt; <userinput>dd if=/dev/zero of=image.img bs=1m count=700</userinput></screen>
+
+      <para>or, for a DVD:</para>
+
+      <screen>&rprompt; <userinput>dd if=/dev/zero of=image.img bs=1m count=4482</userinput></screen>
+
+      <para>Now configure a &man.vnd.4;-pseudo disk with the image:</para>
+
+      <screen>&rprompt; <userinput>vnconfig vnd0 image.img</userinput></screen>
+
+      <para>In order to use cgd, a so-called parameter file, describing
+        encryption parameters and a containing "password salt" must be
+        generated. We'll call it <filename>/etc/cgd/image</filename>
+        here.  You can use one parameter file for several encrypted
+        partitions (I use one different file for each host and a
+        shared file <filename>image</filename> for all removable
+        media, but  that's up to you).</para>
+
+      <para>I'll use AES-CBC with a keylength of 256 bits. Refer to
+	&man.cgd.4; and &man.cgdconfig.8; for details and alternatives.</para>
+
+      <para>The following command will create the parameter file as
+        <filename>/etc/cgd/image</filename>. <emphasis>YOU DO NOT WANT
+        TO INVOKE THE FOLLOWING COMMAND AGAIN</emphasis> after you
+        burnt any CD, since a recreated parameter file is a lost
+        parameter file and you'll never access your encrypted CD again
+        (the "salt" this file contains will differ among each
+        call). Consider this file being <emphasis>HOLY, BACKUP
+        IT</emphasis> and <emphasis>BACKUP IT AGAIN!</emphasis> Use
+        switch -V to specify verfication method "disklabel" for the CD
+        (cgd cannot detect wheter you entered a valid password for the
+        CD later when mounting it otherwise).</para>
+
+      <screen>&rprompt; <userinput>cgdconfig -g -V disklabel aes-cbc 256 > /etc/cgd/image</userinput></screen>
+
+      <para>Now it's time to configure a cgd for our vnd drive. (Replace
+        slice "d" with "c" for all platforms that use "c" as the whole
+        disk (where "<command>sysctl kern.rawpartition</command>"
+        prints "2", not "3"); if you're on i386 or amd64, "d" is OK
+        for you):</para>
+
+      <screen>&rprompt; <userinput>cgdconfig -V re-enter cgd1 /dev/vnd0d /etc/cgd/image</userinput></screen>
+
+      <para>The "<option>-V re-enter</option>" option is neccessary
+	as long as the
+	cgd doesn't have a disklabel yet so we can access and
+        configure
+	it. This switch asks for a password twice and uses it for
+        encryption.</para>
+
+      <para>Now it's time to create a disklabel inside the cgd. The
+        defaults of the label are ok, so invoking disklabel with</para>
+
+      <screen>&rprompt; <userinput>disklabel -e -I cgd1</userinput></screen>
+
+      <para>and leaving vi with "<command>:wq</command>"
+	immediately will do.</para>
+
+      <para>Let's create a filesystem on the cgd, and finally mount it
+        somewhere:</para>
+
+      <screen>&rprompt; <userinput>newfs /dev/cgd1a</userinput>
+&rprompt; <userinput>mount /dev/cgd1a /mnt</userinput></screen>
+
+      <para>The cgd is alive! Now fill <filename>/mnt</filename> with
+        content. When finished, reverse the configuration process. The
+        steps are:</para>
+
+      <orderedlist>
+	<listitem>
+	  <para>Unmounting the cgd1a:</para>
+
+	  <screen>&rprompt; <userinput>umount /mnt</userinput></screen>
+	</listitem>
+
+	<listitem>
+	  <para>Unconfiguring the cgd:</para>
+
+	  <screen>&rprompt; <userinput>cgdconfig -u cgd1</userinput></screen>
+	</listitem>
+
+	<listitem>
+	  <para>Unconfiguring the vnd: </para>
+
+	  <screen>&rprompt; <userinput>vnconfig -u vnd0</userinput></screen>
+	</listitem>
+      </orderedlist>
+
+      <para>The following commands are examples to burn the images on CD
+        or DVD. Please adjust the <parameter>dev=</parameter> for
+        cdrecord or the <filename>/dev/rcd0d</filename> for
+        growisofs. Note the
+        "<emphasis>r</emphasis><filename>cd0d</filename>"
+        <emphasis>is</emphasis> necessary with NetBSD. Growisofs is
+        available in the <filename role="pkg">sysutils/dvd+rw-tools</filename>
+        package. Again, use "<filename>c</filename>" instead of
+        "<filename>d</filename>" if this is the raw partition on your
+        platform.</para>
+
+      <para>Finally, write the image file to a CD:</para>
+
+      <screen>&rprompt; <userinput>cdrecord dev=/dev/rcd0d -v image.img</userinput></screen>
+
+      <para>...or to a DVD:</para>
+
+      <screen>&rprompt; <userinput>growisofs -dvd-compat -Z /dev/rcd0d=image.img</userinput></screen>
+
+      <para>Congratulations! You've just created a really secure CD!</para>
+    </sect2>
+
+    <sect2 id="cryptocds-use">
+      <title>Using an encrypted CD/DVD</title>
+
+      <para>After creating an encrypted CD as described above, we're not
+        done yet - what about mounting it again?  One might guess,
+        configuring the cgd on <filename>/dev/cd0d</filename> is
+        enough - no, it is not.</para>
+
+      <para>NetBSD cannot access FFS file systems on media that is not 512
+        bytes/sector format. It doesn't matter that the cgd on the CD
+        is, since the CD's disklabel the cgd resides in has 2048
+        bytes/sector.</para>
+
+      <para>But the CD driver cd(4) is smart enough to grant "write"
+        access to the (emulated) disklabel on the CD. So before
+        configuring the cgd, let's have a look at the disklabel and
+        modify it a bit:</para>
+
+	<screen>&rprompt; <userinput>disklabel -e cd0</userinput>
+# /dev/rcd0d:
+type: ATAPI
+disk: mydisc
+label: fictitious
+flags: removable
+bytes/sector: 2048    <userinput># -- Change to 512 (= orig / 4)</userinput>
+sectors/track: 100    <userinput># -- Change to 400 (= orig * 4)</userinput>
+tracks/cylinder: 1
+sectors/cylinder: 100 <userinput># -- Change to 400 (= orig * 4)</userinput>
+cylinders: 164
+total sectors: 16386  <userinput># -- Change to value of slice "d" (=65544)</userinput>
+rpm: 300
+interleave: 1
+trackskew: 0
+cylinderskew: 0
+headswitch: 0           # microseconds
+track-to-track seek: 0  # microseconds
+drivedata: 0
+
+4 partitions:
+#     size  offset  fstype [fsize bsize cpg/sgs]
+ a:   65544   0     4.2BSD  0     0     0  # (Cyl. 0 - 655+)
+ d:   65544   0     ISO9660 0     0        # (Cyl. 0 - 655+)</screen>
+
+      <para>If you don't want to do these changes every time by hand, you
+        can use Florian Stoehr's tool  <emphasis
+	  role="bold">neb-cd512</emphasis>  which is (at time of writing
+        this) in pkgsrc-wip and will move  to
+        <filename role="pkg">sysutils/neb-cd512</filename> soon. 
+	You can also download the neb-cd512 source from <ulink
+	  url="http://sourceforge.net/projects/neb-stoehr/">
+	  http://sourceforge.net/projects/neb-stoehr/</ulink> (be sure
+        to use neb-cd512, not neb-wipe!).</para>
+
+      <para>It is invoked with the disk name as parameter, by root:</para>
+
+      <screen>&rprompt; <userinput>neb-cd512 cd0</userinput></screen>
+
+      <para>Now as the disklabel is in 512 b/s format, accessing the CD
+	is as easy as:</para>
+
+      <screen>&rprompt; <userinput>cgdconfig cgd1 /dev/cd0d /etc/cgd/image</userinput>
+&rprompt; <userinput>mount -o ro /dev/cgd1a /mnt</userinput></screen>
+
+      <para>Note that the cgd <emphasis>MUST</emphasis> be mounted read-only
+       or you'll get illegal command errors from the cd(4) driver which
+       can in some cases make even mounting a CD-based cgd impossible!</para>
+
+      <para>Now we're done! Enjoy your secure CD!</para>
+
+      <screen>&rprompt; <userinput>ls /mnt</userinput></screen>
+
+      <para>Remember you have to reverse all steps to remove the CD:</para>
+
+      <screen>&rprompt; <userinput>umount /mnt</userinput>
+&rprompt; <userinput>cgdconfig -u cgd1</userinput>
+&rprompt; <userinput>eject cd0</userinput></screen>
+    </sect2>
+  </sect1>
+
+  <sect1 id="chap-cgd-suggestions">
+    <title>Suggestions and Warnings</title>
+
+    <para>You now have your filesystems encrypted within a
+      <devicename>cgd</devicename>. When your machine is shut down, the data
+      is protected, and can't be decrypted without the passphrase.
+      However, there are still some dangers you should be aware of,
+      and more you can do with <devicename>cgd</devicename>.  This section
+      documents several further suggestions and warnings that will
+      help you use <devicename>cgd</devicename> effectively.</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Use multiple <devicename>cgd</devicename>'s for different kinds of
+          data, one mounted all the time and others mounted only when
+          needed.</para>
+      </listitem>
+
+      <listitem>
+        <para>Use a <devicename>cgd</devicename> configured on top of a
+          <devicename>vnd</devicename> made from a file on a remote network
+          fileserver (NFS, SMBFS, CODA, etc) to safely store private data
+          on a shared system. This is similar to the procedure for
+          using encrypted CDs and DVDs described in <xref
+          linkend="cryptocds" />.</para>
+      </listitem>
+    </itemizedlist>
+
+    <sect2 id="chap-cgd-swap-encryption">
+      <title>Using a random-key cgd for swap</title>
+
+      <para>You may want to use a dedicated random-key
+        <devicename>cgd</devicename> for swap space, regenerating the key
+        each reboot.  The advantage of this is that once your machine
+        is rebooted, any sensitive program memory contents that may
+        have been paged out are permanently unrecoverable, because the
+        decryption key is never known to you.</para>
+
+      <para>We created a temporary <devicename>cgd</devicename> with a random
+        key when scrubbing the disk in the example above, using a
+        shorthand <command>cgdconfig -s</command> invocation to avoid
+        creating a parameters file.</para>
+
+      <para>The <command>cgdconfig</command> params file includes a
+        <quote>randomkey</quote> keygen method. This is more
+        appropriate for "permanent" random-key configurations, and
+        facilitates the easy automatic configuration of these volumes
+        at boot time.</para>
+
+      <para>For example, if you wanted to convert your existing
+        <filename>/dev/wd0b</filename> partition to a dedicated
+        random-key cgd1, use the following command to generate
+        <filename>/etc/cgd/wd0b</filename>:</para>
+
+    <screen>&rprompt; <command>cgdconfig -g -o /etc/cgd/wd0b -V none -k randomkey blowfish-cbc</command></screen>
+
+      <para>When using the randomkey keygen method, only verification
+        method "none" can be used, because the contents of the new
+        <devicename>cgd</devicename> are effectively random each time (the
+        previous data decrypted with a random key).  Likewise, the new
+        disk will not have a valid label or partitions, and
+        <command>swapctl</command> will complain about configuring
+        swap devices not marked as such in a disklabel.</para>
+
+      <para>In order to automate the process of labeling the disk,
+        prepare an appropriate disklabel and save it to a file, for
+        example <filename>/etc/cgd/wd0b.disklabel</filename>. Please
+        refer to &man.disklabel.8; for information about
+        how to use <command>disklabel</command> to set up a swap
+        partition.</para>
+
+      <para>On each reboot, to restore this saved label to the new
+        <devicename>cgd</devicename>, create the
+        <filename>/etc/rc.conf.d/cgd</filename> file as below:</para>
+
+    <programlisting>swap_device="cgd0"
+swap_disklabel="/etc/cgd/wd0b.disklabel"
+start_postcmd="cgd_swap"
+
+cgd_swap()
+{
+	if [ -f $swap_disklabel ]; then
+		disklabel -R -r $swap_device $swap_disklabel
+	fi
+}</programlisting>
+
+      <para>The same technique could be extended to encompass using
+        <command>newfs</command> to re-create an
+        <devicename>ffs</devicename> filesystem for
+        <filename>/tmp</filename> if you didn't want to use
+        <devicename>mfs</devicename>.</para>
+    </sect2>
+
+    <sect2 id="chap-cgd-suggestions-warnings">
+      <title>Warnings</title>
+
+      <para>Prevent cryptographic disasters by making sure you can always
+        recover your passphrase and parameters file. Protect the
+        parameters file from disclosure, perhaps by storing it on
+        removable media as above, because the salt it contains helps
+        protect against dictionary attacks on the passphrase.</para>
+
+      <para>Keeping the data encrypted on your disk is all very well, but
+        what about other copies?  You already have at least one other
+        such copy (the backup we used during this setup), and it's not
+        encrypted. Piping <command>dump</command> through file-based
+        encryption tools like <command>gpg</command> can be one way of
+        addressing this issue, but make sure you have all the keys and
+        tools you need to decrypt it to <command>restore</command>
+        after a disaster.</para>
+
+      <para>Like any form of software encryption, the
+        <devicename>cgd</devicename> key stays in kernel memory while the
+        device is configured, and may be accessible to privileged
+        programs and users, such as <filename>/dev/kmem</filename>
+        grovellers.  Taking other system security steps, such as
+        running with elevated securelevel, is highly recommended.</para>
+
+      <para>Once the <devicename>cgd</devicename> volumes are mounted as normal
+        filesystems, their contents are accessible like any other
+        file.  Take care of file permissions and ensure your runnning
+        system is protected against application and network security
+        attack.</para>
+
+      <para>Avoid using suspend/resume, especially for laptops with a BIOS
+        suspend-to-disk function. If an attacker can resume your
+        laptop with the key still in memory, or read it from the
+        suspend-to-disk memory image on the hard disk later, the whole
+        point of using <devicename>cgd</devicename> is lost.</para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="chap-cgd-further">
+    <title>Further Reading</title>
+
+    <para>
+      The following ressources contain more information on CGD:
+    </para>
+
+    <bibliography id="chap-cgd-bibliography">
+      <biblioentry>
+        <title><ulink url="http://www.s-mackie.com/notes/NetBSD-CGD-Setup.html">
+            NetBSD CGD Setup</ulink></title>
+        <author>
+          <surname>Mackie</surname>
+          <firstname>Stuart</firstname>
+        </author>
+      </biblioentry>
+      
+      <biblioentry>
+        <title><ulink url="http://www.nycbug.org/uploads/_netbsdcgd.html">
+            I want my cgd</ulink> aka: I want an encrypted psuedo-device on my laptop</title>
+      </biblioentry>
+      
+      <biblioentry>
+        <title>The original paper on <ulink url="http://www.imrryr.org/~elric/cgd/cgd.pdf">
+            The CryptoGraphic Disk Driver</ulink></title>
+        <authorgroup>
+          <author>
+            <surname>Dowdeswell</surname>
+            <firstname>Roland</firstname>
+          </author>
+          <author>
+            <surname>Ioannidis</surname>
+            <firstname>John</firstname>
+          </author>
+        </authorgroup>
+      </biblioentry>
+      
+    </bibliography>
+  </sect1>
+</chapter>

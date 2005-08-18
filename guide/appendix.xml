@@ -1,0 +1,91 @@
+<!-- $NetBSD: appendix.xml,v 1.10 2004/12/14 14:09:01 wiz Exp $ -->
+
+<appendix id="appendix">
+  <title>Information</title>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="appendix-availability">
+    <title>Where to get this document</title>
+
+    <para>This document is currently available in the following
+      formats:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink url="http://www.NetBSD.org/guide/en/index.html">HTML</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink url="http://www.NetBSD.org/guide/download/netbsd-en.pdf.gz">gzip'd PDF</ulink></para>
+      </listitem>
+
+      <listitem>
+        <para><ulink url="http://www.NetBSD.org/guide/download/netbsd-en.ps.gz">gzip'd PostScript</ulink></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>In addition, this guide is also sold on occasion in printed form at
+      tradeshows and exhibitons, with all profits being donated to the NetBSD
+      Foundation.
+      On demand printing may at some point be available as well.
+      If you are interested in obtaining a printed and bound copy of this
+      document, please contact <email>www@NetBSD.org</email>. </para>
+
+  </sect1>
+
+  <sect1 id="appendix-history">
+    <title>Guide history</title>
+
+    <para>This guide was born as a collection of sparse notes that
+      Federico Lupi, the original author of the NetBSD Guide, wrote
+      mostly for himself.  When he realized that they could be useful
+      to other &os; users he started collecting them and created the
+      first version of the guide using the
+      <application>groff</application> formatter.  In order to
+      <quote>easily</quote> get a wider variety of output formats
+      (e.g. HTML and PostScript/PDF), he made the
+      <quote>mistake</quote> of moving to SGML/DocBook, which is the
+      current format of the sources.  Maintainership was picked up by
+      the NetBSD project and its developers later, and the format was
+      changed to XML/DocBook later due to better tools and slightly
+      more knowhow on customisations. </para>
+
+    <para>The following open source tools were used to write and format
+      the guide:</para>
+
+    <itemizedlist>
+      <listitem>
+	<para>the <application>vi</application> editor which ships with
+	  &os; (nvi).</para>
+      </listitem>
+
+      <listitem>
+	<para>the <application>libxslt</application> parser from GNOME for
+	  transforming XML/DocBook into HTML.</para>
+      </listitem>
+
+      <listitem>
+	<para>the <application>TeX</application> system from the &os;
+	  packages collection.
+	  TeX is used as a backend to produce the PS and PDF
+	  formats.</para>
+      </listitem>
+
+      <listitem>
+	<para>the <application>tgif</application> program for drawing
+	  the figures.</para>
+      </listitem>
+
+      <listitem>
+	<para>the <application>gimp</application> and
+	  <application>xv</application> programs for converting
+	  between image formats and making small modifications to
+	  the figures.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Many thanks to all the people involved in the development of
+      these great tools.</para>
+  </sect1>
+</appendix>

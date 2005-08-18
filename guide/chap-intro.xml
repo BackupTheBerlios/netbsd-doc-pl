@@ -1,0 +1,248 @@
+<!-- $NetBSD: chap-intro.xml,v 1.15 2004/12/14 14:09:02 wiz Exp $ -->
+
+<chapter id="chap-intro">
+  <title>Czym jest &os;?</title>
+  
+    <para>NetBSD jest wolnym, bezpiecznym, wysoce przeno¶nym UNIX-owo podobnym 
+      systemem operacyjnym dostêpnym dla wielu platform, pocz±wszy od 64 
+      bitowych serwerów opartych na Opteronie i systemach "na biurko" do 
+      przeno¶nych urz±dzeñ i urz±dzeñ zintegrowanych. Jest przejrzy¶cie 
+      zaprojektowany a jego zaawansowane mo¿liwo¶ci sprawdzaj± siê znakomicie 
+      zarówno w ¶rodowiskach produkcyjnych jak i badawczych tak¿e wsparcie dla 
+      u¿ytkowników jest dostpne z kompletnym kodem ¼ródowym . Wiele aplikacji 
+      jest ³±two dostêpnych poprzez kolekcjê systemu pakietów &os;.</para>
+
+  <!-- =============================================================== -->
+
+  <sect1 id="chap-intro-story">
+    <title>Historia &os;</title>
+
+      <para>Pierwsz± wersjê &os; (0.8) datuje siê na rok 1993 i powsta³a ona z 
+        systemu operacyjnego 4.3BSD Lite, wersji Unix'a opracowanego na 
+	Uniwersytecie Californijskim w Berkeley (University of California, 
+	Berkeley - BSD = Berkeley Software Distribution), oraz z systemu 
+	386BSD, pierwszego portu BSD na procesor Intel 386. W nastêpnych 
+	latach, modyfikacje z 4.4BSD Lite (ostatniego wydania stworzonego 
+	przez grupê Berkley) zosta³y zintegrowane z systemem. BSD, ga³±¼ 
+	Unix'a mia³a ogromne znaczenie i wp³yw na historiê systemu 
+	operacyjnego dla którego przyczyni³a siê wieloma narzêdziami, 
+	pomys³ami i udoskonaleniami, które s± teraz standardami w ¶rodowiskach 
+	Unix'owych: edytor vi, pow³oka C, kontrola zadañ, szybki system plików 
+	z Berkleley (FFS), niezawodne sygna³y, wsparcie dla wirtualnej pamiêci 
+	i TCP/IP, ¿eby wymieniæ tylko kilka. Tradycja nad badaniami i rozwojem 
+	przetrwa³a do dzisiaj w systemach BSD (wolne i komercyjne), a w 
+	szczególno¶ci w &os;.</para> 
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-intro-features">
+    <title>Mo¿liwo¶ci &os;</title>
+
+    <para>&os; dzia³a na rozleg³ym wachlarzu platform sprzêtowych i jest 
+      bardzo przeno¶ny, prawdopodobnie jest to najbardziej przeno¶ny system 
+      operacyjny na ¶wiecie. Pe³ne ¼ród³a j±dra i userland'u &os; s± dostêpne 
+      dla ka¿dej wspieranej platformy; zobacz szczegó³y na oficjalnej stronie 
+      <ulink url="http://www.NetBSD.org/">Projektu &os;</ulink>.</para>  
+
+    <para>Szczegó³owa lista mo¿liwo¶ci &os; dostêpna jest pod adresem: <ulink
+      url="http://www.NetBSD.org/Misc/features.html"></ulink>.</para>
+
+    <para>Podstawowe za³o¿enia &os; to:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Przeno¶cno¶æ (ponad 50 wspieranych platform)</para>
+      </listitem>
+
+      <listitem>
+        <para>Bezpieczeñstwo mo¿na uznaæ za oczywiste</para>
+      </listitem>
+
+      <listitem>
+        <para>Jako¶æ i poprawno¶æ kodu</para>
+      </listitem>
+
+      <listitem>
+        <para>Dotrzymywanie standardów przemys³owych</para>
+      </listitem>
+
+      <listitem>
+        <para>Badania i innowacje</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Charakterystyka ta przynosi tak¿e po¶rednie zalety. Dla przyk³adu, 
+      je¶li pracujesz tylko na jednej platformie mo¿esz uwa¿aæ, ¿e nie jeste¶ 
+      zainteresowany przeno¶no¶ci±. Ale przeno¶no¶æ jest zwi±zana z jako¶ci± 
+      kodu; bez dobrze napisanego i dobrze zorganizowanego kodu bazowego nie 
+      by³oby mo¿liwo¶ci wspierania tylu platform. Jako¶æ kodu jest podstaw± 
+      ka¿dego solidnego systemu; Chocia¿ zadziwiaj±co niewielu ludzi wydaje 
+      siê to rozumieæ. Uwaga przyk³adana do architektury i jako¶ci wydañ jest 
+      nagradzana wspania³ym potencja³em kodu &os; i jako¶ci± jego sterowników.
+      </para>
+
+    <para>Cech± odró¿niaj±c± &os; jest brak satysfakcji z czê¶ciowych 
+      rozwi±zañ. 
+      <!-- stolen from the site -->
+      Niektóre systemy wydaj± siê mieæ filozofiê <quote>Je¶li dzia³a, to 
+      jest dobrze</quote>.
+      W tym ¶wietle &os; mo¿na by opisaæ tak <quote>Nie dzia³a je¿eli nie jest 
+      dobre</quote>.
+      Pomy¶l jak wiele programów jest dzisiaj rozro¶niêtych ponad miarê i
+      rozpadaj± siê pod ich w³asnym ciê¿arem i zrozumiesz dlaczego &os; chce 
+      unikaæ takich sytuacji za wszelk± cenê.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-intro-platforms">
+    <title>Obs³ugiwane platformy</title>
+    
+    <para>&os; obs³uguje ponad 50 platform, zarówno popularne PC (i386), 
+      systemy Opteron, SPARC i UltraSPARC, Alpha, Amiga, Atari, m68k i PowerPC 
+      oparty na platformie Apple Macintosh. Techniczne szczegó³y dla ka¿dej z 
+      nich s± dostêpne na <ulink 
+      url="http://www.NetBSD.org/">stronie &os;</ulink>.</para> 
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-intro-target-users">
+    <title>U¿ytkownicy docelowi &os;</title>
+
+      <para>Strona &os; mówi, ¿e: <quote>Projekt &os; dostarcza, wolny od 
+        op³at, z mo¿liwo¶ci± ponownej redystrybucji system dla 
+	profesjonalistów, hobbistów, i naukowców którzy mog± go u¿ywaæ 
+	jakkolwiek im siê podoba</quote>. Chcia³bym dodaæ, ¿e &os; jest 
+        idealnym systemem je¶li chcia³by¶ uczyæ siê Unix'a, poniewa¿ przede 
+	wszystkim dotrzymuje standardów (jedno z za³o¿eñ projektu) i dlatego, 
+	¿e dzia³a tak samo na najnowszym sprzêcie PC jak i na sprzêcie 
+	pochopnie uznanym za zbêdny przez wiêkszo¶æ systemów operacyjnych; 
+	mo¿emy powiedzieæ <quote>aby uczyæ siê Unixa'a nie musisz kupowaæ 
+	drogiego sprzêtu; mo¿esz ponownie u¿yæ starego PC lub Mac'a którego 
+	masz na strychu</quote>, oczywi¶cie &os; rozwinie skrzyd³a nawet na 
+	najpopularniejszych podzespo³ach! Ponadto, je¶li potrzebujesz Unix'a, 
+	którego mo¿na uruchomiæ konsekwêtnie na ró¿norakich platformach, &os; 
+	jest prawdopodobnie Twoim najlepszym (jedynym) wyborem.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-intro-applications">
+    <title>Aplikacje dla &os;</title>
+
+      <para>Kiedy instalujesz &os; masz dostêp do bogatego zestawu programów i 
+        aplikacji, które mo¿esz zainstalowaæ w systemie. Oprócz tego 
+	posiadasz standardowe narzêdzia produkcyjne Unixa'a, edytory, 
+	formatery, kompilatory C/C++ i debuggery itd., jest te¿ potê¿na 
+	(i ci±gle rosn±ca, obecnie ponad 5,000) liczba pakietów, które mog± 
+	byæ zainstalowane zarówno ze ¼róde³ jak i z formy przekompilowanej. 
+	Wszystkie pakiety, które oczekujesz znale¼æ na porz±dnie 
+	skonfigurowanym systemie s± dostêpne dla &os; za darmo, jest te¿ 
+	kilka komercyjnych aplikacji. Dodatkowo, &os; dostarcza binarn± 
+	emulacjê rozmaitej ilo¶ci innych *nix'owych systemów operacyjnych, 
+	pozwalaj±c± uruchomiæ Tobie nienatywne aplikacje. Emulacja Linux'a 
+	jest prawdopodobnie najbardziej trafnym przyk³adem, jak du¿o wysi³ku 
+	zosta³o w³o¿one w ni± i jest ona u¿ywana przez prawie wszystkich 
+	u¿ytkowników &os; mo¿esz uruchomiæ Linux'owe wersje:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Netscape</para>
+      </listitem>
+
+      <listitem>
+        <para>Acrobat Reader</para>
+      </listitem>
+
+      <listitem>
+        <para>Doom, Quake</para>
+      </listitem>
+
+      <listitem>
+        <para>Adobe FrameMaker</para>
+      </listitem>
+
+      <listitem>
+        <para>oraz wiele innych programów</para>
+      </listitem>
+    </itemizedlist>
+
+    <!-- *** TODO *** other emulations -->
+
+    <para>&os; jest tak¿e zdolny emulowaæ FreeBSD, BSDI, Solaris i binarki 
+      innych systemów.
+    </para> 
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-intro-philosophy">
+    <title>Filozofia &os;</title>
+
+    <para>Inaczej ni¿ wiele wspó³czesnych systemów operacyjnych, instalacja 
+      &os; jest bogata w mo¿liwo¶ci, ale nie jest objêto¶ciowo wielka, 
+      poniewa¿ d±¿y do wyprodukowania stabilnego i kompletnego podstawowego 
+      systemu bez stawania siê zbytecznym. Po instalacji otrzymujesz w pe³ni 
+      funkcjonalny podstawowy system, który pó¼niej mo¿na dostosowaæ do 
+      ró¿nych aplikacji, np. GNOME czy KDE i przegl±darka oraz inne narzêdzia 
+      dla maszyny biurowej, Apache dla serwera www, PostgreSQL lub MySQL dla 
+      serwera bazodanowego, itd. - masz wolno¶æ wyboru jakie programy 
+      zainstalowaæ na swojej maszynie przy czym instalacja nowych programów 
+      jest bardzo prosta dziêki systemowi <ulink 
+      url="http://www.pkgsrc.org/">pkgsrc</ulink>.</para>
+
+    <para>Inn± przewag± nad takim podej¶ciem jest to, ¿e system podstawy 
+      bêdzie pracowaæ bez tych aplikacji; je¶li zdecydujesz siê uaktualniæ 
+      swoj± wersjê Perla nie musisz obawiaæ siê, ¿e popsujesz jak±¶ czê¶æ 
+      systemu. Kiedy instalujesz &os; nie znajdziesz wielkiej kolekcji 
+      prekompilowanych aplikacji; mo¿esz postrzegaæ to jako wadê ale kiedy 
+      zaczniesz rozumieæ filozofiê id±c± za tym odkryjesz, ¿e to daje ci 
+      wolno¶æ. Kiedy instalujesz ca³± t± kolekcjê oprogramowania (albo kto¶ 
+      zdecydowa³, ¿e zrobi to za ciebie) wype³niasz swój twardy dysk tonami 
+      programów, które w wiêkszo¶ci pozostan± nieu¿ywane (i nieznane) i bêd± 
+      tylko marnowa³y miejsce (i najprawdopodobniej obni¿± stabilno¶æ 
+      systemu); to jest co¶ czego typowy u¿ytkownik BSD nie chcia³by robiæ.
+    </para>
+
+    <para>Nawet je¶li zaczniesz poznawaæ &os;, zawsze bêdzie co¶ co ci±gle 
+      bêdzie ciê zachwyca³o, ekstremalna konsekwencja i logika systemu oraz 
+      zwracanie uwagi na szczegó³y; nic nie jest wynikiem przypadku, wszystko 
+      jest dobrze przemy¶lane. Tak, o to w³a¶nie chodzi w jako¶ci i w mojej 
+      opini jest to najwa¿niejsza cecha &os;.</para>
+
+    <para>Mogliby¶my spêdzaæ dnie dyskutuj±c nad wzglêdnymi zaletami systemów 
+      operacyjnych (niektórzy ludzie uwielbiaj± to robiæ) ale je¶li nie 
+      spróbujesz czego¶ naprawdê to nie mo¿esz naprawdê os±dzaæ. Jestem 
+      przekonany, poniewa¿ widzia³em wielokrotnie na listach dyskusyjnych, 
+      ¿e je¶li spróbujesz &os; uwiedzie Ciê perfekcyjnie wywa¿ona granica 
+      miêdzy skomplikowaniem i efektywno¶ci±; wszystkie problemy maj± wiêcej 
+      ni¿ jedno rozwi±zanie; Dla &os; nie ma du¿o gotowych rozwi±zañ, ale 
+      zawsze bêdzie stara³ siê znale¼æ najbardziej proste i eleganckie. 
+      &os; jest narzêdziem umo¿liwiaj±cym wykonywanie waszej pracy bez 
+      wchodzenia Tobie w drogê. W tym ¶wietle jest to optymalne narzêdzie; 
+      jest jak u¿ywanie d³ugopisu; pracujesz ciê¿ko ¿eby nauczyæ siê nim 
+      pos³ugiwaæ, ale kiedy wkoñcu siê nauczysz, mo¿esz rysowaæ, pisaæ i 
+      kompletnie zapomnieæ o d³ugopisie.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-intro-howto-get">
+    <title>Jak zdobyæ &os;</title>
+
+    <para>
+      &os; jest systemem operacyjnym Open Source, i co za tym idzie jest 
+      dostêpny za darmo z <ulink 
+      url="ftp://ftp.NetBSD.org">ftp.NetBSD.org</ulink> i jego mirrorów.
+    </para>
+
+    <para>
+      Nie ma oficjalnego wydania &os; na CD ale jest du¿a liczba dystrybutorów.
+      Najbardziej aktualne wydania znajdziesz na powi±zanej z tematem stronie 
+      na 
+      <ulink url="http://www.NetBSD.org/Sites/cdroms.html">stronie &os;</ulink>.
+    </para>
+  </sect1>
+</chapter>

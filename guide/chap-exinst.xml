@@ -1,0 +1,1563 @@
+<!-- $NetBSD: chap-exinst.xml,v 1.17 2005/03/12 05:04:18 reed Exp $ -->
+
+<chapter id="chap-exinst">
+  <title>Przyk³adowa instalacja</title>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-exinst-install">
+    <title>Wprowadzenie</title>
+
+    <para>Ten rozdzia³ pokazuje przyk³±dow± instalacjê dla dwóch przypadków:
+      instalacji z CD-ROMu i przez FTP. Ta koncepcja jest podobna do 
+      wszystkich typów instalacji; jedyna ró¿nica wystêpuje w momencie wyboru 
+      pakietów binarnych przez <application>sysinst</application>.
+      Proszê zauwa¿yæ, ¿e pewne szczegó³y instalacji mog± siê ró¿niæ w 
+      zale¿no¶ci od wersji NetBSD: ten przyk³ad zosta³ stworzony na 
+      przyk³adzie wersji 2.0.
+    </para>
+
+    <para>Wybór tych dwóch rodzajów instalacji mo¿e daæ ci wra¿enie, ¿e 
+      instalacja jest bardzo skomplikowana oraz wymaga bardzo du¿o pracy: 
+      pamiêtaj jednak, ¿e je¶li zaakceptujesz domy¶le ustawienia wszystko 
+      stanie siê znacznie prostrze.
+      Z drugiej strony podrêcznik, który wyj±¶nia tylko <quote>³atwe</quote> 
+      zagadnienia nie jest zbyt praktyczny (chyba, ¿e spojrzymy na niego z 
+      punktu widzenia marketingowego).
+    </para>
+  </sect1>
+
+  <!-- ........................................................... -->
+
+  <sect1 id="chap-exinst-preparing">
+    <title>Przygotowanie do instalacji</title>
+
+    <para>
+      Przed instalacj± by³o by dobrze zrobiæ szczegó³owy plan kroków jakie 
+      bêdziesz musia³ wykonaæ.
+      Wpierw przeczytaj plik <filename>INSTALL</filename> (obiecujê, ¿e mówiê 
+      to ostatni raz). Przeczytaj opis instalacji i sprawd¼ czy twój sprzêt 
+      jest obs³ugiwany.
+      Nastêpnie, je¿eli na twoim dysku jest ju¿ inny system pomy¶l jak mo¿esz 
+      przeznaczyæ to co ci pozosta³o dla NetBSD; Je¿eli NetBSD dzieli dysk z 
+      innym systemem operacyjnym prawdopodobnie bêdziesz musia³ utworzyæ now± 
+      partycjê (zrobisz to z <application>sysinst</application>) i byæ mo¿e 
+      zmieniæ wielko¶æ istniej±cyj partycji.
+      Nie jest mo¿liwa zmiana wielko¶ci istniej±cych partycji z programem 
+      <application>sysinst</application> ale istniej± komercyjne programy 
+      (takie jak <application>Partition Magic</application>) oraz niektóre 
+      wolne narzêdzia (<application>FIPS</application>, 
+      <application>pfdisk</application>), które to umo¿liwiaj±.
+    </para>
+    <para>
+      Instalacja jest podzielona na dwa kroki.
+      W pierwszej czê¶ci bêdziesz musia³ stworzyæ partycje dla NetBSD oraz 
+      tzw. disklabel dla tej partycji.
+      W drugiej czê¶ci musisz zadecydowaæ, który zestaw plików binarnych 
+      chcesz zainstalowaæ na nowo powsta³ej partycji.
+      Pierwsza czê¶æ jest niezale¿na od metody instalacji (CD-ROM, ftp, NFS, 
+      ...); a¿ do koñca pierwszej czê¶ci nic nie jest jeszcze nagrywane na 
+      dysk twardy.
+      Je¿eli potwierdzisz dalszy proces instalacji bêdzie posuwa³ siê dalej. 
+      Bedziesz jeszcze móg³ przerwaæ i wróciæ do g³ównego menu i dysk twardy 
+      nie zostanie zmieniony.
+    </para>
+
+  </sect1>
+
+  <!-- ........................................................... -->
+
+  <sect1 id="chap-exinst-create-floppy">
+    <title>Tworzenie dyskietki instalacyjnej</title>
+
+    <note>
+      <para>
+	Je¶li posiadasz bootowalny CD-ROM nie potrzebujesz tworzyæ dyskietki 
+	instalacyjnej: powiniene¶ uaktywniæ 
+	<quote>bootowanie z CD-ROM'u</quote> w opcjach BIOS'u, w³o¿yæ CD i 
+	zrestartowaæ komputer. 
+	Ta opcja jest prawdopodobnie nie dostêpna na starszych maszynach.
+      </para>
+    </note>
+
+    <para>
+      Przed instalacj± bêdziesz musia³ utworzyæ dyskietki instalacyjne, tzn. 
+      skopiowaæ obraz dyskietki z CD-ROM'u na dyskietki. 
+      Aby wykonaæ tê operacjê pod DOS'em mo¿esz u¿yæ do tego programu 
+      <application>rawrite</application> znajduj±cego siê w katalogu 
+      <filename>i386/installation/misc</filename>, znajduje siê tam tak¿e 
+      wersja dla Windows'a <filename>rawr32.zip</filename>.
+      Obrazy dyskietek w przypadku instalacji na <quote>normalnym</quote> PC to 
+      <filename>i386/installation/floppy/boot1.fs</filename> oraz 
+      <filename>i386/installation/floppy/boot2.fs</filename> natomiast dla 
+      laptopów przeznaczone s± 
+      <filename>i386/installation/floppy/bootlap1.fs</filename> i 
+      <filename>i386/installation/floppy/bootlap2.fs</filename>. Pozosta³e
+      z dostêpnych obrazów dyskietek s± opisane bardziej szczegó³owo w 
+      dokumencie <filename>INSTALL.*</filename>.
+    </para>
+
+    <note>
+        <para>
+	  Przed stworzeniem dyskietek instalacyjnych zawsze sprawd¼ czy 
+	  dyskietki s± sprawne: ten prosty krok jest czêsto pomijany, a mo¿e
+	  uratowaæ ciê przed problemami!
+        </para>
+    </note>
+
+    <para>
+      Procedura tworzenia dyskietek jest nastêpuj±ca:
+    </para>
+    
+    <procedure>
+      <step>
+        <para>
+          Sformatuj dyskietkê. 
+        </para>
+      </step>
+      <step>
+        <para>
+	  Przejd¼ do katalogu <filename>I386\INSTALLATION\FLOPPY</filename> 
+	  na CD-ROM'ie.
+        </para>
+      </step>
+      <step>
+        <para>
+	  Uruchom program 
+	  <command><filename>..\MISC\RAWRITE</filename></command>
+	  (lub wypakuj <filename>..\MISC\RAWR32.ZIP</filename> 
+	  je¶li posiadasz system Windows i uruchom program RAWRITE32). 
+	  <quote>Plikami ¼ród³owymi</quote> s± 
+	  <filename>BOOT1.FS</filename> i 
+	  <filename>BOOT2.FS</filename> (itd., zobacz wy¿ej) a 
+	  <quote>napêdem przeznaczenia</quote> jest A:
+        </para>
+      </step>
+    </procedure>
+
+    <para>
+      Je¶li tworzysz dyskiety startowe w ¶rodowisku Unix'owym, mo¿esz u¿yæ 
+      do tego celu polecenia <command>dd</command>.
+      Dla przyk³adu:
+    </para>
+
+    <screen>&rprompt; <userinput>cd i386/installation/floppy</userinput>
+&rprompt; <userinput>dd if=boot.fs of=/dev/fd0a bs=36b</userinput></screen>
+
+    <para>
+      <command>dd</command> kopiuje 512 bajtowe bloki: opcja
+      <option>bs=36b</option> copiuje 36 bloków jednocze¶nie, czyni±c t± 
+      operacje znacznie szybsz±.
+    </para>
+
+    <note>
+      <para>
+	Dyskietka 1440K zawiera 1474560 bajtów, które tworz± 80 cylindrów, 
+	2 drogi, 18 sektorów i 512 bajtów na sektor, czyli 80 * 2 * 18 = 2880
+	bloków.
+	W ten sposób <option>bs=36b</option> kopiuje jednocze¶nie jeden 
+	cylinder (18 * 2 bloki) i powtarza tê operacjê 80 razy zamiast 2880.
+      </para>
+    </note>
+
+  </sect1>
+
+  <!-- ........................................................... -->
+
+  <sect1 id="chap-exinst-last-step">
+    <title>Ostatnie kroki przygotowawcze</title>
+
+    <para>
+      Wszystko jest ju¿ przygotowane do instalacji tylko przed przyst±pieniem 
+      do niej by³oby lepiej zebraæ trochê informacji o sprzêciê jaki posiadasz.
+    </para>
+
+    <para>
+      Najwa¿niejsz± rzecz± jest sprawdzenie jakiego typu jest dysk twardy 
+      (IDE, SCSI) oraz jego geometriê.
+      Mo¿esz znale¼æ te informacjê fizycznie na dysku twardym lub u¿yæ do tego
+      celu programu diagnostycznego.
+      Niektóre dyski twarde maj± etykietê na, której te dane s± napisane.
+      Inn± mo¿liwo¶ci± jest po³±czenie siê w sieci ze stron± producenta 
+      twojego dysku i przyjrzenie siê informacj± o produkcie.
+    </para>
+
+    <para>
+      Je¶li instalujesz przez ftp lub NFS pamiêtaj by twoje ustawienia dla 
+      karty sieciowej: je¶li j±dro instalacyjne oczekuje, ¿e twoja karta jest 
+      na okre¶lonym przerwaniu IRQ, a ustawienia karty s± inne mo¿esz nie byæ 
+      wstanie zainstalowaæ systemu.
+      Dla przyk³adu, j±dro instalacyjne mo¿e rozpoznaæ kartê sieciow± NE2000 z 
+      nastêpuj±cymi ustawieniami:
+    </para>
+
+      <screen>ne0     at isa? port 0x280 irq 9        # NE[12]000 ethernet cards
+ne1     at isa? port 0x300 irq 10</screen>
+
+    <para>
+      Je¶li karta sieciowa NE2000 ma inne ustawienia mo¿e nie zostaæ wykryta.
+      (Po instalacji bêdziesz móg³ skompilowaæ i przerobiæ j±dro systemu 
+      wed³ug w³asnych ustawieñ.)
+    </para>
+
+    <para>
+      Powiniene¶ tak¿e sprawdziæ pozosta³e detale sprzêtowe takie jak, dla 
+      przyk³adu, numery portów szeregowych i równoleg³ych, itd.; ten sposób
+      postêpowania nie jest wymagany dla instalacji ale mo¿e okazaæ siê 
+      przydatny pó¼niej.
+      Sprawd¼ swoje ustawienia (IRQ, porty I/O, ...) wbrew temu co jest 
+      napisane w pliku <filename>INSTALL</filename>.
+    </para>
+
+    <note>
+      <para>
+	mo¿esz instalowaæ system nawet je¶li nie znasz geometrii dysku 
+	twardego oraz innych detali sprzêtu.
+	W tym przypadku musisz zaufaæ programowi 
+	<application>sysinst</application>, który automatycznie wyznaczy 
+	geometriê i (zazwyczaj) bêdzie ona dobrze wyznaczona.
+      </para>
+    </note>
+
+  </sect1>
+
+  <!-- ........................................................... -->
+
+  <sect1 id="chap-exinst-begin-installation">
+    <title>Rozpoczynamy instalacjê.</title>
+
+    <para>
+      W³ó¿ swoj± niedawno utworzon± dyskietkê instalacyjn± do napêdu A: i 
+      zrestartuj komputer (lub inicjuj z CD-ROM'u). J±dro z dyskietki zostanie 
+      zainicjowany i rozpocznie siê wy¶wietlanie du¿ej ilo¶ci komunikatów na 
+      twoim ekranie, wiêkszo¶æ z nich bêdzie mówiæ o co¶ o tym, ¿e twój sprzêt 
+      zosta³ wykryty lub nie zosta³ skonfigurowany. To jest normalne: j±dro z 
+      dyskietki stara siê wykryæ jak najwiêksz± ilo¶æ wspieranego sprzêtu 
+      przez NetBSD (!) prawdopodobnie nie masz wszystkich tych urz±dzeñ w 
+      swojej maszynie.
+    </para>
+
+    <figure id="fig-inst-language">
+      <title>Wybór jêzyka</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-language.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-language.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>
+      Kiedy zakoñczy siê procedura inicjacyjna znajdziesz siê w programie
+      instalacyjnym &os;, <application>sysinst</application>, pokazanym w 
+      <xref linkend="fig-inst-language" />. Program 
+      <application>sysinst</application> wygl±da nieco spartañsko lecz jest 
+      bardzo potê¿nym i elastycznym narzêdziem.
+      Od teraz powinienie¶ postêpowaæ zgodnie z intrukcjami ukazuj±cymi siê na 
+      ekranie monitora, u¿ywaj±c dokumentu <filename>INSTALL.*</filename> jako 
+      odniesienia.
+      Ekrany programu <application>sysinst</application> maj± mniej wiêcej ten 
+      sam uk³ad: górna czê¶æ ekranu pokazuje, krótki opis bie¿±cej operacji 
+      lub krótk± wiadomo¶æ; centralna czê¶æ ekranu pokazuje bierz±ce 
+      ustawienia, jakie zosta³y wykryte przez NetBSD; dolna czê¶æ ekranu 
+      wy¶wietla menu wyboru. Aby wybraæ opcjê u¿yj obu klawiszy strza³ek, 
+      klawiszy 
+      <quote>Ctrl+N</quote> (nastêpny) i <quote>Ctrl+P</quote> (poprzedni) i 
+      potwierd¼ swój wybór przez naci¶niêcie klawisza Return (Enter).
+    </para>
+    
+    <para>
+      Teraz mo¿esz ju¿ i¶æ do przodu i wybraæ jêzyk, który preferujesz do 
+      instalacji.
+    </para>
+
+    <figure id="fig-inst-mainmenu">
+      <title>Menu g³ówne programu instalacyjnego</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-mainmenu.eps" format="EPS" /> 
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-mainmenu.png" format="PNG" /> 
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+
+    <para>
+      Wybór ten przeniesie ciê do g³ównego menu programu instalacyjnego, 
+      pokazanego w (<xref linkend="fig-inst-mainmenu" />. Wybierz opcjê 
+      Instalacji, która przeniesie ciê do nastêpnego ekranu 
+      (<xref linkend="fig-inst-confirm" />), gdzie bêdziesz móg³ potwierdziæ 
+      tê operacjê.
+    </para>
+
+    <figure id="fig-inst-confirm">
+      <title>Potwierdzanie chêci instalacji NetBSD</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-confirm.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-confirm.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>
+      Po wyborze opcji kontynuacji <quote>Tak</quote>, przyszed³ czas wyboru, 
+      na którym dysku twardym chcesz zainstalowaæ NetBSD.
+      Je¶li wiêcje ni¿ jeden dysk jest dostêpny, 
+      <application>sysinst</application> wy¶wietli listê dysków, z których 
+      bêdziesz móg³ wybraæ jeden.
+      W przyk³adzie <xref linkend="fig-inst-select-disk" /> s± pokazane dwa 
+      dyski i NetBSD bêdzie zainstalowany na <quote>wd0</quote>, pierwszym 
+      znalezionym dysku IDE. Je¶li posiadasz dyski SCSI, one bêd± nazwane 
+      <quote>sd0</quote>, <quote>sd1</quote> i tak dalej.
+      
+      <note>
+        <para>
+	  Informacje na tym ekranie mog± siê ró¿niæ w zale¿no¶ci od typu i 
+	  liczby dysków twardych zainstalowanych w systemie.
+        </para>
+      </note>
+    </para>
+
+    <figure id="fig-inst-select-disk">
+      <title>Wybór dysku twardego</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-select-disk.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-select-disk.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>
+      <application>Sysinst</application> zapyta pó¼niej czy chcesz 
+      przeprowadziæ pe³n± instalacjê czy zwyczajn± instalacjê. NetBSD jest 
+      podzielone na kolekcjê zestawów spakowanych pakietów zwanych 
+      "distributions sets". <quote>Pe³na instalacji</quote> zainstaluje ca³y 
+      zestaw; je¶li wybierzesz <quote>zwyczajn± instalacjê</quote> bêdziesz 
+      móg³ wybraæ taki zestaw na jaki bêdziesz mia³ ochotê. Ten krok jest 
+      pokazany na <xref linkend="inst-fullcustom" />. 
+    </para>
+
+    <figure id="inst-fullcustom">
+      <title>Pe³na lub zwyczajna instalacja</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-fullcustom.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-fullcustom.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>
+      Je¶³i wybra³e¶ zwyk³± instalacjê <application>sysinst</application> 
+      zezwoli ci na wybór, zestawu pakietów do instalacji, jak jest pokazane 
+      na <xref linkend="inst-distsets" />. Bêdziesz potrzebowa³ przynajmniej 
+      kernel <quote>Base</quote> i <quote>System
+      (<filename>/etc</filename>)</quote> dla funkcjonalnej instalacji.
+    </para>
+
+    <figure id="inst-distsets">
+      <title>Wybór zestawu pakietów</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-distsets.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-distsets.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+  </sect1>
+
+  <!-- ........................................................... -->
+
+  <sect1 id="chap-exinst-partitions">
+    <title>Partycjonowanie</title>
+
+    <para>Pierwszym wa¿nym krokiem instalacji jest: partycjonowanie dysku
+      twardego.
+      Wpierw musisz okre¶liæ czy NetBSD ma byæ zainstalowany na wybranych
+      partycjach (sugerowany wybrór tej opcji) czy te¿ instalator ma
+      zainstalowaæ system na ca³ym dysku (wybór tej opcji jest 
+      <quote>niebezpieczny</quote>). W pierwszym przypadku jest nadal mo¿liwe
+      utworzenie partycji, które obejm± ca³y dysk twardy (<xref 
+      linkend="fig-inst-mbr-partitioning" />) wiêc rekomendujemy zaznaczenie
+      tej opcji, która utrzymuje tablicê partycji BIOS'u w formacie
+      zgodnym z pozosta³ymi systemami operacyjnymi.</para>
+      
+    <figure id="fig-inst-mbr-partitioning">
+      <title>Wybór rodzaju partycjonowania dysku twardego</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-mbr-partitioning.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-mbr-partitioning.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Nastêpnym krokiem, przedstawionym w 
+      <xref linkend="fig-inst-units" />, jest wybór jednostki miary jaka ma
+      byæ u¿yta do partycjonowania dysku twardego: sektory daj± najwiêcej
+      elastyczno¶ci i precyzji (zazwyczaj lepiej jest ustawiaæ partycje na
+      granicach cylindra z powodów wydajno¶ciowych, przynajmniej na starszych
+      typach dysków twardych).
+      Megabajty s± ³atwiejsze w u¿yciu, poniewa¿ nie wymagaj± rêcznego
+      przeliczania i s± bardziej <quote>intuicyjne</quote>.</para>
+
+    <figure id="fig-inst-units">
+      <title>Wybór jednostki miary</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-units.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-units.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Dla wiêkszo¶ci ludzi, <quote>Megabajty</quote> bêd± najlepszym
+      wyborem, poniewa¿ jest to jednostka specyficzna dla rozmiarów partycji.
+      Po dokonaniu wyboru zostaniesz przeniesiony do programu
+      <application>fdisk</application>.</para>
+
+    <figure id="fig-inst-fdisk">
+      <title>fdisk</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-fdisk.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-fdisk.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para><xref linkend="fig-inst-fdisk" /> pokazuje bie¿±c± sytuacjê na dysku
+      twardym przed instalacj± NetBSD; s± cztery podstawowe partycje i jak
+      mo¿esz zobaczyæ dysk jest aktualnie pusty. 
+      Je¿eli masz inne partycje na dysku mo¿esz je zostawiæ nie naruszone i
+      instalowaæ NetBSD na partycji, która jest akutalnie nieu¿ywana lub te¿
+      mo¿esz skasowaæ wszystkie partycje i zainstalowaæ NetBSD na ca³ym
+      dysku.</para>
+
+    <para>Kasowanie partycji jest proste; po wyborze partycji z opcji menu dla
+      tej partycji (<xref linkend="fig-inst-partition-options" />), zmieñ
+      rodzaj partycji na <quote>Kasuj partycje</quote> co spowoduje skasowanie
+      wybranej partycji. Oczywi¶cie, je¶li chcesz u¿yæ partycji dla NetBSD
+      musisz ustawiæ rodzaj partycji na <quote>NetBSD</quote>.</para>
+
+    <para>Mo¿esz stworzyæ partycje dla NetBSD przez wybór partycji, na której
+      chcesz zainstalowaæ NetBSD. Nazwy partycji od <quote>a</quote> do
+      <quote>d</quote> odpowiadaj± czterem podstawowym partycjom na innych
+      systemach operacyjnych. Po wyborze partycji, menu z opcjami dla tej
+      partycji bêdzie wygl±da³o nastêpuj±co 
+      <xref linkend="fig-inst-partition-options" />.</para>
+
+    <figure id="fig-inst-partition-options">
+      <title>Opcje partycji</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-partition-options.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-partition-options.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Dla stworzenia nowej partycji musz± byæ dostarczone nastêpuj±ce
+      informacje:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>
+	  typ (kind) nowej partycji
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+	  pierwszy (start) sektor nowej partycji
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+	  wielko¶æ nowej partycji
+        </para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Wybierz typ partycji dla nowej partycji <quote>NetBSD</quote> (opcja
+      <quote>kind</quote>. Program instalacyjny automatycznie spróbuje
+      przydzieliæ opcjê <quote>Start</quote> przez wystartowanie w miejscu
+      gdzie koñczy siê poprzednia partycja. Zmieñ tê warto¶æ je¶li jest ona
+      niepoprawna. Tak samo wygl±da to w przypadku opcji <quote>size</quote>;
+      program instalacyjny zacznie wype³niaæ woln± przestrzeñ na dysku do
+      nastêpnej partycji lub do koñca dysku (w zale¿no¶ci od tego co zosta³o
+      wybrane). Zmieñ tê warto¶æ je¶li jest ona niepoprawna lub je¶li nie
+      chcesz by &os; u¿y³o sugerowanej przestrzeni dyskowej.</para>
+
+    <para>Po tym jak ustawi³e¶ rodzaj partycji, sektor nowej partycji i
+      wielko¶æ jest dobrze ustawiæ nazwê, która powinna byæ u¿yta w menu
+      bootloadera. Mo¿esz to zrobiæ wybieraj±c opcjê <quote>bootmenu</quote> i
+      podaj±c nazwê np. <quote>NetBSD</quote>. Dobrze jest powtórzyæ ten krok
+      dla pozosta³ych partycji. Mo¿esz bootowaæ razem &os; i Windows u¿ywaj±c
+      bootloadera NetBSD. Gdy ju¿ bêdziesz zdowolony z ustawieñ partycji
+      mo¿esz zatwierdziæ swój wybór przez wybranie <quote> Partition
+      OK</quote>. Mo¿esz wybraæ tê sam± opcjê w programie fdisk kiedy
+      zakoñczysz partycjonowanie dysku twardego.</para>
+
+    <para>Je¶li zrobi³e¶ b³±d przy partycjonowaniu dysku (dla przyk³adu
+      utworzy³e¶ pokrywaj±ce siê partycje) program instalacyjny
+      <application>sysinst</application> wy¶wietli Ci informacjê i sugestiê by
+      powróciæ do programu <application>fdisk</application> (mo¿esz tak¿e
+      kontynuowaæ instalacjê NetBSD).
+      Je¶li dane s± poprawne ale partycja NetBSD le¿y poza zasiêgiem sectorów,
+      które s± botowane przez BIOS, program <application>sysinst</application>
+      ostrze¿e Ciê i spyta czy chcesz kontynuowaæ.
+      Ten problem mo¿e wystêpowaæ na starszych PC: PC u¿yty w tym przyk³adzie
+      otrzyma³ to ostrze¿enie ale uruchomi³ siê perfekcyjnie.
+      Nie ma mo¿liwo¶ci by daæ ogóln± regu³ê (to zale¿y od BIOS'u). Je¶li PC
+      nie jest zbyt stary sugerujê ignorowaæ to ostrze¿enie i kontynuwaæ
+      instalacjê.</para>
+
+    <note>
+      <para>To nie jest ograniczenie NetBSD; niektóre stare BIOS'y nie mog±
+	inicjowaæ partycji, które le¿± poza zasiêgiem pierwszych 1024
+	cylindrów.
+	Dla pe³nego zrozumienia problemu powiniene¶ poznañ ró¿ne typy BIOS'ów
+	oraz wiele schematów adresowych, których u¿ywaj± (fizyczny CHS,
+	logiczny CHS, LBA, ...).
+	Ten temat nie jest opisany w tym przewodniku.</para>
+
+      <para>Wiêkszo¶æ ostatnich BIOS'ów, wspiera rozszerzenie int13, daje to
+        mo¿liwo¶æ instalacji NetBSD na partycjach, które wychodz± poza 
+        pierwsze 8 GB dysku twardego, pod warunkiem, ¿e bootmened¿er NetBSD jest
+        zainstalowany.</para>
+    </note>
+
+    <para>Je¿eli dane s± poprawne, program <application>sysinst</application>
+      zaoferuje Ci instalacjê bootmened¿era na dysku twardym.
+      Tak jak to jest pokazane na screenie 
+      <xref linkend="fig-inst-bootselect" />.</para>
+
+    <figure id="fig-inst-bootselect">
+      <title>Instalacja bootmened¿era</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-bootselect.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-bootselect.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Od tego momentu pierwsza czê¶æ instalacji jest skoñczona.</para>
+
+    <para>Partycje BIOS'u, tak¿e nazywane <emphasis>slices</emphasis> przez
+      BSD tak¿e s± utworzone.
+      Czas zdefiniowaæ partycje BSD.</para>
+
+  </sect1>
+
+  <!-- ........................................................... -->
+
+  <sect1 id="chap-exinst-disklabel">
+    <title>Disklabel</title>
+
+    <para>Niektóre platformy sprzêtowe takie jak PC (i386), u¿ywaj± partycji
+      MBR dla osobnych systemów plików. Partycje MBR &os; mo¿esz utworzyæ
+      wcze¶niej w procesie instalacyjny ale upewnij siê czy inne systemy
+      operacyjne nie nadpisz± twoje przestrzeni dyskowej, któr± przydzieli³e¶
+      dla &os;. &os; u¿ywa schematu podzia³u dysku, który nazywa siê
+      disklabel. Jest on przechowywany podczas startu partycji MBR &os;. W
+      nastêpnych kilku krokach bêdziesz wstanie stworzyæ disklabel i ustawiæ
+      wielko¶æ partycji &os; lub u¿yæ istniej±cych wielko¶ci partycji, tak jak
+      jest pokazane na <xref linkend="inst-extpart" />.</para>
+
+    <figure id="inst-extpart">
+      <title>Wybierz je¶li partycje powinny byæ edytowane</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-extpart.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-extpart.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+    
+    <para>Je¿eli wybra³e¶ samodzielne ustawienie wielko¶ci partycji &os; przed
+      edycj± disklabel mo¿esz zdefiniowaæ jakie partcyje chcesz utworzyæ.
+      Program instalacyjny wygeneruje disklabel oparty na tych ustawieniach.
+      Przedstawia to ten screen instalacyjny 
+      <xref linkend="inst-disklabel-predefine" />.</para>
+
+    <figure id="inst-disklabel-predefine">
+      <title>Ustawienia wielko¶ci partycji</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-disklabel-predefine.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-disklabel-predefine.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Domy¶lnie schemat partycji u¿ywa wielkiej partycji (root)
+      <filename>/</filename> (plus swap). Dzia³a to dobrze z &os; i nie musisz
+      tego zmieniaæ bez potrzeby. Mo¿esz zmieniæ <filename>/tmp</filename> by
+      rezydowa³ on w RAM dysku (mfs). Przy¶piesza to jego dzia³anie. Pozosta³y
+      schemat partycji mo¿e byæ podzielony na <filename>/var</filename>,
+      <filename>/usr</filename> i/lub <filename>/home</filename>, ale nie
+      musisz siê tym kierowaæ i mo¿esz u¿yæ w³asnego do¶wiadczenia przy
+      podziale partycji.</para>
+
+  </sect1>
+
+  <!-- ........................................................... -->
+
+  <sect1 id="chap-exinst-creating-disklabel">
+    <title>Tworzenie disklabel</title>
+
+    <para>Nastêpny krokiem jest utworzenie disklabel. Tak jak jest pokazane 
+      <xref linkend="inst-disklabel" />.
+      Je¶li zdefiniowa³e¶ ju¿ wielko¶æ partycji w poprzednim kroku wynikaj±cy
+      disklabel prawdopodobnie bêdzie odpowiada³e temu czego sobie rzyczy³e¶. 
+      W tym przypadku mo¿esz zakoñczyæ proces natychmiast przez wybór 
+      <quote>Partition sizes ok</quote>.</para>
+
+    <figure id="inst-disklabel">
+      <title>Edytor disklabel</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-disklabel.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-disklabel.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Jak mo¿esz zobaczyæ na <xref linkend="inst-disklabel" /> s± tam dwie
+      rezerwowe partycje, <quote>c</quote> (reprezentuje partycje NetBSD), a
+      <quote>d</quote> (reprezentuje ca³y dysk). Mo¿esz edytowaæ wszytkie
+      pozosta³e partycje poprzez ich wybór u¿ywaj±c klawiszy kursora i
+      naciskaj±æ klawisz enter. Mo¿esz dodaæ partycjê poprzez wybór
+      nieu¿ywanego slotu i wybór parametrów dla tej partycji. Screen edytora
+      partycji jest pokazany na <xref linkend="inst-disklabel-edit" /></para>
+
+    <figure id="inst-disklabel-edit">
+      <title>Editor disklabel</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-disklabel-edit.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-disklabel-edit.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Jak ju¿ skoñczysz definiowaæ nowe disklabel, ostatni± pozycj± do
+      zrobienia jest podanie nazwy dla dysku &os; tak jak jest to pokazane na 
+      <xref linkend="inst-diskname" />. Mo¿e byæ to u¿yte pó¼niej do
+      odró¿nienia disklabel's od pozosta³ych identycznych dysków.</para>
+
+    <figure id="inst-diskname">
+      <title>Nazwanie dysku &os;</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-diskname.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-diskname.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Instalator &os; ma teraz wszystkie dane by przygotowaæ dysk do
+      instalacji. Nic nie jest jeszcze zapisane na dysku dlatego teraz masz
+      ostatni± szansê by przerwaæ proces instalacji przez w³a¶ciwym zapisem
+      danych na dysk. Tak jak to zosta³o pokazane na 
+      <xref linkend="inst-reallyformat" />. Wybierz <quote>no</quote> by
+      przerwaæ proces instalacji i powróciæ to menu g³ównego lub wci¶nij
+      <quote>yes</quote> by przej¶æ do dalszej czê¶ci instalacji.</para>
+
+    <figure id="inst-reallyformat">
+      <title>Ostatnia szansa przed zapisem danych na dysku</title> 
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-reallyformat.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-reallyformat.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+  </sect1>
+
+  <!-- ........................................................... -->
+
+  <sect1 id="chap-exinst-disk-preparation-process">
+    <title>Proces przygotowania dysku</title>
+
+    <para>Po zatwierdzeniu wszystkich operacji sysinst powinien przygotowaæ
+      dysk. Uruchomi siê &man.disklabel.8; by zdefiniowaæ uk³ad podzia³u
+      partycji &os; i &man.newfs.8; by utworzyæ system plików na dysku, tak
+      jak zosta³o to pokazane na <xref linkend="inst-format" />.</para>
+    
+    <figure id="inst-format">
+      <title>Tworzenie systemu plików</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-format.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-format.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Po przygotowaniu partycji i systemu plików nastêpnym pytaniem bêdzie 
+      <xref linkend="inst-bootblock" />, który bootblock ma zostaæ
+      zainstalowany. Zazwyczaj powiniene¶ wybraæ domy¶lny u¿ywaj±cy konsoli
+      BIOS czyli pokazuj±cy komunikat na ekranie Twojego PC.</para>
+
+    <para>Je¶li masz komputer bez monitora mo¿esz wybraæ konsolê szeregow±
+      uruchomion± na jednym z portów szeregowych. Menu tak¿e pozwala zmieniaæ 
+      szybko¶æ transmisji danych portów szeregowych z domy¶lnych: 9600 bod'ów,
+      8 bitów danych, brak parzysto¶ci, 1 bitu stopu.</para>
+
+    <figure id="inst-bootblock">
+      <title>Wybór bootblock</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-bootblock.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-bootblock.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+  </sect1>
+
+  <!-- ........................................................... -->
+
+  <sect1 id="chap-exinst-choose-media">
+    <title>Wybór mediów instalacyjnych</title>
+
+    <para>Przerwa - zakoñczy³e¶ pierwszy i najtrudniejszy etap
+      instalacji!</para>
+
+    <para>Druga po³owa procesu instalacyjnego sk³ada siê z wypakowania na
+      utworzonych partycjach tzw. <quote>sets</quote> systemu &os;, które
+      mo¿esz wcze¶niej wybraæ (base, etc, comp, etc.).
+      Przed wypakowaniem sets program <application>sysinst</application>
+      zapyta Ciê jakiego rodziaju informacje chcia³by¶ zobaczyæ podczas tego
+      procesu. Jest to pokazane na (<xref linkend="inst-progress" />). Mo¿esz
+      wybraæ pasek postêpu, tzw. cich± instalacjê lub te¿ wszystkie
+      wypakowywane pliki bêd± pokazane na ekranie.</para>
+
+    <figure id="inst-progress">
+      <title>Wybór rodzaju informacji pokazywanych na ekranie podczas procesu
+	wypakowywania plików</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-progress.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-progress.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+
+    <para>Teraz program <application>sysinst</application> bêdzie potrzebowa³
+      informacji gdzie mo¿e znale¶æ sets NetBSD (pliki
+      <filename>.tgz</filename>). Bêdziesz musia³ mu je podaæ.
+      Menu oferuje kilka ró¿nych sposobów. Zosta³o to pokazane na <xref 
+      linkend="inst-select-medium" />.</para>
+
+    <figure id="inst-select-medium">
+      <title>Media instalacyjne</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-select-medium.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-select-medium.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Opcje te zostaly szczegó³owo wyja¶nione w dokumencie
+      <filename>INSTALL.*</filename>.</para>  
+
+    <para>Mo¿liwe jest tak¿e instalowanie z niepodmontowanego systemu plików
+      (pod warunkiem, ¿e typ ten jest rozpoznawany przez instalowane j±dro)
+      dla przyk³adu mo¿liwe jest przekopiowanie wszystkich sets na istniej±c±
+      partycjê MS-DOS i przeprowadzenie procesu instalacyjnego z tej
+      partycji.</para>
+  </sect1>
+  
+  <!-- ........................................................... -->
+    
+  <sect1 id="chap-exinst-install-from-cdrom">
+    <title>Instalacja z CD-ROM'u i DVD</title>
+
+    <para>Je¶li wybra³e¶ <quote>CD-ROM / DVD</quote>
+      <application>sysinst</application> zapyta Ciê o nazwê urz±dzenia 
+      CD-ROM'u lub DVD i katalog, w którym znajduj± siê pliki sets, zobacz
+      <xref linkend="inst-cdrom" />. Urz±dzeniem zazwyczaj jest
+      <filename>cd0</filename> dla pierwszego CD-ROM'u lub DVD, bez wzglêdu na
+      to czy jest to IDE czy SCSI.</para>
+
+    <figure id="inst-cdrom">
+      <title>Instalacja z CD-ROM'u/DVD</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-cdrom.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-cdrom.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <note>
+      <para>je¶li nie u¿ywasz klawiatury US, bedziesz musia³ byæ ostro¿ny
+	kiedy piszesz znak <quote>/</quote>.
+	Zobacz <xref linkend="sect-kbd" />.</para>
+    </note>
+
+    <note>
+    <title>Nazwa urz±dzenia CD-ROM'u / DVD</title>
+      <para>Je¶li nie znasz nazwy urz±dzenia CD-ROM'u / DVD, mo¿esz j± znale¶æ
+	w nastêpuj±cy sposób:</para>
+      
+      <orderedlist>
+        <listitem>
+          <para>
+	    Wci¶nij Ctrl-Z spowoduje to zatrzymanie
+	    <application>sysinst</application> i przej¶cie do shell'a (jest to
+	    fajny cecha tego programu!)
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Wpisz polecenie:
+          </para>
+
+    <screen>&rprompt; <userinput>cat /kern/msgbuf</userinput></screen>
+
+          <para>
+	    Poka¿e Ci ono komunikaty startowe j±dra zawieraj±ce nazwe
+	    urz±dzenia CD-ROM, dla przyk³adu <emphasis>cd0</emphasis>.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+	    Je¶li komunikaty przewijaj± siê przez ekran zbyt szybko mo¿esz
+	    u¿yæ polecenia <command>more</command>:
+          </para>
+
+          <screen>&rprompt; <userinput>more /kern/msgbuf</userinput></screen>
+
+        </listitem>
+        <listitem>
+          <para>
+            Wróæ do programu instalacyjnego u¿ywaj±c polecenia:
+          </para>
+
+          <screen>&rprompt; <userinput>fg</userinput></screen>
+
+        </listitem>
+      </orderedlist>
+    </note>
+
+  </sect1>
+  
+  <!-- ........................................................... -->
+    
+  <sect1 id="chap-exinst-install-via-ftp">
+    <title>Instalacja przez FTP</title>
+
+    <para>Je¶li wybra³e¶ instalacjê przez FTP program
+      <application>sysinst</application> skonfiguruje system do po³±czenia 
+      z sieci±, pobierze z sieci zaznaczone pliki sets do katalogu
+      tymczasowego i wypakuje je.</para>
+
+    <para>NetBSD 2.0 aktualnie wspiera instalacjê przez ethernet,
+      ehternet-przez-USB i bezprzewodowy LAN, instalacja przez DSL (PPP przez
+      Ethernet) nie jest wspierana podczas procesu instalacyjnego i musi byæ
+      skonfigurowana rêcznie po instalacji.</para> 
+
+    <para>Pierwszy krok jest pokazany na <xref linkend="inst-ftp-if" />
+      sk³ada siê on z wyboru karty sieciowej, która ma zostaæ skonfigurowana.
+      <application>sysinst</application> wyznaczy listê interfejsów sieciowych
+      dostêpnych dla Twojego sprzêtu i spyta Ciê, któr± wybraæ.</para> 
+
+    <note>
+      <para>Dok³adna nazwa Twojego interfejsu sieciowego zale¿eæ bêdzie od
+	sprzêtu jakiego u¿ywasz, dla przyk³adu interfejs <quote>fxp0</quote>
+	nale¿eæ bêdzie do kart sieciowych bazuj±cych na chipsecie Intel
+	i8255x, <quote>tlp0</quote> dla kart sieciowych TULIP,
+	<quote>wi0</quote> dla Lucent WaveLAN i <quote>ath0</quote> dla
+	bezprzewodowych kart sieciowych Atheros. Ta lista nie jest oczywi¶cie
+	kompletna. &os; obs³uguje o wiele wiêcej urz±dzeñ sieciowych.</para>
+
+      <para>Aby otrzymaæ listê interfejsów sieciowych dostêpnych dla Twojego
+	systemu (lub raczej, listê wszystkich interfejsów sieciowych, które
+	wykrywa &os;), musisz przerwaæ proces instalacji przez naci¶niêcie
+	<quote>Ctrl+Z</quote> i wpisanie</para>
+
+      <screen>&rprompt; <userinput>ifconfig -a</userinput>
+fxp0: flags=8943&lt;UP,BROADCAST,RUNNING,PROMISC,SIMPLEX,MULTICAST&gt; mtu 1500
+        address: 00:06:0d:c6:73:d5
+        media: Ethernet autoselect (10baseT)
+        status: active
+        inet 0.0.0.0 netmask 0xffffff00 broadcast 0.0.0.0
+        inet6 fe80::206:dff:fec6:73d5%fxp0 prefixlen 64 scopeid 0x1
+lo0: flags=8009&lt;UP,LOOPBACK,MULTICAST&gt; mtu 33196
+        inet 127.0.0.1 netmask 0xff000000
+        inet6 ::1 prefixlen 128
+        inet6 fe80::1%lo0 prefixlen 64 scopeid 0x2
+ppp0: flags=8010&lt;POINTOPOINT,MULTICAST&gt; mtu 1500
+ppp1: flags=8010&lt;POINTOPOINT,MULTICAST&gt; mtu 1500
+sl0: flags=c010&lt;POINTOPOINT,LINK2,MULTICAST&gt; mtu 296
+sl1: flags=c010&lt;POINTOPOINT,LINK2,MULTICAST&gt; mtu 296
+strip0: flags=0 mtu 1100
+strip1: flags=0 mtu 1100 </screen>
+
+      <para>otrzymasz listê wszystkich interfejsów sieciowych (fxp0, lo0, 
+	ppp0, ...), i ich aktualny stan (który jest teraz bardzo
+	niekonfigurowalny). Aby dostaæ wiêcej informacji o wszystkich
+	urz±dzeniach znalezionych podczas startu systemu, w³±czaj±c w to
+	urz±dzenia sieciowe, wpisz</para>
+
+      <screen>&rprompt; <userinput>more /kern/msgbuf</userinput></screen>
+
+      <para>
+	Aby dostaæ tylko informacjê o pojedynczym urz±dzeniu, dla przyk³adu
+	<quote>fxp0</quote>, wpisz:
+      </para>
+
+      <screen>&rprompt; <userinput>grep ^fxp0 /kern/msgbuf</userinput>
+fxp0 at pci1 dev 8 function 0: Intel PRO/100 VE (MOB) Network Controller, rev 131
+fxp0: interrupting at irq 11
+fxp0: Ethernet address 00:06:0d:c6:73:d5</screen>
+
+      <para>
+        Mo¿esz powróciæ do instalacji &os; wydaj±c polecenie
+      </para>
+      
+      <screen>&rprompt; <userinput>fg</userinput></screen>
+    </note>
+    
+
+    <figure id="inst-ftp-if">
+      <title>Które interfejsy sieciowe maj± byæ skonfigurowane</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-if.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-if.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Nastêpnie bêdziesz konfigurowa³ opcje dla Twojej sieci tak ja
+      zosta³o to pokazane na <xref linkend="inst-ftp-media" />, takie jak
+      ustawienia duplex'u dla sieci ethernet oraz ró¿ne ustawienia dla
+      bezprzewodowych kart LAN.</para>
+
+    <note>
+      <para>Jest ma³o prawdopodobne, ¿e bêdziesz potrzebowa³ czego¶ wiêcej ni¿
+	przedstawionych tutaj domy¶lnych ustawieñ. Je¿eli napodkasz problem
+	typu bardzo powolny transfer lub przerywanie po³±czenia, mo¿esz dla
+	przyk³adu ustawiæ rêcznie ró¿ne ustawienia dla kart sieciowych. Aby
+	otrzymaæ listê wspieranych mediów i listê opcji dla karty sieciowej
+	(np. <quote>fxp0</quote>), przerwij dzia³anie programu
+	<application>sysinst</application> przez nacisniêcie
+	<quote>Ctrl+Z</quote>, a pó¼niej wpisz:</para>
+
+      <screen>&rprompt; <userinput>ifconfig -m fxp0</userinput>
+fxp0: flags=8943&lt;UP,BROADCAST,RUNNING,PROMISC,SIMPLEX,MULTICAST&gt; mtu 1500
+        address: 00:03:0d:c6:73:d5
+        media: Ethernet autoselect (10baseT)
+        status: active
+        supported Ethernet media:
+                media <emphasis>10baseT</emphasis>
+                media <emphasis>10baseT mediaopt full-duplex</emphasis>
+                media <emphasis>100baseTX</emphasis>
+                media <emphasis>100baseTX mediaopt full-duplex</emphasis>
+                media <emphasis>autoselect</emphasis>
+        inet 0.0.0.0 netmask 0xffffff00 broadcast 0.0.0.0
+        inet6 fe80::206:dff:fec6:73d5%fxp0 prefixlen 64 scopeid 0x1 </screen>
+
+      <para>Ró¿ne wartosæi podane przez to polcenie mogê byæ interesuj±ce jak
+	<quote>media</quote>, <quote>autoselect</quote> lub te¿ zaweraj±ce
+	ró¿ne ustawienia <quote>mediaopt</quote>.</para>
+
+      <para>
+        Powróæ do instalacji wydaj±c polecenie
+      </para>
+	
+      <screen>&rprompt; <userinput>fg</userinput></screen>
+    </note>
+
+    <figure id="inst-ftp-media">
+      <title>Wybór opcji mediów sieciowych</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-media.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-media.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Nastêpnym pytaniem bêdzie czy chcesz wykorzystaæ autoconfiguracjê
+      DHCP jak to pokazano na <xref linkend="inst-ftp-dhcp" />.
+      Odpowiedz <quote>Yes</quote> je¶li masz serwer dla Dynamic Host
+      Configuration Protocol (DHCP) uruchomiony w Twojej sieci. Program
+      sysinst wykona wówczas kilka zapytaæ do niego i pobierze domy¶lne
+      warto¶ci.
+      Odpowiedz <quote>No</quote> i bêdziesz móg³ wpisaæ wszystkie warto¶ci 
+      rêcznie.</para> 
+
+    <para>Aby wyja¶niæ o co chodzi przyjmijmy, ¿e odpowiedzia³e¶
+      <quote>No</quote> i przeszed³e¶ do wszystkich szczegó³owych
+      pytañ.</para>
+
+    <figure id="inst-ftp-dhcp">
+      <title>U¿ycie DHCP do konfiguracji sieci</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-dhcp.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-dhcp.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para><xref linkend="inst-ftp-cfg" /> pokazuje pytania zadawane przy
+      konfiguracji sieci. Warto¶ci te oznaczaj±:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term> Twoja domena DNS: </term>
+	<listitem>
+	  <para>
+	    To jest nazwa domeny, któr± masz w WRT Domain Name System (i która
+	    nie ma <emphasis>nic</emphasis> wspólnego z systemem NIS/YP!).
+	  </para>
+	</listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term> Twoja nazwa hosta: </term>
+	<listitem>
+	  <para>
+	    Nazwa przez któr± inne maszyny mog± siê komunikowaæ z Twoim
+	    komputerem (a dok³adnie z Twoim adresem). Nie jest u¿yteczna
+	    podczas instalacji.
+	  </para>
+	</listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term> Twój numer IPv4: </term>
+	<listitem>
+	  <para>
+            Podaj swój adres IP w <quote>poczwórnej notacji</quote>
+	  </para>
+	</listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term> Maska IPv4: </term>
+	<listitem>
+	  <para>
+	    Maska Twojej sieci, musi byæ podana jako warto¶æ szesnastkowa np.
+	    (<quote>0xffffff00</quote>) lub tak¿e w poczwórnej notacji
+	    (<quote>255.255.255.0</quote>).
+	  </para>
+	</listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term> Brama IPv4: </term>
+	<listitem>
+	  <para>
+	    Adres IP domy¶lnego routera. Nie u¿ywaj tu nazwy hosta.
+	  </para>
+	</listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term> Serwer nazw IPv4: </term>
+	<listitem>
+	  <para>
+	    Adres IP (pierwszy) serwera DNS. Jeszcze raz, nie u¿ywaj tutaj
+	    nazwy hosta.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+
+    <note>
+      <para>Zauwa¿ proszê, ¿e wiêkszo¶æ parametrów konfiguracyjnych sieci
+	<emphasis>nie</emphasis> zostaje zapamiêtana w systemie. Móg³by¶
+	powiedzieæ, ¿e tak powinno byæ ale NetBSD nie zosta³ tak
+	zaprojektowany. Po instalacji zobacz tak¿e <xref linkend="chap-boot"
+ 	/>, <xref linkend="chap-2boot" /> oraz zasadniczo ca³± resztê tego
+ 	przewodnika. Tak &os; daje Ci du¿± mo¿liwo¶æ wyboru!</para>
+    </note>
+    
+    <figure id="inst-ftp-cfg">
+      <title>Wprowadzenie i konfiguracja danych sieciowych</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-cfg.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-cfg.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Gdy ju¿ odpowiedzia³e¶ na pytania dotycz±ce konfiguracji sieci,
+      bêdziesz mia³ szanse na powrót i wpisanie tych danych jeszcze raz je¶li
+      pope³ni³e¶ b³±d, zobacz <xref linkend="inst-ftp-cfgok" />. Wybierz
+      wówczas <quote>No</quote>. Wybieraj±c <quote>Yes</quote> zatwierdzasz
+      wszystkie ustawienia i kontynujesz instalacjê.</para>
+
+    <figure id="inst-ftp-cfgok">
+      <title>Zatwierdzanie parametrów sieciowych</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-cfgok.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-cfgok.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para><application>sysinst</application> uruchomi teraz kilka poleceñ (nie
+      bêd± one szczegó³owo wy¶wietlane) do konfiguracji sieci:
+      utworzy tablicê routingu, ustawi domy¶lny routing i przeprowadzi test
+      sieci.</para>
+
+    <para>Nastêpne pytanie bêdzie zadane o miejsce gdzie pliki maj± zostaæ
+      pobrane, zobacz <xref linkend="inst-ftp-dldir" />. Katalog domy¶lny jest
+      zazwyczaj dobrym rozwi±zaniem, znajduje siê on w systemie plików
+      &os;</para>
+
+    <figure id="inst-ftp-dldir">
+      <title>Który katalog ma byæ u¿yty dla pobranych plików</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-dldir.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-dldir.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Gdy ju¿ instalator wie gdzie pobraæ pliki, jaki rodzaj po³±czenia
+      sieciowego u¿yæ dla pobrania ich i na której partycji i systemie plików
+      je wypakowaæ, ostatni± rzecz± jak± musisz podaæ jest miejsce sk±d maj±
+      zostaæ pobrane plik sets. Zobacz <xref linkend="inst-ftp-src" />. Musisz
+      podaæ nazwê hosta skad maj± zostaæ pobrane pliki sets, podstawowy
+      katalog &os; wersjê  systemu jaki± chcesz pobraæ (wzglêdnie podstawowy
+      katalog), która zawiera rodzaj architektóry, który chesz instalowaæ.
+      Mo¿esz tak¿e zmieniæ login u¿ytkownika FTP oraz has³o, je¶li jest to
+      potrzebne. Je¶li chcesz u¿yæ proxy FTP dla pobrania plików, wprowad¼ ten
+      URL tak¿e tutaj.</para>
+
+    <para>Kiedy ju¿ jeste¶ usatysfakcjonowany z podanych ustawieñ (domy¶lnne
+      ustawienia dzia³aj± dobrze), wybierz <quote>Get Distribution</quote> dla
+      kontynuacji instalacji.</para>
+
+    <figure id="inst-ftp-src">
+      <title>Definiowanie miejsca ¼róde³ sets</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-src.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-src.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Je¶li zrobi³e¶ b³±d i <application>sysinst</application> nie mo¿e
+      pobraæ plików, zostaniesz zapytany tak jak to pokazano na <xref
+      linkend="inst-ftp-badsrc" /> czy chcesz powróciæ i jeszcze raz
+      wprowadziæ miejsce sk±d maj± zostaæ pobrane pliki sets.</para>
+
+    <figure id="inst-ftp-badsrc">
+      <title>Je¶li zda¿y³ siê b³±d podczas pobierania plików</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-badsrc.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-badsrc.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Je¶li dane, które wprowadzi³e¶ s± prawid³owe, pliki sets bêd±
+      pobrane i zmagazynowane w katalogu, który poda³e¶. Pokazuje to
+      screen <xref linkend="inst-ftp-dl" />.</para>
+
+    <figure id="inst-ftp-dl">
+      <title>Pobieranie plików instalacyjnych sets</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-dl.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-ftp-dl.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+                
+  </sect1>
+  
+  <!-- ........................................................... -->
+    
+  <sect1 id="chap-exinst-extract-sets">
+    <title>Wypakowywanie sets</title>
+
+    <para>Gdy wszystkie sets s± ju¿ dostêpne - albo z CD-ROM/DVD lub w
+      katalogu, do którego zosta³y pobrane, zostanie przeprowadzony proces
+      wypakowywania ich do systemu plików &os;. <xref 
+      linkend="inst-extract" /> pokazuje przyk³adowy proces wypakowywania przy
+      u¿yciu paska postêpu, który zosta³ przedtem wybrany.</para>
+
+    <figure id="inst-extract">
+      <title>Wypakowywanie plików z sets</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-extract.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-extract.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Po wypakowaniu wszystkich zaznaczonych sets
+      <application>sysinst</application> przejdzie do tworzenia powi±zañ
+      miêdzy urz±dzeniami w katalogu <filename>/dev</filename>, a nastêpnie
+      zostanie wy¶wietlone okno z informacj±, ¿e ca³y proces przebieg³
+      pozytywnie.</para>
+
+    <para>Je¶li pliki sets by³y pobrane z internetu, mo¿esz skasowaæ je zaraz
+      po wypakowaniu lub zatrzymaæ je.
+      <application>sysinst</application> zapyta Ciê o to. Mo¿esz wybraæ
+      <quote>Yes</quote>, wówczas pliki zostan± skasowane. Pokazuje to screen
+      <xref linkend="inst-rmdl" />.</para>
+
+    <figure id="inst-rmdl">
+      <title>Kasowanie plików sets po zakoñczonym wypakowywaniu</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-rmdl.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-rmdl.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>Kolejn± wiadomo¶ci± jak± otrzymasz (zobacz <xref
+      linkend="inst-extract-complete" />) bêdzie informacja, ¿e wypakowywanie
+      plików sets zosta³o zakoñczone i ¿e teraz bêdziesz mia³ mo¿liwo¶æ
+      skonfigurowaæ kilka rzeczy przed zakoñczeniem procesu instalacji
+      &os;</para>
+
+    <figure id="inst-extract-complete">
+      <title>Procedura wypakowywania zosta³a zakoñczona</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-extract-complete.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-extract-complete.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+            
+  </sect1>
+  
+  <!-- ........................................................... -->
+    
+  <sect1 id="chap-exinst-system-configuration">
+    <title>System configuration</title>
+
+    <para>Pierwsz± rzecz± jak± mo¿esz sobie dostosowaæ jest strefa czasowa, w
+      której system rezyduje. Czas uniwersalny Universal Time Coordinated
+      (UTC) jest podawany domy¶lnie. Mo¿esz u¿yæ dwupoziomowego menu dla
+      kontynentów/krajów oraz miast tak jak zosta³o to pokazane na <xref
+      linkend="inst-tz" /> do ustawienia strefy czasowej. Je¶li jeste¶
+      zadowolony z wyboru wci¶nij Enter by uaktualniæ swoj± lokaln± strefê
+      czasow±. Wciskaj±c <quote>x</quote> po Enter wyjdziesz z okna wyboru
+      strefy czasowej.</para>
+
+    <figure id="inst-tz">
+      <title>Wybór strefy czasowej</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-tz.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-tz.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+    
+    <para>Nastêpn± rzecz±, o któr± zostaniesz zapytany jest algorytm jaki ma
+      byæ u¿yty do kodowania pliku hase³ (<xref
+      linkend="inst-passwd-cipher" />). Algorytm DES jest standardowym
+      algorytmemu u¿ywanym przez wiêkszo¶æ systemów Unix, MD5 i Blowfish
+      udostêpniaj± mo¿liwo¶æ wprowadzania d³u¿szych hase³ ni¿ DES, który u¿ywa
+      tylko pierwszych o¶miu znaków, które zosta³y wprowadzone. Algorytm DES
+      jest nadal u¿yteczny dla wspó³dzia³ania z innymi systemami operacyjnymi
+      (n.p. dla NIS).</para>
+    
+    <figure id="inst-passwd-cipher">
+      <title>Wybór schamatu kodowania hase³</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-passwd-cipher.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-passwd-cipher.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+ 
+   <para>Po wyborze rodzaju szyfrowania has³a zostaniesz zapytany o to czy
+     chcesz ustawiæ has³o root'a, zobacz <xref
+     linkend="inst-root-passwd" />. &os; nie wystartuje jakichkolwiek serwisów
+     podczas startu systemu po instalacji, dlatego jest rekomendowane
+     ustawienie has³a root'a z powodów bezpieczeñstwa.</para>
+
+   <figure id="inst-root-passwd">
+     <title>Ustaw has³o root'a teraz lub pó¼niej</title>
+
+     <mediaobject>
+       <imageobject>
+         <imagedata fileref="&imagesdir;/inst-root-passwd.eps" format="EPS" />
+       </imageobject>
+       
+       <imageobject>
+         <imagedata fileref="&imagesdir;/inst-root-passwd.png" format="PNG" />
+       </imageobject>
+     </mediaobject>
+   </figure>
+
+   <para>Je¿eli zgodzisz siê na ustawienie has³a dla root'a, sysinst uruchomi
+     narzêdzie &man.passwd.1;. Powiniene¶ teraz wprowadziæ has³o root'a (dwa
+     razy). Proszê zauwa¿, ¿e wprowadzane has³o nie jest wy¶wietlane oraz
+     je¶li wprowadzisz bardzo proste has³o system zaalarmuje Ciê o tym. Zobacz
+     <xref linkend="inst-root-passwd2" />. Je¶li bêdziesz znów nalega³ na
+     wprowadzenie prostego has³a, &os; zaakceptuje Twój wybór, dostarczaj±c Ci
+     sznur by¶ móg³ siê od razu powiesiæ (oczywi¶cie jest to metafora).</para>
+
+    <figure id="inst-root-passwd2">
+      <title>Ustawienie has³a root'a</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-root-passwd2.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-root-passwd2.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>
+      Next item to tweak is to choose which command line interpreter -
+      also known as <quote>shell</quote> in Unix - to use for the root
+      account. As printed in <xref linkend="inst-rootshell" />, the
+      default is the C shell (csh), other choices are Korn shell (ksh)
+      and the classic Bourne shell (sh). While BSD systems have
+      traditionally shipped with <quote>csh</quote> as login shell for
+      the system manager, modern systems tend to come with a Bourne
+      shell (or variantes thereof, like ksh or bash), and it may be
+      useful to chose this if you have experience on such systems.
+      Else, the default will be fine, and it can always be changed
+      later (see <xref linkend="chap-boot-change-shell" />). 
+    </para>   
+    <para>Nastêpn± spraw± jest wybór interpertera poleceñ zwanego równie¿
+      <quote>shell</quote> w Unix'ie - do u¿ycia na koncie root'a. Jak zosta³o
+      pokazane na <xref linkend="inst-rootshell" /> domy¶lnym shell'em jest
+      shell C (csh), pozosta³e to Korn shell (ksh) i klasyczny Bourne shell
+      (sh). Podczas gdy systemy BSD trzymaj± siê tradycji shell'a
+      <quote>csh</quote>, nowoczesne systemy maj± tendêcjê do przechodzenia na
+      Bourne shell (lub jego warianty takie jak ksh lub bash). Mo¿e to byæ
+      u¿yteczne je¶li masz do¶wiadczenie w tych systemach. Inaczej wybór
+      domy¶lnego shell'a bêdzie dobrym wyborem, a je¶li nie zawsze to mo¿na
+      pó¼niej zmieniæ. (zobacz <xref linkend="chap-boot-change-shell" />).
+    </para>
+    
+    <figure id="inst-rootshell">
+      <title>Wybór shell'a dla konta root</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-rootshell.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-rootshell.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+
+   <para>
+     W tym punkcie instalacja jest ju¿ skoñczona, zobacz 
+     <xref linkend="inst-complete" />.
+   </para>
+   
+   <figure id="inst-complete">
+     <title>Gratulacje</title>
+
+     <mediaobject>
+       <imageobject>
+         <imagedata fileref="&imagesdir;/inst-complete.eps" format="EPS" />
+       </imageobject>
+       
+       <imageobject>
+         <imagedata fileref="&imagesdir;/inst-complete.png" format="PNG" />
+       </imageobject>
+     </mediaobject>
+   </figure>
+
+   <para>
+     Po zatwierdzenie okna, które potwierdza koniec instalacji, program
+     <application>sysinst</application> powróci do g³ównego menu. Wyjmij
+     wysztkie media instalacyjne (dyskietki, CDROM) ze swoich urz±dzeñ i
+     wybierz <quote>Reboot the computer</quote> by uruchomiæ NetBSD tak jak
+     zosta³o to pokazane na <xref linkend="inst-reboot" />.</para>
+
+    <figure id="inst-reboot">
+      <title>Reboot systemu i koniec instalacji</title>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-reboot.eps" format="EPS" />
+        </imageobject>
+	
+        <imageobject>
+          <imagedata fileref="&imagesdir;/inst-reboot.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </figure>
+   
+  </sect1>
+
+</chapter>

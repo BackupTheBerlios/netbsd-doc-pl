@@ -1,0 +1,2048 @@
+<!-- $Id: chap-tuning.xml,v 1.1 2005/08/18 14:04:40 portman Exp $ -->
+
+<chapter id="chap-tuning">
+  <title>Tuning &os;</title>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="tuning-intro">
+    <title>Introduction</title>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-intro-overview">
+      <title>Overview</title>
+
+      <para>This section covers a variety of performance tuning topics.
+    	It attempts to span tuning from the perspective of the system
+        administrator to systems programmer. The art of performance
+	tuning itself is very old. To tune something means to make
+	it operate more efficiently, whether one is referring to
+	a &os; based technical server or a vacuum cleaner, the goal
+	is to improve something, whether that be the way something
+	is done, how it works or how it is put together.</para>
+
+      <sect3 id="tuning-intro-overview-whatis">
+        <title>What is Performance Tuning?</title>
+
+        <para>A view from 10,000 feet pretty much dictates that
+          everything we do is task oriented, this pertains to a
+          &os; system as well. When the system boots, it
+          automatically begins to perform a variety of tasks.
+          When a user logs in, they usually have a wide variety
+          of tasks they have to accomplish. In the scope of these
+          documents, however, performance tuning strictly means to
+          improve how efficient a &os; system performs.</para>
+
+        <para>The most common thought that crops into someone's mind when
+          they think "tuning" is some sort of speed increase or
+          decreasing the size of the kernel - while those are ways
+          to improve performance, they are not the only ends an
+          administrator may have to take for increasing efficiency.
+          For our purposes, performance tuning means this:
+          <emphasis>To make a &os; system operate in an optimum
+          state.</emphasis></para>
+
+        <para>Which could mean a variety of things, not necessarily
+          speed enhancements. A good example of this is filesystem
+          formatting parameters, on a system that has a lot of small
+          files (say like a source repository) an administrator may
+          need to increase the number of inodes by making their
+          size smaller (say down to 1024k) and then increasing the
+          amount of inodes. In this case the number of inodes was
+          increased, however, it keeps the administrator from
+          getting those nasty out of inodes messages, which
+          ultimately makes the system more efficient.</para>
+
+        <para>Tuning normally revolves around finding and eliminating
+          bottlenecks. Most of the time, such bottlenecks are
+          spurious, for example, a release of Mozilla that does
+          not quite handle java applets too well can cause Mozilla
+          to start crunching the CPU, especially applets that are not
+          done well. Occasions when processes seem to spin off into
+          nowhere and eat CPU are almost always resolved with a kill.
+          There are instances, however, when resolving bottlenecks
+          takes a lot longer, for example, say an rsynced server
+          is just getting larger and larger. Slowly, performance
+          begins to fade and the administrator may have to take
+          some sort of action to speed things up, however, the
+          situation is relative to say an emergency like an
+          instantly spiked CPU.</para>
+      </sect3>
+
+      <sect3 id="tuning-intro-overview-when">
+        <title>When does one tune?</title>
+
+        <para>Many &os; users rarely have to tune a system. The GENERIC
+          kernel may run just fine and the layout/configuration of
+          the system may do the job as well. By the same token, as
+          a pragma it is always good to know how to tune a system.
+       	  Most often tuning comes as a result of a sudden bottleneck
+          issue (which may occur randomly) or a gradual loss of
+          performance. It does happen in a sense to everyone
+          at some point, one process that is eating the CPU is a
+          bottleneck as much as a gradual increase in paging. So,
+       	  the question should not be when to tune so much as when
+          to learn to tune.</para>
+
+        <para>One last time to tune is if you can tune in a preventive
+          manner (and you think you might need to) then do it.
+          One example of this was on a system that needed to be
+          able to reboot quickly. Instead of waiting, I did
+          everything I could to trim the kernel and make sure
+          there was absolutely nothing running that was not needed,
+          I even removed drivers that did have devices, but were
+          never used (lp). The result was reducing reboot time by
+          nearly two-thirds. In the long run, it was a smart move
+          to tune it before it became an issue.</para>
+      </sect3>
+
+      <sect3 id="tuning-intro-overview-notcovered">
+        <title>What these Documents Will Not Cover</title>
+
+        <para>Before I wrap up the introduction, I think it is
+	  important to note what these documents will not cover.
+          This guide will pertain only to the core &os; system.
+          In other words, it will not cover tuning a web server's
+          configuration to make it run better; however,
+          it might mention how to tune &os; to run better as a web
+          server. The logic behind this is simple: web servers,
+          database software, etc. are third party and almost
+          limitless. I could easily get mired down in details
+          that do not apply to the &os; system. Almost all third
+          party software have their own documentation about tuning
+          anyhow.</para>
+      </sect3>
+
+      <sect3 id="tuning-intro-overview-layout">
+        <title>How Examples are Laid Out</title>
+
+	<para>Since there is ample man page documentation, only used
+          options and arguments with examples are discussed. In
+          some cases, material is truncated for brevity and not
+          thoroughly discussed because, quite simply, there is
+          too much. For example, every single device driver
+          entry in the kernel will not be discussed, however,
+          an example of determining whether or not a given system
+	  needs one will be.  Nothing in this Guide is concrete,
+          tuning and performance are very subjective, instead, it
+	  is a guide for the reader to learn what some of the tools
+          available to them can do.</para>
+      </sect3>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="tuning-considerations">
+    <title>Tuning Considerations</title>
+
+    <para>Tuning a system is not really too difficult when pro-active tuning
+      is the approach. This document approaches tuning from a
+      <quote>before it comes up</quote> approach. While tuning in spare
+      time is considerably easier versus say, a server that is almost
+      completely bogged down to 0.1% idle time, there are still a few
+      things that should be mulled over about tuning before actually
+      doing it, hopefully, before a system is even installed.
+    </para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-considerations-general">
+      <title>General System Configuration</title>
+
+      <para>Of course, how the system is setup makes a big difference.
+	Sometimes small items can be overlooked which may in fact
+	cause some sort of long term performance problem.</para>
+
+      <sect3 id="tuning-considerations-general-fs">
+        <title>Filesystems and Disks</title>
+
+        <para>How the filesystem is laid out relative to disk drives is
+          very important. On hardware RAID systems, it is not such
+          a big deal, but, many &os; users specifically use &os;
+          on older hardware where hardware RAID simply is not an
+          option. The idea of <filename>/</filename> being
+          close to the first drive is a good one, but for example
+          if there are several drives to choose from that will be
+          the first one, is the best performing the one that
+          <filename>/</filename> will be on? On a related note,
+          is it wise to split off <filename>/usr</filename>? Will
+          the system see heavy usage say in
+          <filename>/usr/pkgsrc</filename>? It might make sense to
+          slap a fast drive in and mount it under
+          <filename>/usr/pkgsrc</filename>, or it might not. Like
+          all things in performance tuning, this is subjective.</para>
+      </sect3>
+
+      <sect3 id="tuning-considerations-general-swap">
+        <title>Swap Configuration</title>
+
+        <para>There are three schools of thought on swap size and about
+          fifty on using split swap files with prioritizing and how
+          that should be done. In the swap size arena, the vendor
+          schools (at least most commercial ones) usually have
+          their own formulas per OS. As an example, on a particular
+          version of HP-UX with a particular version of Oracle the
+          formula was:</para>
+
+        <literallayout>2.5 GB * Number_of_processor</literallayout>
+
+        <para>Well, that all really depends on what type of usage the
+          database is having and how large it is, for instance if it
+          is so large that it must be distributed, that formula
+          does not fit well.</para>
+
+	<para>The next school of thought about swap sizing is sort of
+          strange but makes some sense, it says, if possible, get
+          a reference amount of memory used by the system. It goes
+          something like this:</para>
+
+        <orderedlist>
+    	  <listitem>
+	    <para>Startup a machine and estimate total memory needs
+              by running everything that may ever be
+              needed at once. Databases, web servers ....
+              whatever. Total up the amount.</para>
+	  </listitem>
+
+	  <listitem>
+            <para>Add a few MB for padding.</para>
+          </listitem>
+
+          <listitem>
+            <para>Subtract the amount of physical RAM from this total.</para>
+          </listitem>
+        </orderedlist>
+
+        <para>If the amount leftover is 3 times the size of physical RAM,
+          consider getting more RAM. The problem, of course, is
+          figuring out what is needed and how much space it will take.
+          There is also another flaw in this method, some programs
+          do not behave well. A glaring example of misbehaved
+          software is web browsers.
+          On certain versions of Netscape, when something went wrong
+          it had a tendency to runaway and eat swap space. So, the
+          more spare space available, the more time to kill it.</para>
+
+        <para>Last and not least is the tried and true
+          PHYSICAL_RAM * 2 method. On modern machines and even
+          older ones (with limited purpose of course) this seems to
+          work best.</para>
+
+        <para>All in all, it is hard to tell when swapping will start.
+          Even on small 16MB RAM machines (and less) &os; has
+          always worked well for most people until misbehaving
+          software is running.</para>
+      </sect3>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-considerations-services">
+      <title>System Services</title>
+
+      <para>On servers, system services have a large impact. Getting
+        them to run at their best almost always requires some
+        sort of network level change or a fundamental speed
+        increase in the underlying system (which of course is
+        what this is all about). There are instances when some
+        simple solutions can improve services. One example,
+        an ftp server is becoming slower and a new release of
+        the ftp server that is shipped with the system comes
+        out that, just happens to run faster. By upgrading the
+        ftp software, a performance boost is accomplished.</para>
+
+      <para>Another good example where services are concerned is the
+        age old question: <quote>To use inetd or not to
+        use inetd?</quote> A great service example is pop3.
+        Pop3 connections can conceivably clog up inetd. While
+        the pop3 service itself starts to degrade slowly, other
+        services that are multiplexed through inetd will also
+        degrade (in some case more than pop3).
+        Setting up pop3 to run outside of inetd and on its own
+        may help.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-considerations-kernel">
+      <title>The &os; Kernel</title>
+
+      <para>The &os; kernel obviously plays a key role in how well a
+        system performs, while rebuilding and tuning the kernel is
+        covered later in the text, it is worth discussing in the
+        local context from a high level.</para>
+
+      <para>Tuning the &os; kernel really involves three main areas: </para>
+
+      <orderedlist>
+        <listitem>
+          <para>removing unrequired drivers</para>
+        </listitem>
+
+        <listitem>
+          <para>configuring options</para>
+        </listitem>
+
+        <listitem>
+          <para>system settings</para>
+	</listitem>
+      </orderedlist>
+
+      <sect3 id="tuning-considerations-kernel-drivers">
+        <title>Removing Unrequired Drivers</title>
+
+        <para>Taking drivers out of the kernel that are not needed
+          achieves several results; first, the system boots faster
+          since the kernel is smaller, second again since the
+          kernel is smaller, more memory is free to users and
+          processes and third, the kernel tends to respond quicker.</para>
+      </sect3>
+
+      <sect3 id="tuning-considerations-kernel-options">
+        <title>Configuring Options</title>
+
+        <para>Configuring options such as enabling/disabling certain
+          subsystems, specific hardware and filesystems can also
+          improve performance pretty much the same way removing
+          unrequired drivers does. A very simple example of this
+          is a FTP server that only hosts ftp files - nothing else.
+          On this particular server there is no need to have
+          anything but native filesystem support and perhaps a
+          few options to help speed things along. Why would it
+          ever need NTFS support for example? Besides, if it
+          did, support for NTFS could be added at some later
+          time. In an opposite case, a workstation may need to
+          support a lot of different filesystem types to share
+          and access files.</para>
+      </sect3>
+
+      <sect3 id="tuning-considerations-kernel-settings">
+        <title>System Settings</title>
+
+        <para>System wide settings are controlled by the kernel, a few
+          examples are filesystem settings, network settings and core
+          kernel settings such as the maximum number of processes.
+          Almost all system settings can be at least looked at or
+          modified via the sysctl facility. Examples using the
+          sysctl facility are given later on.</para>
+      </sect3>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="tuning-vtools">
+    <title>Visual Monitoring Tools</title>
+
+    <para>&os; ships a variety of performance monitoring tools with the
+      system. Most of these tools are common on all UNIX systems. In
+      this section some example usage of the tools is given with
+      interpretation of the output.</para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-vtools-top">
+      <title>The top Process Monitor</title>
+
+      <para>The top monitor does exactly what it says: it displays the CPU
+        hogs on the system. To run the monitor, simply type top at the
+        prompt. Without any arguments, it should look like:</para>
+
+      <screen>load averages:  0.09,  0.12,  0.08                                     20:23:41
+21 processes:  20 sleeping, 1 on processor
+CPU states:  0.0% user,  0.0% nice,  0.0% system,  0.0% interrupt,  100% idle
+Memory: 15M Act, 1104K Inact, 208K Wired, 22M Free, 129M Swap free
+
+  PID USERNAME PRI NICE   SIZE   RES STATE     TIME   WCPU    CPU COMMAND
+13663 root       2    0  1552K 1836K sleep     0:08  0.00%  0.00% httpd
+  127 root      10    0   129M 4464K sleep     0:01  0.00%  0.00% mount_mfs
+22591 root       2    0   388K 1156K sleep     0:01  0.00%  0.00% sshd
+  108 root       2    0   132K  472K sleep     0:01  0.00%  0.00% syslogd
+22597 jrf       28    0   156K  616K onproc    0:00  0.00%  0.00% top
+22592 jrf       18    0   828K 1128K sleep     0:00  0.00%  0.00% tcsh
+  203 root      10    0   220K  424K sleep     0:00  0.00%  0.00% cron
+    1 root      10    0   312K  192K sleep     0:00  0.00%  0.00% init
+  205 root       3    0    48K  432K sleep     0:00  0.00%  0.00% getty
+  206 root       3    0    48K  424K sleep     0:00  0.00%  0.00% getty
+  208 root       3    0    48K  424K sleep     0:00  0.00%  0.00% getty
+  207 root       3    0    48K  424K sleep     0:00  0.00%  0.00% getty
+13667 nobody     2    0  1660K 1508K sleep     0:00  0.00%  0.00% httpd
+ 9926 root       2    0   336K  588K sleep     0:00  0.00%  0.00% sshd
+  200 root       2    0    76K  456K sleep     0:00  0.00%  0.00% inetd
+  182 root       2    0    92K  436K sleep     0:00  0.00%  0.00% portsentry
+  180 root       2    0    92K  436K sleep     0:00  0.00%  0.00% portsentry
+13666 nobody    -4    0  1600K 1260K sleep     0:00  0.00%  0.00% httpd</screen>
+
+      <para>The top utility is great for finding CPU hogs, runaway
+        processes or groups of processes that may be causing
+        problems. The output shown above indicates that this
+        particular system is in good health. Now, the next display
+        should show some very different results:</para>
+
+      <screen>load averages:  0.34,  0.16,  0.13                                     21:13:47
+25 processes:  24 sleeping, 1 on processor
+CPU states:  0.5% user,  0.0% nice,  9.0% system,  1.0% interrupt, 89.6% idle
+Memory: 20M Act, 1712K Inact, 240K Wired, 30M Free, 129M Swap free
+
+  PID USERNAME PRI NICE   SIZE   RES STATE     TIME   WCPU    CPU COMMAND
+ 5304 jrf       -5    0    56K  336K sleep     0:04 66.07% 19.53% bonnie
+ 5294 root       2    0   412K 1176K sleep     0:02  1.01%  0.93% sshd
+  108 root       2    0   132K  472K sleep     1:23  0.00%  0.00% syslogd
+  187 root       2    0  1552K 1824K sleep     0:07  0.00%  0.00% httpd
+ 5288 root       2    0   412K 1176K sleep     0:02  0.00%  0.00% sshd
+ 5302 jrf       28    0   160K  620K onproc    0:00  0.00%  0.00% top
+ 5295 jrf       18    0   828K 1116K sleep     0:00  0.00%  0.00% tcsh
+ 5289 jrf       18    0   828K 1112K sleep     0:00  0.00%  0.00% tcsh
+  127 root      10    0   129M 8388K sleep     0:00  0.00%  0.00% mount_mfs
+  204 root      10    0   220K  424K sleep     0:00  0.00%  0.00% cron
+    1 root      10    0   312K  192K sleep     0:00  0.00%  0.00% init
+  208 root       3    0    48K  432K sleep     0:00  0.00%  0.00% getty
+  210 root       3    0    48K  424K sleep     0:00  0.00%  0.00% getty
+  209 root       3    0    48K  424K sleep     0:00  0.00%  0.00% getty
+  211 root       3    0    48K  424K sleep     0:00  0.00%  0.00% getty
+  217 nobody     2    0  1616K 1272K sleep     0:00  0.00%  0.00% httpd
+  184 root       2    0   336K  580K sleep     0:00  0.00%  0.00% sshd
+  201 root       2    0    76K  456K sleep     0:00  0.00%  0.00% inetd</screen>
+
+      <para>At first, it should seem rather obvious which process is
+        hogging the system, however, what is interesting in this
+        case is why. The bonnie program is a disk benchmark tool
+        which can write large files in a variety of sizes and ways.
+        What the previous output indicates is only that the bonnie
+        program is a CPU hog, but not why.</para>
+
+      <sect3 id="tuning-vtools-top-other">
+        <title>Other Neat Things About Top</title>
+
+        <para>A careful examination of the manual page &man.top.1;
+          shows that there is a lot more that can be done with
+          top, for example, processes can have their priority
+          changed and killed. Additionally, filters can be set
+          for looking at processes.</para>
+      </sect3>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-vtools-systat">
+      <title>The sysstat utility</title>
+
+      <para>As the man page &man.sysstat.1; indicates, the sysstat
+        utility shows a variety of system statistics using the
+        curses library. While it is running the screen is shown
+        in two parts, the upper window shows the current load
+        average while the lower screen depends on user commands.
+        The exception to the split window view is when vmstat
+        display is on which takes up the whole screen. Following
+        is what sysstat looks like on a fairly idle system with no
+        arguments given when it was invoked:</para>
+
+      <screen>                   /0   /1   /2   /3   /4   /5   /6   /7   /8   /9   /10
+     Load Average   |
+
+                         /0   /10  /20  /30  /40  /50  /60  /70  /80  /90  /100
+                  &lt;idle&gt; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</screen>
+
+      <para>Basically a lot of dead time there, so now have a look with
+        some arguments provided, in this case,
+        <command>sysstat inet.tcp</command> which looks like this:</para>
+
+      <screen>                    /0   /1   /2   /3   /4   /5   /6   /7   /8   /9   /10
+     Load Average   |
+
+        0 connections initiated           19 total TCP packets sent
+        0 connections accepted            11   data
+        0 connections established          0   data (retransmit)
+                                           8   ack-only
+        0 connections dropped              0   window probes
+        0   in embryonic state             0   window updates
+        0   on retransmit timeout          0   urgent data only
+        0   by keepalive                   0   control
+        0   by persist
+                                          29 total TCP packets received
+       11 potential rtt updates           17   in sequence
+       11 successful rtt updates           0   completely duplicate
+        9 delayed acks sent                0   with some duplicate data
+        0 retransmit timeouts              4   out of order
+        0 persist timeouts                 0   duplicate acks
+        0 keepalive probes                11   acks
+        0 keepalive timeouts               0   window probes
+                                           0   window updates</screen>
+
+      <para>Now that is informative. The first poll is accumulative, so
+        it is possible to see quite a lot of information in the
+        output when sysstat is invoked. Now, while that may be
+        interesting, how about a look at the buffer cache with
+        <command>sysstat bufcache</command>:</para>
+
+      <screen>                    /0   /1   /2   /3   /4   /5   /6   /7   /8   /9   /10
+     Load Average
+
+There are 1642 buffers using 6568 kBytes of memory.
+
+File System          Bufs used   %   kB in use   %  Bufsize kB   %  Util %
+/                          877  53        6171  93        6516  99      94
+/var/tmp                     5   0          17   0          28   0      60
+
+Total:                     882  53        6188  94        6544  99</screen>
+
+      <para>Again, a pretty boring system, but great information to have
+        available. While this is all nice to look at, it is time to
+        put a false load on the system to see how sysstat can be
+        used as a performance monitoring tool. As with top,
+        bonnie++ will be used to put a high load on the I/O
+        subsystems and a little on the CPU. The bufcache will be
+        looked at again to see of there are any noticeable differences:</para>
+
+      <screen>                    /0   /1   /2   /3   /4   /5   /6   /7   /8   /9   /10
+     Load Average   |||
+
+There are 1642 buffers using 6568 kBytes of memory.
+
+File System          Bufs used   %   kB in use   %  Bufsize kB   %  Util %
+/                          811  49        6422  97        6444  98      99
+
+Total:                     811  49        6422  97        6444  98</screen>
+
+      <para>First, notice that the load average shot up, this is to be
+        expected of course, then, while most of the numbers are close,
+        notice that utilization is at 99%. Throughout the time that
+        bonnie++ was running the utilization percentage remained
+        at 99, this of course makes sense, however, in a real
+	troubleshooting situation, it could be indicative of a
+	process doing heavy I/O on one particular file or filesystem.</para>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="tuning-mtools">
+    <title>Monitoring Tools</title>
+
+    <para>In addition to screen oriented monitors and tools, the &os;
+      system also ships with a set of command line oriented tools.
+      Many of the tools that ship with a &os; system can be found
+      on other UNIX and UNIX-like systems.
+    </para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-mtools-fstat">
+      <title>fstat</title>
+
+      <para>The &man.fstat.1; utility reports the status of open files on
+        the system, while it is not what many administrators
+        consider a performance monitor, it can help find out if a
+        particular user or process is using an inordinate amount
+        of files, generating large files and similar information.</para>
+
+      <para>Following is a sample of some fstat output:</para>
+
+      <screen>USER     CMD          PID   FD MOUNT      INUM MODE         SZ|DV R/W
+jrf      tcsh       21607   wd /         29772 drwxr-xr-x     512 r
+jrf      tcsh       21607    3* unix stream c057acc0&lt;-&gt; c0553280
+jrf      tcsh       21607    4* unix stream c0553280 &lt;-&gt; c057acc0
+root     sshd       21597   wd /             2 drwxr-xr-x     512 r
+root     sshd       21597    0 /         11921 crw-rw-rw-    null rw
+nobody   httpd       5032   wd /             2 drwxr-xr-x     512 r
+nobody   httpd       5032    0 /         11921 crw-rw-rw-    null r
+nobody   httpd       5032    1 /         11921 crw-rw-rw-    null w
+nobody   httpd       5032    2 /         15890 -rw-r--r--  353533 rw
+...</screen>
+
+      <para>The fields are pretty self explanatory, again, this tool while
+        not as performance oriented as others, can come in handy when
+        trying to find out information about file usage.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-mtools-iostat">
+      <title>iostat</title>
+
+      <para>The &man.iostat.8; command does exactly what it sounds like, it
+        reports the status of the I/O subsystems on the system. When
+        iostat is employed, the user typically runs it with a certain
+        number of counts and an interval between them like so:</para>
+
+      <screen>&uprompt; <userinput>iostat 5 5</userinput>
+      tty            wd0             cd0             fd0             md0             cpu
+ tin tout  KB/t t/s MB/s   KB/t t/s MB/s   KB/t t/s MB/s   KB/t t/s MB/s  us ni sy in id
+   0    1  5.13   1 0.00   0.00   0 0.00   0.00   0 0.00   0.00   0 0.00   0  0  0  0 100
+   0   54  0.00   0 0.00   0.00   0 0.00   0.00   0 0.00   0.00   0 0.00   0  0  0  0 100
+   0   18  0.00   0 0.00   0.00   0 0.00   0.00   0 0.00   0.00   0 0.00   0  0  0  0 100
+   0   18  8.00   0 0.00   0.00   0 0.00   0.00   0 0.00   0.00   0 0.00   0  0  0  0 100
+   0   28  0.00   0 0.00   0.00   0 0.00   0.00   0 0.00   0.00   0 0.00   0  0  0  0 100</screen>
+
+      <para>The above output is from a very quiet ftp server. The fields
+        represent the various I/O devices, the tty (which, ironically,
+        is the most active because iostat is running), wd0 which is the
+        primary IDE disk, cd0, the cdrom drive, fd0, the floppy and the
+        memory filesystem.</para>
+
+      <para>Now, let's see if we can pummel the system with some heavy
+        usage. First, a large ftp transaction consisting of a tarball
+        of netbsd-current source along with the bonnie++ disk
+        benchmark program running at the same time.</para>
+
+      <screen>&uprompt; <userinput>iostat 5 5</userinput>
+      tty            wd0             cd0             fd0             md0             cpu
+ tin tout  KB/t t/s MB/s   KB/t t/s MB/s   KB/t t/s MB/s   KB/t t/s MB/s  us ni sy in id
+   0    1  5.68   1 0.00   0.00   0 0.00   0.00   0 0.00   0.00   0 0.00   0  0  0  0 100
+   0   54 61.03 150 8.92   0.00   0 0.00   0.00   0 0.00   0.00   0 0.00   1  0 18  4 78
+   0   26 63.14 157 9.71   0.00   0 0.00   0.00   0 0.00   0.00   0 0.00   1  0 20  4 75
+   0   20 43.58  26 1.12   0.00   0 0.00   0.00   0 0.00   0.00   0 0.00   0  0  9  2 88
+   0   28 19.49  82 1.55   0.00   0 0.00   0.00   0 0.00   0.00   0 0.00   1  0  7  3 89</screen>
+
+      <para>As can be expected, notice that wd0 is very active, what is
+        interesting about this output is how the processor's I/O seems
+        to rise in proportion to wd0. This makes perfect sense,
+        however, it is worth noting that only because this ftp
+        server is hardly being used can that be observed. If, for
+        example, the cpu I/O subsystem was already under a moderate
+        load and the disk subsystem was under the same load as it
+        is now, it could appear that the cpu is bottlenecked when
+        in fact it would have been the disk. In such a case, we can
+        observe that "one tool" is rarely enough to completely
+        analyze a problem. A quick glance at processes probably
+        would tell us (after watching iostat) which
+        processes were causing problems.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-mtools-ps">
+      <title>ps</title>
+
+      <para>Using the &man.ps.1; command or process status, a great deal of
+        information about the system can be discovered. Most of the
+        time, the ps command is used to isolate a particular process
+        by name, group, owner etc. Invoked with no options or
+        arguments, ps simply prints out information about the user
+        executing it.</para>
+
+      <screen>&uprompt; <userinput>ps</userinput>
+  PID TT STAT    TIME COMMAND
+21560 p0 Is   0:00.04 -tcsh
+21564 p0 I+   0:00.37 ssh jrf.odpn.net
+21598 p1 Ss   0:00.12 -tcsh
+21673 p1 R+   0:00.00 ps
+21638 p2 Is+  0:00.06 -tcsh</screen>
+
+      <para>Not very exciting. The fields are self explanatory with the
+        exception of STAT which is actually the state a process is in.
+        The flags are all documented in the man page, however, in the
+        above example, I is idle, S is sleeping, R is runnable,
+        the + means the process is in a foreground state, and the s
+        means the process is a session leader. This all makes
+        perfect sense when looking at the flags, for example,
+        PID 21560 is a shell, it is idle and (as would be expected)
+        the shell is the process leader.</para>
+
+      <para>In most cases, someone is looking for something very specific
+        in the process listing. As an example, looking at all processes
+        is specified with -a, to see all processes plus those without
+        controlling terminals is -ax and to get a much more verbose
+        listing (basically everything plus information about the
+        impact processes are having) aux:</para>
+
+      <screen>&rprompt; <userinput>ps aux</userinput>
+USER     PID %CPU %MEM    VSZ  RSS TT STAT STARTED    TIME COMMAND
+root       0  0.0  9.6      0 6260 ?? DLs  16Jul02 0:01.00 (swapper)
+root   23362  0.0  0.8    144  488 ?? S    12:38PM 0:00.01 ftpd -l
+root   23328  0.0  0.4    428  280 p1 S    12:34PM 0:00.04 -csh
+jrf    23312  0.0  1.8    828 1132 p1 Is   12:32PM 0:00.06 -tcsh
+root   23311  0.0  1.8    388 1156 ?? S    12:32PM 0:01.60 sshd: jrf@ttyp1
+jrf    21951  0.0  1.7    244 1124 p0 S+    4:22PM 0:02.90 ssh jrf.odpn.net
+jrf    21947  0.0  1.7    828 1128 p0 Is    4:21PM 0:00.04 -tcsh
+root   21946  0.0  1.8    388 1156 ?? S     4:21PM 0:04.94 sshd: jrf@ttyp0
+nobody  5032  0.0  2.0   1616 1300 ?? I    19Jul02 0:00.02 /usr/pkg/sbin/httpd
+...</screen>
+
+      <para>Again, most of the fields are self explanatory with the
+        exception of VSZ and RSS which can be a little confusing.
+        RSS is the real size of a process in 1024 byte units while
+        VSZ is the virtual size. This is all great, but again, how
+        can ps help? Well, for one, take a look at this modified
+        version of the same output:</para>
+
+      <screen>&rprompt; <userinput>ps aux</userinput>
+USER     PID %CPU %MEM    VSZ  RSS TT STAT STARTED    TIME COMMAND
+root       0  0.0  9.6      0 6260 ?? DLs  16Jul02 0:01.00 (swapper)
+root   23362  0.0  0.8    144  488 ?? S    12:38PM 0:00.01 ftpd -l
+root   23328  0.0  0.4    428  280 p1 S    12:34PM 0:00.04 -csh
+jrf    23312  0.0  1.8    828 1132 p1 Is   12:32PM 0:00.06 -tcsh
+root   23311  0.0  1.8    388 1156 ?? S    12:32PM 0:01.60 sshd: jrf@ttyp1
+jrf    21951  0.0  1.7    244 1124 p0 S+    4:22PM 0:02.90 ssh jrf.odpn.net
+jrf    21947  0.0  1.7    828 1128 p0 Is    4:21PM 0:00.04 -tcsh
+root   21946  0.0  1.8    388 1156 ?? S     4:21PM 0:04.94 sshd: jrf@ttyp0
+nobody  5032  9.0  2.0   1616 1300 ?? I    19Jul02 0:00.02 /usr/pkg/sbin/httpd
+...</screen>
+
+      <para>Given that on this server, our baseline indicates a relatively
+        quiet system, the PID 5032 has an unusually large amount of
+        %CPU. Sometimes this can also cause high TIME numbers. The
+        ps command can be grepped on for PIDs, username and process
+        name and hence help track down processes that may be
+        experiencing problems.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-mtools-vmstat">
+      <title>vmstat</title>
+
+      <para>Using &man.vmstat.1;, information pertaining to virtual
+        memory can be monitored and measured. Not unlike iostat,
+        vmstat can be invoked with a count and interval. Following
+        is some sample output using 5 5 like the iostat example:</para>
+
+      <screen>&rprompt; <userinput>vmstat 5 5</userinput>
+ procs   memory     page                       disks         faults      cpu
+ r b w   avm   fre  flt  re  pi   po   fr   sr w0 c0 f0 m0   in   sy  cs us sy id
+ 0 7 0 17716 33160    2   0   0    0    0    0  1  0  0  0  105   15   4  0  0 100
+ 0 7 0 17724 33156    2   0   0    0    0    0  1  0  0  0  109    6   3  0  0 100
+ 0 7 0 17724 33156    1   0   0    0    0    0  1  0  0  0  105    6   3  0  0 100
+ 0 7 0 17724 33156    1   0   0    0    0    0  0  0  0  0  107    6   3  0  0 100
+ 0 7 0 17724 33156    1   0   0    0    0    0  0  0  0  0  105    6   3  0  0 100</screen>
+
+      <para>Yet again, relatively quiet, for posterity, the exact same load
+        that was put on this server in the iostat example will be used.
+        The load is a large file transfer and the bonnie benchmark
+        program.</para>
+
+      <screen>&rprompt; <userinput>vmstat 5 5</userinput>
+ procs   memory     page                       disks         faults      cpu
+ r b w   avm   fre  flt  re  pi   po   fr   sr w0 c0 f0 m0   in   sy  cs us sy id
+ 1 8 0 18880 31968    2   0   0    0    0    0  1  0  0  0  105   15   4  0  0 100
+ 0 8 0 18888 31964    2   0   0    0    0    0 130  0  0  0 1804 5539 1094 31 22 47
+ 1 7 0 18888 31964    1   0   0    0    0    0 130  0  0  0 1802 5500 1060 36 16 49
+ 1 8 0 18888 31964    1   0   0    0    0    0 160  0  0  0 1849 5905 1107 21 22 57
+ 1 7 0 18888 31964    1   0   0    0    0    0 175  0  0  0 1893 6167 1082  1 25 75</screen>
+
+      <para>Just a little different. Notice, since most of the work
+        was I/O based, the actual memory used was not very much.
+        Since this system uses mfs for <filename>/tmp</filename>,
+	however, it can certainly get beat up. Have a look at this:</para>
+
+      <screen>&rprompt; <userinput>vmstat 5 5</userinput>
+ procs   memory     page                       disks         faults      cpu
+ r b w   avm   fre  flt  re  pi   po   fr   sr w0 c0 f0 m0   in   sy  cs us sy id
+ 0 2 0 99188   500    2   0   0    0    0    0  1  0  0  0  105   16   4  0  0 100
+ 0 2 0111596   436  592   0 587  624  586 1210 624  0  0  0  741  883 1088  0 11 89
+ 0 3 0123976   784  666   0 662  643  683 1326 702  0  0  0  828  993 1237  0 12 88
+ 0 2 0134692  1236  581   0 571  563  595 1158 599  0  0  0  722  863 1066  0  9 90
+ 2 0 0142860   912  433   0 406  403  405  808 429  0  0  0  552  602 768  0  7 93</screen>
+
+      <para>Pretty scary stuff. That was created by running bonnie in
+        <filename>/tmp</filename>
+        on a memory based filesystem. If it continued for too long,
+        it is possible the system could have started thrashing.
+        Notice that even though the VM subsystem was taking a beating,
+        the processors still were not getting too battered.</para>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="tuning-ntools">
+    <title>Network Tools</title>
+
+    <para>Sometimes a performance problem is not a particular machine,
+      it is the network or some sort of device on the network such as
+      another host, a router etc. What other machines that provide a
+      service or some sort of connectivity to a particular &os; system
+      do and how they act can have a very large impact on performance
+      of the &os; system itself, or the perception of performance by
+      users.
+      A really great example of this is when a DNS server that a &os;
+      machine is using suddenly disappears. Lookups take long and they
+      eventually fail. Someone logged into the &os; machine who is not
+      experienced would undoubtedly (provided they had no other evidence)
+      blame the &os; system. One of my personal favorites,
+      <quote>the Internet is broke</quote> usually means either DNS
+      service or a router/gateway has dropped offline. Whatever the
+      case may be, a &os; system comes adequately armed to deal with
+      finding out what network issues may be cropping up whether
+      the fault of the local system or some other issue.</para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-ntools-ping">
+      <title>ping</title>
+
+      <para>The classic &man.ping.8; utility can tell us if there is just
+        plain connectivity, it can also tell if host resolution
+        (depending on how <filename>nsswitch.conf</filename>
+        dictates) is working. Following is some typical ping
+        output on a local network with a count of 3 specified:</para>
+
+      <screen>&rprompt; <userinput>ping -c 3 marie</userinput>
+PING marie (172.16.14.12): 56 data bytes
+64 bytes from 172.16.14.12: icmp_seq=0 ttl=255 time=0.571 ms
+64 bytes from 172.16.14.12: icmp_seq=1 ttl=255 time=0.361 ms
+64 bytes from 172.16.14.12: icmp_seq=2 ttl=255 time=0.371 ms
+
+----marie PING Statistics----
+3 packets transmitted, 3 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 0.361/0.434/0.571/0.118 ms</screen>
+
+      <para>Not only does ping tell us if a host is alive, it tells us how
+        long it took and gives some nice details at the very end. If
+        a host cannot be resolved, just the IP address can be
+        specified as well:</para>
+
+      <screen>&rprompt; <userinput>ping -c 1 172.16.20.5</userinput>
+PING ash (172.16.20.5): 56 data bytes
+64 bytes from 172.16.20.5: icmp_seq=0 ttl=64 time=0.452 ms
+
+----ash PING Statistics----
+1 packets transmitted, 1 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 0.452/0.452/0.452/0.000 ms</screen>
+
+      <para>Now, not unlike any other tool, the times are very subjective,
+        especially in regards to networking. For example, while the
+        times in the examples are good, take a look at the localhost
+        ping:</para>
+
+      <screen>&rprompt; <userinput>ping -c 4 localhost</userinput>
+PING localhost (127.0.0.1): 56 data bytes
+64 bytes from 127.0.0.1: icmp_seq=0 ttl=255 time=0.091 ms
+64 bytes from 127.0.0.1: icmp_seq=1 ttl=255 time=0.129 ms
+64 bytes from 127.0.0.1: icmp_seq=2 ttl=255 time=0.120 ms
+64 bytes from 127.0.0.1: icmp_seq=3 ttl=255 time=0.122 ms
+
+----localhost PING Statistics----
+4 packets transmitted, 4 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 0.091/0.115/0.129/0.017 ms</screen>
+
+      <para>Much smaller because the request never left the machine. Pings
+        can be used to gather information about how well a network
+        is performing. It is also good for problem isolation, for
+        instance, if there are three relatively close in size &os;
+        systems on a network and one of them simply has horrible
+        ping times, chances are something is wrong on that one
+        particular machine.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-ntools-traceroute">
+      <title>traceroute</title>
+
+      <para>The &man.traceroute.8; command is great for making sure a
+        path is available or detecting problems on a particular
+        path. As an example, here is a trace between the example
+        ftp server and ftp.NetBSD.org:</para>
+
+      <screen>&rprompt; <userinput>traceroute ftp.NetBSD.org</userinput>
+traceroute to ftp.NetBSD.org (204.152.184.75), 30 hops max, 40 byte packets
+ 1  208.44.95.1 (208.44.95.1)  1.646 ms  1.492 ms  1.456 ms
+ 2  63.144.65.170 (63.144.65.170)  7.318 ms  3.249 ms  3.854 ms
+ 3  chcg01-edge18.il.inet.qwest.net (65.113.85.229)  35.982 ms  28.667 ms  21.971 ms
+ 4  chcg01-core01.il.inet.qwest.net (205.171.20.1)  22.607 ms  26.242 ms  19.631 ms
+ 5  snva01-core01.ca.inet.qwest.net (205.171.8.50)  78.586 ms  70.585 ms  84.779 ms
+ 6  snva01-core03.ca.inet.qwest.net (205.171.14.122)  69.222 ms  85.739 ms  75.979 ms
+ 7  paix01-brdr02.ca.inet.qwest.net (205.171.205.30)  83.882 ms  67.739 ms  69.937 ms
+ 8  198.32.175.3 (198.32.175.3)  72.782 ms  67.687 ms  73.320 ms
+ 9  so-1-0-0.orpa8.pf.isc.org (192.5.4.231)  78.007 ms  81.860 ms  77.069 ms
+10  tun0.orrc5.pf.isc.org (192.5.4.165)  70.808 ms  75.151 ms  81.485 ms
+11  ftp.NetBSD.org (204.152.184.75)  69.700 ms  69.528 ms  77.788 ms</screen>
+
+      <para>All in all, not bad. The trace went from the host to the local
+        router, then out onto the provider network and finally out onto
+        the Internet looking for the final destination. How to
+        interpret traceroutes, again, are subjective, but
+        abnormally high times in portions of a path can indicate a
+        bottleneck on a piece of network equipment. Not unlike ping,
+        if the host itself is suspect, run traceroute from another
+        host to the same destination. Now, for the worst case scenario:</para>
+
+     <screen>&rprompt; <userinput>traceroute www.microsoft.com</userinput>
+traceroute: Warning: www.microsoft.com has multiple addresses; using 207.46.230.220
+traceroute to www.microsoft.akadns.net (207.46.230.220), 30 hops max, 40 byte packets
+ 1  208.44.95.1 (208.44.95.1)  2.517 ms  4.922 ms  5.987 ms
+ 2  63.144.65.170 (63.144.65.170)  10.981 ms  3.374 ms  3.249 ms
+ 3  chcg01-edge18.il.inet.qwest.net (65.113.85.229)  37.810 ms  37.505 ms  20.795 ms
+ 4  chcg01-core03.il.inet.qwest.net (205.171.20.21)  36.987 ms  32.320 ms  22.430 ms
+ 5  chcg01-brdr03.il.inet.qwest.net (205.171.20.142)  33.155 ms  32.859 ms  33.462 ms
+ 6  205.171.1.162 (205.171.1.162)  39.265 ms  20.482 ms  26.084 ms
+ 7  sl-bb24-chi-13-0.sprintlink.net (144.232.26.85)  26.681 ms  24.000 ms  28.975 ms
+ 8  sl-bb21-sea-10-0.sprintlink.net (144.232.20.30)  65.329 ms  69.694 ms  76.704 ms
+ 9  sl-bb21-tac-9-1.sprintlink.net (144.232.9.221)  65.659 ms  66.797 ms  74.408 ms
+10  144.232.187.194 (144.232.187.194)  104.657 ms  89.958 ms  91.754 ms
+11  207.46.154.1 (207.46.154.1)  89.197 ms  84.527 ms  81.629 ms
+12  207.46.155.10 (207.46.155.10)  78.090 ms  91.550 ms  89.480 ms
+13  * * *
+.......</screen>
+
+      <para>In this case, the Microsoft server cannot be found either
+        because of multiple addresses or somewhere along the line a
+        system or server cannot reply to the information request.
+        At that point, one might think to try ping, in the Microsoft
+        case, a ping does not reply, that is because somewhere on
+        their network ICMP is most likely disabled.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-ntools-netstat">
+      <title>netstat</title>
+
+      <para>Another problem that can crop up on a &os; system is routing
+        table issues. These issues are not always the systems fault.
+        The &man.route.8; and &man.netstat.1; commands can show
+        information about routes and network connections (respectively).</para>
+
+      <para>The route command can be used to look at and modify routing
+        tables while netstat can display information about network
+        connections and routes. First, here is some output from route
+        show: </para>
+
+      <screen>&rprompt; <userinput>route show</userinput>
+Routing tables
+
+Internet:
+Destination      Gateway            Flags
+default          208.44.95.1        UG
+loopback         127.0.0.1          UG
+localhost        127.0.0.1          UH
+172.15.13.0      172.16.14.37       UG
+172.16.0.0       link#2             U
+172.16.14.8      0:80:d3:cc:2c:0    UH
+172.16.14.10     link#2             UH
+marie            0:10:83:f9:6f:2c   UH
+172.16.14.37     0:5:32:8f:d2:35    UH
+172.16.16.15     link#2             UH
+loghost          8:0:20:a7:f0:75    UH
+artemus          8:0:20:a8:d:7e     UH
+ash              0:b0:d0:de:49:df   UH
+208.44.95.0      link#1             U
+208.44.95.1      0:4:27:3:94:20     UH
+208.44.95.2      0:5:32:8f:d2:34    UH
+208.44.95.25     0:c0:4f:10:79:92   UH
+
+Internet6:
+Destination      Gateway            Flags
+default          localhost          UG
+default          localhost          UG
+localhost        localhost          UH
+::127.0.0.0      localhost          UG
+::224.0.0.0      localhost          UG
+::255.0.0.0      localhost          UG
+::ffff:0.0.0.0   localhost          UG
+2002::           localhost          UG
+2002:7f00::      localhost          UG
+2002:e000::      localhost          UG
+2002:ff00::      localhost          UG
+fe80::           localhost          UG
+fe80::%ex0       link#1             U
+fe80::%ex1       link#2             U
+fe80::%lo0       fe80::1%lo0        U
+fec0::           localhost          UG
+ff01::           localhost          U
+ff02::%ex0       link#1             U
+ff02::%ex1       link#2             U
+ff02::%lo0       fe80::1%lo0        U</screen>
+
+      <para>The flags section shows the status and whether or not it is a
+        gateway. In this case we see U, H and G (U is up, H is host and
+        G is gateway, see the man page for additional flags).</para>
+
+      <para>Now for some netstat output using the -r (routing) and -n
+        (show network numbers) options:</para>
+
+      <screen>Routing tables
+
+Internet:
+Destination        Gateway            Flags     Refs     Use    Mtu  Interface
+default            208.44.95.1        UGS         0   330309   1500  ex0
+127                127.0.0.1          UGRS        0        0  33228  lo0
+127.0.0.1          127.0.0.1          UH          1     1624  33228  lo0
+172.15.13/24       172.16.14.37       UGS         0        0   1500  ex1
+172.16             link#2             UC         13        0   1500  ex1
+...
+Internet6:
+Destination                   Gateway                   Flags     Refs     Use
+  Mtu  Interface
+::/104                        ::1                       UGRS        0        0
+33228  lo0 =>
+::/96                         ::1                       UGRS        0        0</screen>
+
+      <para>The above output is a little more verbose. So, how can this
+        help?  Well, a good example is when routes between networks
+        get changed while users are connected. I saw this happen
+        several times when someone was rebooting routers all day
+        long after each change. Several users called up saying they
+        were getting kicked out and it was taking very long to log
+        back in. As it turned out, the clients connecting to the
+        system were redirected to another router (which took a very
+        long route) to reconnect. I observed the M flag or Modified
+        dynamically (by redirect) on their connections. I deleted
+        the routes, had them reconnect and summarily followed up
+        with the offending technician.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-ntools-tcpdump">
+      <title>tcpdump</title>
+
+      <para>Last, and definitely not least is &man.tcpdump.8;, the network
+	sniffer that can retrieve a lot of information. In this
+	discussion, there will be some sample output and an
+	explanation of some of the more useful options of tcpdump.</para>
+
+      <para>Following is a small snippet of tcpdump in action just as it
+        starts:</para>
+
+      <screen>&rprompt; <userinput>tcpdump</userinput>
+tcpdump: listening on ex0
+14:07:29.920651 mail.ssh &gt; 208.44.95.231.3551: P 2951836801:2951836845(44) ack 2
+476972923 win 17520 &lt;nop,nop,timestamp 1219259 128519450&gt; [tos 0x10]
+14:07:29.950594 12.125.61.34 &gt;  208.44.95.16: ESP(spi=2548773187,seq=0x3e8c) (DF)
+14:07:29.983117 smtp.somecorp.com.smtp &gt; 208.44.95.30.42828: . ack 420285166 win
+16500 (DF)
+14:07:29.984406 208.44.95.30.42828 &gt; smtp.somecorp.com.smtp: . 1:1376(1375) ack 0
+ win 7431 (DF)
+...</screen>
+
+      <para>Given that the particular server is a mail server, what is
+        shown makes perfect sense, however, the utility is very
+        verbose, I prefer to initially run tcpdump with no options
+        and send the text output into a file for later digestion
+        like so:</para>
+
+      <screen>&rprompt; <userinput>tcpdump > tcpdump.out</userinput>
+tcpdump: listening on ex0</screen>
+
+      <para>So, what precisely in the mish mosh are we looking for?
+        In short, anything that does not seem to fit, for example,
+        messed up packet lengths (as in a lot of them) will show
+        up as improper lens or malformed packets (basically garbage).
+        If, however, we are looking for something specific, tcpdump
+        may be able to help depending on the problem.</para>
+
+      <sect3 id="tuning-ntools-tcpdump-usage">
+        <title>Specific tcpdump Usage</title>
+
+        <para>These are just examples of a few things one can do with
+          tcpdump.</para>
+
+        <para>Look for duplicate IP addresses:</para>
+
+        <screen><userinput>tcpdump -e host ip-address</userinput></screen>
+
+        <para>For example:</para>
+
+        <screen><userinput>tcpdump -e host 192.168.0.2</userinput></screen>
+
+        <para>Routing Problems:</para>
+
+        <screen><userinput>tcpdump icmp</userinput></screen>
+
+        <para>There are plenty of third party tools available, however,
+          &os; comes shipped with a good tool set for tracking down
+          network level performance problems.</para>
+      </sect3>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="tuning-acct">
+    <title>Accounting</title>
+
+    <para>The &os; system comes equipped with a great deal of performance
+      monitors for active monitoring, but what about long term monitoring?
+      Well, of course the output of a variety of commands can be sent to
+      files and re-parsed later with a meaningful shell script or program.
+      &os; does, by default, offer some extraordinarily powerful
+      low level monitoring tools for the programmer, administrator or
+      really astute hobbyist.</para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-acct-acct">
+      <title>Accounting</title>
+
+      <para>While accounting gives system usage at an almost userland level,
+        kernel profiling with gprof provides explicit system call usage.</para>
+
+      <para>Using the accounting tools can help figure out what possible
+        performance problems may be laying in wait, such as increased
+        usage of compilers or network services for example.</para>
+
+      <para>Starting accounting is actually fairly simple, as root, use the
+        &man.accton.8; command. The syntax to start accounting is:
+        <command>accton filename</command></para>
+
+      <para>Where accounting information is appended to filename, now,
+        strangely enough, the lastcomm command which reads from an
+        accounting output file, by default, looks in
+        <filename>/var/account/acct</filename>
+        so I tend to just use the default location, however, lastcomm
+        can be told to look elsewhere.</para>
+
+      <para>To stop accounting, simply type accton with no arguments. </para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-acct-reading">
+      <title>Reading Accounting Information</title>
+
+      <para>To read accounting information, there are two tools that can
+        be used:</para>
+
+      <itemizedlist>
+        <listitem>
+	  <para>&man.lastcomm.1;</para>
+	</listitem>
+
+	<listitem>
+	  <para>&man.sa.8;</para>
+	</listitem>
+      </itemizedlist>
+
+      <sect3 id="tuning-acct-reading-lastcomm">
+        <title>lastcomm</title>
+
+        <para>The lastcomm command shows the last commands executed in
+          order, like all of them. It can, however, select by user,
+          here is some sample output:</para>
+
+        <screen>&uprompt; <userinput>lastcomm jrf</userinput>
+last       -       jrf      ttyp3      0.00 secs Tue Sep  3 14:39 (0:00:00.02)
+man        -       jrf      ttyp3      0.00 secs Tue Sep  3 14:38 (0:01:49.03)
+sh         -       jrf      ttyp3      0.00 secs Tue Sep  3 14:38 (0:01:49.03)
+less       -       jrf      ttyp3      0.00 secs Tue Sep  3 14:38 (0:01:49.03)
+lastcomm   -       jrf      ttyp3      0.02 secs Tue Sep  3 14:38 (0:00:00.02)
+stty       -       jrf      ttyp3      0.00 secs Tue Sep  3 14:38 (0:00:00.02)
+tset       -       jrf      ttyp3      0.00 secs Tue Sep  3 14:38 (0:00:01.05)
+hostname   -       jrf      ttyp3      0.00 secs Tue Sep  3 14:38 (0:00:00.02)
+ls         -       jrf      ttyp0      0.00 secs Tue Sep  3 14:36 (0:00:00.00)
+...</screen>
+
+        <para>Pretty nice, the lastcomm command gets its information
+          from the default location of /var/account/acct, however,
+          using the -f option, another file may be specified.</para>
+
+        <para>As may seem obvious, the output of lastcomm could get a
+          little heavy on large multi user systems. That is where
+          sa comes into play.</para>
+      </sect3>
+
+      <sect3 id="tuning-acct-reading-sa">
+        <title>sa</title>
+
+        <para>The sa command (meaning "print system accounting
+          statistics") can be used to maintain information. It
+          can also be used interactively to create reports.
+          Following is the default output of sa:</para>
+
+        <screen>&uprompt; <userinput>sa</userinput>
+      77       18.62re        0.02cp        8avio        0k
+       3        4.27re        0.01cp       45avio        0k   ispell
+       2        0.68re        0.00cp       33avio        0k   mutt
+       2        1.09re        0.00cp       23avio        0k   vi
+      10        0.61re        0.00cp        7avio        0k   ***other
+       2        0.01re        0.00cp       29avio        0k   exim
+       4        0.00re        0.00cp        8avio        0k   lastcomm
+       2        0.00re        0.00cp        3avio        0k   atrun
+       3        0.03re        0.00cp        1avio        0k   cron*
+       5        0.02re        0.00cp       10avio        0k   exim*
+      10        3.98re        0.00cp        2avio        0k   less
+      11        0.00re        0.00cp        0avio        0k   ls
+       9        3.95re        0.00cp       12avio        0k   man
+       2        0.00re        0.00cp        4avio        0k   sa
+      12        3.97re        0.00cp        1avio        0k   sh
+...</screen>
+
+        <para>From left to right, total times called, real time in
+          minutes, sum of user and system time, in minutes,
+          Average number of I/O operations per execution, size,
+          command name.</para>
+
+        <para>The sa command can also be used to create summary files
+          or reports based on some options, for example, here is
+          the output when specifying a sort by CPU-time average
+          memory usage:</para>
+
+        <screen>&uprompt; <userinput>sa -k</userinput>
+      86       30.81re        0.02cp        8avio        0k
+      10        0.61re        0.00cp        7avio        0k   ***other
+       2        0.00re        0.00cp        3avio        0k   atrun
+       3        0.03re        0.00cp        1avio        0k   cron*
+       2        0.01re        0.00cp       29avio        0k   exim
+       5        0.02re        0.00cp       10avio        0k   exim*
+       3        4.27re        0.01cp       45avio        0k   ispell
+       4        0.00re        0.00cp        8avio        0k   lastcomm
+      12        8.04re        0.00cp        2avio        0k   less
+      13        0.00re        0.00cp        0avio        0k   ls
+      11        8.01re        0.00cp       12avio        0k   man
+       2        0.68re        0.00cp       33avio        0k   mutt
+       3        0.00re        0.00cp        4avio        0k   sa
+      14        8.03re        0.00cp        1avio        0k   sh
+       2        1.09re        0.00cp       23avio        0k   vi</screen>
+
+	<para>The sa command is very helpful on larger systems.</para>
+      </sect3>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-acct-enabling">
+      <title>How to Put Accounting to Use</title>
+
+      <para>Accounting reports, as was mentioned earlier, offer a way to
+        help predict trends, for example, on a system that has cc and
+        make being used more and more may indicate that in a few months
+        some changes will need to be made to keep the system running at
+        an optimum level. Another good example is web server usage. If
+        it begins to gradually increase, again, some sort of action may
+        need to be taken before it becomes a problem. Luckily, with
+        accounting tools, said actions can be reasonably predicted and
+        planned for ahead of time.</para>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="tuning-kprof">
+    <title>Kernel Profiling</title>
+
+    <para>Profiling a kernel is normally employed when the goal is to
+      compare the difference of new changes in the kernel to a previous
+      one or to track down some sort of low level performance problem.
+      Two sets of data about profiled code behavior are recorded
+      independently:
+      function call frequency and time spent in each function.</para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-kprof-starting">
+      <title>Getting Started</title>
+
+      <para>First, take a look at both <xref linkend="tuning-kernel" /> and
+        <xref linkend="chap-kernel" />.
+        The only difference in procedure for setting up a kernel
+        with profiling enabled is when you run config add the -p
+        option. The build area is
+        <filename>../compile/&lt;KERNEL_NAME&gt;.PROF</filename> ,
+        for example, a  GENERIC kernel would be
+        <filename>../compile/GENERIC.PROF</filename>.</para>
+
+      <para>Following is a quick summary of how to compile a kernel
+        with profiling enabled on the i386 port, the assumptions
+        are that the appropriate sources are available under
+        <filename>/usr/src</filename> and the GENERIC
+        configuration is being used, of course, that may not
+        always be the situation:</para>
+
+      <orderedlist>
+        <listitem>
+          <para><userinput>cd /usr/src/sys/arch/i386/conf</userinput></para>
+        </listitem>
+
+        <listitem>
+          <para><userinput>config -p GENERIC</userinput></para>
+        </listitem>
+
+        <listitem>
+          <para><userinput>cd ../compile/GENERIC.PROF</userinput></para>
+        </listitem>
+
+        <listitem>
+          <para><userinput>make depend &amp;&amp; make</userinput></para>
+        </listitem>
+
+        <listitem>
+          <para><userinput>cp /netbsd /netbsd.old</userinput></para>
+	</listitem>
+
+        <listitem>
+          <para><userinput>cp netbsd /</userinput></para>
+        </listitem>
+
+        <listitem>
+          <para><userinput>reboot</userinput></para>
+        </listitem>
+      </orderedlist>
+
+      <para>Once the new kernel is in place and the system has rebooted,
+        it is time to turn on the monitoring and start looking at
+        results.</para>
+
+      <sect3 id="tuning-kprof-starting-kgmon">
+        <title>Using kgmon</title>
+
+        <para>To start kgmon:</para>
+
+        <screen>&uprompt; <userinput>kgmon -b</userinput>
+kgmon: kernel profiling is running.</screen>
+
+        <para>Next, send the data into the file
+          <filename>gmon.out</filename>:</para>
+
+        <screen>&uprompt; <userinput>kgmon -p</userinput></screen>
+
+        <para>Now, it is time to make the output readable:</para>
+
+        <screen>&uprompt; <userinput>gprof /netbsd &gt; gprof.out</userinput></screen>
+
+        <para>Since gmon is looking for <filename>gmon.out</filename>,
+          it should find it in the current working directory.</para>
+
+        <para>By just running kgmon alone, you may not get the
+          information you need, however, if you are comparing
+          the differences between two different
+          kernels, then a known good baseline should be used.
+          Note that it is generally a good idea to stress the
+          subsystem if you know what it is both in the baseline
+          and with the newer (or different) kernel.</para>
+      </sect3>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-kprof-intkgmon">
+      <title>Interpretation of kgmon Output</title>
+
+      <para>Now that kgmon can run, collect and parse information, it is
+        time to actually look at some of that information. In this
+        particular instance, a GENERIC kernel is running with
+        profiling enabled for about an hour with only system
+        processes and no adverse load, in the fault insertion
+        section, the example will be large enough that even under
+        a minimal load detection of the problem should be easy.</para>
+
+      <sect3 id="tuning-kprof-intkgmon-flat">
+        <title>Flat Profile</title>
+
+        <para>The flat profile is a list of functions, the number of
+          times they were called and how long it took (in seconds).
+          Following is sample output from the quiet system:</para>
+
+        <screen>Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total
+ time   seconds   seconds    calls  ns/call  ns/call  name
+ 99.77    163.87   163.87                             idle
+  0.03    163.92     0.05      219 228310.50 228354.34  _wdc_ata_bio_start
+  0.02    163.96     0.04      219 182648.40 391184.96  wdc_ata_bio_intr
+  0.01    163.98     0.02     3412  5861.66  6463.02  pmap_enter
+  0.01    164.00     0.02      548 36496.35 36496.35  pmap_zero_page
+  0.01    164.02     0.02                             Xspllower
+  0.01    164.03     0.01   481968    20.75    20.75  gettick
+  0.01    164.04     0.01     6695  1493.65  1493.65  VOP_LOCK
+  0.01    164.05     0.01     3251  3075.98 21013.45  syscall_plain
+...</screen>
+
+        <para>As expected, idle was the highest in percentage, however,
+          there were still some things going on, for example, a
+          little further down there is the
+          <emphasis>vn_lock</emphasis> function:</para>
+
+        <screen>...
+  0.00    164.14     0.00     6711     0.00     0.00  VOP_UNLOCK
+  0.00    164.14     0.00     6677     0.00  1493.65  vn_lock
+  0.00    164.14     0.00     6441     0.00     0.00  genfs_unlock</screen>
+
+        <para>This is to be expected, since locking still has to take
+	  place, regardless.</para>
+      </sect3>
+
+      <sect3 id="tuning-kprof-intkgmon-callgraph">
+        <title>Call Graph Profile</title>
+
+        <para>The call graph is an augmented version of the flat profile
+          showing subsequent calls from the listed functions.
+          First, here is some sample output:</para>
+
+        <screen>                     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) for 0.01% of 164.14 seconds
+
+index % time    self  children    called     name
+                                                 &lt;spontaneous&gt;
+[1]     99.8  163.87    0.00                 idle [1]
+-----------------------------------------------
+                                                 &lt;spontaneous&gt;
+[2]      0.1    0.01    0.08                 syscall1 [2]
+                0.01    0.06    3251/3251        syscall_plain [7]
+                0.00    0.01     414/1660        trap [9]
+-----------------------------------------------
+                0.00    0.09     219/219         Xintr14 [6]
+[3]      0.1    0.00    0.09     219         pciide_compat_intr [3]
+                0.00    0.09     219/219         wdcintr [5]
+-----------------------------------------------
+...</screen>
+
+        <para>Now this can be a little confusing. The index number is
+          mapped to from the trailing number on the end of the
+          line, for example,</para>
+
+        <screen>...
+                0.00    0.01      85/85          dofilewrite [68]
+[72]     0.0    0.00    0.01      85         soo_write [72]
+                0.00    0.01      85/89          sosend [71]
+...</screen>
+
+        <para>Here we see that dofilewrite was called first, now we can
+          look at the index number for 64 and see what was
+          happening there:</para>
+
+        <screen>...
+                0.00    0.01     101/103         ffs_full_fsync &lt;cycle 6&gt; [58]
+[64]     0.0    0.00    0.01     103         bawrite [64]
+                0.00    0.01     103/105         VOP_BWRITE [60]
+...</screen>
+
+        <para>And so on, in this way, a "visual trace" can be established.</para>
+
+        <para>At the end of the call graph right after the terms
+          section is an index by function name which can help map
+          indexes as well.</para>
+      </sect3>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-kprof-use">
+      <title>Putting it to Use</title>
+
+      <para>In this example, I have modified an area of the kernel I know
+        will create a problem that will be blatantly obvious.</para>
+
+      <para>Here is the top portion of the flat profile after running the
+        system for about an hour with little interaction from users:</para>
+
+      <screen>Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total
+ time   seconds   seconds    calls  us/call  us/call  name
+ 93.97    139.13   139.13                             idle
+  5.87    147.82     8.69       23 377826.09 377842.52  check_exec
+  0.01    147.84     0.02      243    82.30    82.30  pmap_copy_page
+  0.01    147.86     0.02      131   152.67   152.67  _wdc_ata_bio_start
+  0.01    147.88     0.02      131   152.67   271.85  wdc_ata_bio_intr
+  0.01    147.89     0.01     4428     2.26     2.66  uvn_findpage
+  0.01    147.90     0.01     4145     2.41     2.41  uvm_pageactivate
+  0.01    147.91     0.01     2473     4.04  3532.40  syscall_plain
+  0.01    147.92     0.01     1717     5.82     5.82  i486_copyout
+  0.01    147.93     0.01     1430     6.99    56.52  uvm_fault
+  0.01    147.94     0.01     1309     7.64     7.64  pool_get
+  0.01    147.95     0.01      673    14.86    38.43  genfs_getpages
+  0.01    147.96     0.01      498    20.08    20.08  pmap_zero_page
+  0.01    147.97     0.01      219    45.66    46.28  uvm_unmap_remove
+  0.01    147.98     0.01      111    90.09    90.09  selscan
+...</screen>
+
+      <para>As is obvious, there is a large difference in performance.
+        Right off the bat the idle time is noticeably less. The main
+        difference here is that one particular function has a large
+        time across the board with very few calls. That function is
+        <emphasis>check_exec</emphasis>. While at first, this may
+        not seem strange if a lot of commands had been executed,
+        when compared to the flat profile of the first measurement,
+        proportionally it does not seem right:</para>
+
+      <screen>...
+  0.00    164.14     0.00       37     0.00 62747.49  check_exec
+...</screen>
+
+      <para>The call in the first measurement is made 37 times and has
+        a better performance. Obviously something in or around that
+        function is wrong. To eliminate other functions, a look at
+	the call graph can help, here is the first instance of
+        <emphasis>check_exec</emphasis></para>
+
+      <screen>...
+-----------------------------------------------
+                0.00    8.69      23/23          syscall_plain [3]
+[4]      5.9    0.00    8.69      23         sys_execve [4]
+                8.69    0.00      23/23          check_exec [5]
+                0.00    0.00      20/20          elf32_copyargs [67]
+...</screen>
+
+      <para>Notice how the time of 8.69 seems to affect the two previous
+        functions. It is possible that there is something wrong with
+        them, however, the next instance of
+        <emphasis>check_exec</emphasis> seems to prove otherwise:</para>
+
+      <screen>...
+-----------------------------------------------
+                8.69    0.00      23/23          sys_execve [4]
+[5]      5.9    8.69    0.00      23         check_exec [5]
+...</screen>
+
+      <para>Now we can see that the problem, most likely, resides in
+        <emphasis>check_exec</emphasis>. Of course, problems
+        are not always this simple and in fact, here
+        is the simpleton code that was inserted right after
+        <emphasis>check_exec</emphasis>
+        (the function is in <filename>sys/kern/kern_exec.c</filename>):</para>
+
+      <screen>...
+        /* A Cheap fault insertion */
+        for (x = 0; x &lt; 100000000; x++) {
+                y = x;
+        }
+..</screen>
+
+      <para>Not exactly glamorous, but enough to register a large change
+        with profiling. </para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-kprof-summary">
+      <title>Summary</title>
+
+      <para>Kernel profiling can be enlightening for anyone and provides a
+        much more refined method of hunting down performance problems
+        that are not as easy to find using conventional means, it is
+        also not nearly as hard as most people think, if you can
+        compile a kernel, you can get profiling to work.</para>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="tuning-system">
+    <title>System Tuning</title>
+
+    <para>Now that monitoring and analysis tools have been addressed,
+      it is time to look into some actual methods. In this section,
+      tools and methods that can affect how the system performs
+      that are applied without recompiling the kernel are addressed,
+      the next section examines kernel tuning by recompiling.</para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-system-sysctl">
+      <title>Using sysctl</title>
+
+      <para>The sysctl utility can be used to look at and in some cases
+        alter system parameters. There are so many parameters that
+        can be viewed and changed they cannot all be shown here,
+        however, for the first example here is a simple usage of
+        sysctl to look at the system PATH environment variable:</para>
+
+      <screen>&uprompt; <userinput>sysctl user.cs_path</userinput>
+user.cs_path = /usr/bin:/bin:/usr/sbin:/sbin:/usr/pkg/bin:/usr/pkg/sbin:/usr/local/bin:/usr/local/sbin</screen>
+
+      <para>Fairly simple. Now something that is actually related to
+	performance. As an example, lets say a system with many users
+	is having file open issues, by examining and perhaps raising
+	the kern.maxfiles parameter the problem may be fixed, but
+	first, a look:</para>
+
+      <screen>&uprompt; <userinput>sysctl kern.maxfiles</userinput>
+kern.maxfiles = 1772</screen>
+
+      <para>Now, to change it, as root with the -w option specified:</para>
+
+      <screen>&rprompt; <userinput>sysctl -w kern.maxfiles=1972</userinput>
+kern.maxfiles: 1772 -> 1972</screen>
+
+      <para>Note, when the system is rebooted, the old value will return,
+        there are two cures for this, first, modify that parameter in
+        the kernel and recompile, second (and simpler) add this line
+        to <filename>/etc/sysctl.conf</filename>:</para>
+
+      <screen>kern.maxfiles=1972</screen>
+    </sect2>
+
+<!-- XXX - At the moment of writing ideal vm.* values for machines with
+     thashing problems are still debated. So, we'll comment this section
+     out for now. When we add this, we should also add this excellent
+     mail by SODA Noriyuki:
+
+     http://mail-index.NetBSD.org/current-users/2004/09/01/0000.html
+
+<sect2 id="tuning-system-ubc">
+<title>UBC and sysctl</title>
+
+<para>
+    From what I have gathered on a variety of lists, the most
+    commonly <quote>tweaked</quote> part of the system via sysctl is
+    the Unified Buffer Cache (UBC). In a really great
+    <ulink url="http://mail-index.NetBSD.org/tech-perform/2002/08/03/0000.html">email</ulink>
+    a developer made some excellent recommendations for tuning a system
+    with UBC, this section will peruse that for the example.
+</para>
+
+<para>
+    Following along with the maxfiles example above, even though there
+    can now be a larger amount of open files, there still may be more
+    that can be done to make the system run faster. Since more files
+    can be opened, it stands to reason that it would be good if the
+    caching were optimized as well. In the case of this machine,
+    there is a decent amount of RAM (256MB) that despite a lot of
+    low level activity (such as editing and small compiles) is not
+    being utilized to its full potential. This means that the buffer
+    cache could probably be expanded, thereby making performance better
+    since more would be in the cache versus rereading from disk. Now,
+    a word of warning, it is of course possible to raise the size to
+    a point where getting a cache hit is taking too long, but as
+    has been well documented, that number seems to be fairly high. So
+    what is the parameter? It is kern.maxvnodes and in the case of
+    this machine, 38k was used which gave a pretty decent performance boost.
+    In general, it has been seen that a kern.maxvnodes operates
+    well when the size is set to between 1/6 to 1/4 of the amount of
+    RAM (depending on what the system is being used for).
+</para>
+
+<para>
+    You can also improve performance by tuning vm.anonmax, which
+    sets the amount of physical memory that can be reclaimed for anonymous
+    application data. Simon Burge wrote a
+    <ulink url="http://mail-index.NetBSD.org/tech-kern/2002/11/27/0005.html">very good post</ulink> to tech-kern
+    discussing this; it is highly recommended that you read his entire
+    e-mail before setting values for your system. For the lazy amongst us,
+    though, <command>sysctl -w vm.anonmax=95</command> seems to work well
+    for him on his pc532 with 8MB of RAM; it might work well for your
+    system too.
+</para>
+</sect2>
+-->
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-system-memfs">
+      <title>memfs &amp; softdeps</title>
+
+      <para>An operating system can often benefit from a few configuration
+        changes (along the same lines, it can also be of great
+        detriment). Two particular cases where system performance
+        can be changed are by using memory based filesystems and/or
+        soft updates.</para>
+
+      <sect3 id="tuning-system-memfs-memfs">
+        <title>Using memfs</title>
+
+        <para>When to use and not to use the memory based filesystem can
+          be hard on large multi user systems. In some cases,
+          however, it makes pretty good sense, for example, on a
+          development machine used by only one developer at a time,
+          the obj directory might be a good place, or some of the
+          tmp directories for builds. In a case like that, it
+          makes sense on machines that have a fair amount of RAM
+          on them. On the other side of the coin, if a system
+          only has 16MB of RAM and <filename>/var/tmp</filename>
+          is memfs based, there could be severe applications
+          issues that occur.</para>
+
+        <para>The GENERIC kernel has memfs enabled by default. To use
+	  it on a particular directory first determine where the
+	  swap space is that you wish to use, in the example case,
+	  a quick look in <filename>/etc/fstab</filename>
+	  indicates that <filename>/dev/wd0b</filename> is the
+	  swap partition:</para>
+
+        <screen>mail% cat /etc/fstab
+/dev/wd0a / ffs rw 1 1
+/dev/wd0b none swap sw 0 0
+/kern /kern kernfs rw</screen>
+
+	<para>This system is a mail server so I only want to use
+          <filename>/tmp</filename> with memfs, also on this
+          particular system I have linked <filename>/tmp</filename>
+          to <filename>/var/tmp</filename> to save space
+          (they are on the same drive). All I need to do is add the
+          following entry:</para>
+
+        <programlisting>/dev/wd0b /var/tmp mfs rw 0 0</programlisting>
+
+        <para>Now, a word of warning, make sure said directories are
+          empty and nothing is using them when you mount the memory
+          file system! At this point I can either
+          <command>mount -a</command> or reboot the system.</para>
+      </sect3>
+
+      <sect3 id="tuning-system-memfs-softdep">
+        <title>Using softdeps</title>
+
+        <para>Soft-dependencies is a mechanism that does not write
+          meta-data to disk immediately, but it is written in an
+          ordered fashion, which keeps the filesystem consistent.
+          <xref linkend="chap-boot-enabling-softdep" /> describes
+          how to enable soft-dependencies. A great deal more
+          information about softdep capabilities can be found on
+          the <ulink
+          url="http://www.mckusick.com/softdep/index.html">author's
+          page</ulink>. </para>
+      </sect3>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="tuning-kernel">
+    <title>Kernel Tuning</title>
+
+    <para>While many system parameters can be changed with sysctl, many
+      improvements by using enhanced system software, layout of the
+      system and managing services (moving them in and out of inetd
+      for example) can be achieved as well. Tuning the kernel however
+      will provide better performance, even if it appears
+      to be marginal.</para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-kernel-prepare">
+      <title>Preparing to Recompile a Kernel</title>
+
+      <para>First, get the kernel sources for the release as described in
+        <xref linkend="chap-fetch" />, reading <xref
+        linkend="chap-kernel" /> for more information on building
+        the kernel is recommended. Note, this document
+        can be used for -current tuning, however, a read of the
+        <ulink
+        url="http://www.NetBSD.org/Documentation/current/">Tracking
+        -current</ulink> documentation should be done first,
+        much of the information there is repeated here.</para>
+    </sect2>
+
+
+    <sect2 id="tuning-kernel-configure">
+      <title>Configuring the Kernel</title>
+      <!-- XXX: integrate this in chap-kernel -->
+
+      <para>Configuring a kernel in &os; can be daunting. This is because of
+	multiple line dependencies within the configuration file itself,
+	however, there is a benefit to this method and that is, all it really
+	takes is an ASCII editor to get a new kernel configured and some
+	dmesg output. The kernel configuration file is under
+	<filename>src/sys/arch/ARCH/conf</filename> where ARCH is your
+	architecture (for example,
+	on a SPARC it would be under
+	<filename>src/sys/arch/sparc/conf</filename>).</para>
+
+      <para>After you have located your kernel config file, copy it and remove
+	(comment out) all the entries you don't need. This is where
+	&man.dmesg.8; becomes your friend. A clean &man.dmesg.8;-output
+	will show all of the
+	devices detected by the kernel at boot time. Using &man.dmesg.8;
+	output, the device options really needed can be determined.
+	For some automation, check the "adjustkernel" package.</para>
+
+      <sect3 id="tuning-kernel-configure-example">
+	<title>Some example Configuration Items</title>
+
+	<para>In this example, an ftp server's kernel is being
+	  reconfigured to run
+	  with the bare minimum drivers and options and any other items that
+	  might make it run faster (again, not necessarily smaller, although
+	  it will be). The first thing to do is take a look at some of the
+	  main configuration items. So, in
+	  <filename>/usr/src/sys/arch/i386/conf</filename> the
+	  GENERIC file is copied to FTP, then the file FTP edited.</para>
+
+	<para>At the start of the file there are a bunch of options beginning
+	  with maxusers, which will be left alone, however, on larger
+	  multi-user systems it might be help to crank that value up a bit.
+	  Next is CPU support, looking at the dmesg output this is seen:</para>
+
+	<screen>cpu0: Intel Pentium II/Celeron (Deschutes) (686-class), 400.93 MHz</screen>
+
+	<para>Indicating that only the options I686_CPU options
+	  needs to be used.
+	  In the next section, all options are left alone except the
+	  PIC_DELAY which is recommended unless it is an older machine.
+	  In this case it is enabled since the 686 is <quote>relatively new.</quote></para>
+
+	<para>Between the last section all the way down to compat options there
+	  really was no need to change anything on this particular system.
+	  In the compat section, however, there are several options that do
+	  not need to be enabled, again this is because this machine is
+	  strictly a FTP server, all compat options were turned off.</para>
+
+	<para>The next section is File systems, and again,
+	  for this server very
+	  few need to be on, the following were left on:</para>
+
+	<programlisting># File systems
+file-system     FFS             # UFS
+file-system     LFS             # log-structured file system
+file-system     MFS             # memory file system
+file-system     CD9660          # ISO 9660 + Rock Ridge file system
+file-system     FDESC           # /dev/fd
+file-system     KERNFS          # /kern
+file-system     NULLFS          # loopback file system
+file-system     PROCFS          # /proc
+file-system     UMAPFS          # NULLFS + uid and gid remapping
+...
+options         SOFTDEP         # FFS soft updates support.
+...</programlisting>
+
+	<para>Next comes the network options section.
+	  The only options left on were:</para>
+
+	<programlisting>options         INET            # IP + ICMP + TCP + UDP
+options         INET6           # IPV6
+options         IPFILTER_LOG    # &man.ipmon.8; log support</programlisting>
+
+	<para>IPFILTER_LOG is a nice one to have around since the server
+	  will be running ipf.</para>
+
+	<para>The next section is verbose messages for various subsystems,
+	  since this machine is already running and had no major problems,
+	  all of them are commented out.</para>
+      </sect3>
+
+      <sect3 id="tuning-kernel-configure-drivers">
+	<title>Some Drivers</title>
+
+	<para>The configurable items in the config file are
+	  relatively few and
+	  easy to cover, however, device drivers are a different story.
+	  In the following examples, two drivers are examined and their
+	  associated <quote>areas</quote> in the file trimmed down.
+	  First, a small
+	  example: the cdrom, in dmesg, is the following lines:</para>
+
+	<screen>...
+cd0 at atapibus0 drive 0: &lt;CD-540E, , 1.0A&gt; type 5 cdrom removable
+cd0: 32-bit data port
+cd0: drive supports PIO mode 4, DMA mode 2, Ultra-DMA mode 2
+pciide0: secondary channel interrupting at irq 15
+cd0(pciide0:1:0): using PIO mode 4, Ultra-DMA mode 2 (using DMA data transfer
+...</screen>
+
+	<para>Now, it is time to track that section down in the
+	  configuration file.
+	  Notice that the "cd"-drive is on an atapibus and requires
+	  pciide support.
+	  The section that is of interest in this case is the kernel
+	  config's "IDE and related devices" section.
+	  It is worth noting at this point, in and around
+	  the IDE section are
+	  also ISA, PCMCIA etc., on this machine in the &man.dmesg.8;
+	  output there are
+	  no PCMCIA devices, so it stands to reason
+	  that all PCMCIA references
+	  can be removed. But first, the "cd" drive.</para>
+
+	<para>At the start of the IDE section is the following:</para>
+
+	<screen>...
+wd*     at atabus? drive ? flags 0x0000
+...
+atapibus* at atapi?
+...</screen>
+
+	<para>Well, it is pretty obvious that those lines
+	  need to be kept. Next is this:</para>
+
+	<programlisting>...
+# ATAPI devices
+# flags have the same meaning as for IDE drives.
+cd*     at atapibus? drive ? flags 0x0000       # ATAPI CD-ROM drives
+sd*     at atapibus? drive ? flags 0x0000       # ATAPI disk drives
+st*     at atapibus? drive ? flags 0x0000       # ATAPI tape drives
+uk*     at atapibus? drive ? flags 0x0000       # ATAPI unknown
+...</programlisting>
+
+	<para>The only device type that was in the &man.dmesg.8;
+	  output was the cd,
+	  the rest can be commented out.</para>
+
+	<para>The next example is slightly more difficult,
+	  network interfaces.
+	  This machine has two of them:</para>
+
+	<screen>...
+ex0 at pci0 dev 17 function 0: 3Com 3c905B-TX 10/100 Ethernet (rev. 0x64)
+ex0: interrupting at irq 10
+ex0: MAC address 00:50:04:83:ff:b7
+UI 0x001018 model 0x0012 rev 0 at ex0 phy 24 not configured
+ex1 at pci0 dev 19 function 0: 3Com 3c905B-TX 10/100 Ethernet (rev. 0x30)
+ex1: interrupting at irq 11
+ex1: MAC address 00:50:da:63:91:2e
+exphy0 at ex1 phy 24: 3Com internal media interface
+exphy0: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto
+...</screen>
+
+	<para>At first glance it may appear that there are
+	  in fact three devices,
+	  however, a closer look at this line:</para>
+
+	<screen>exphy0 at ex1 phy 24: 3Com internal media interface</screen>
+
+	<para>Reveals that it is only two physical cards, not unlike the cdrom,
+	  simply removing names that are not in dmesg will do the job. In
+	  the beginning of the network interfaces section is:</para>
+
+	<programlisting>...
+# Network Interfaces
+
+# PCI network interfaces
+an*     at pci? dev ? function ?        # Aironet PC4500/PC4800 (802.11)
+bge*    at pci? dev ? function ?        # Broadcom 570x gigabit Ethernet
+en*     at pci? dev ? function ?        # ENI/Adaptec ATM
+ep*     at pci? dev ? function ?        # 3Com 3c59x
+epic*   at pci? dev ? function ?        # SMC EPIC/100 Ethernet
+esh*    at pci? dev ? function ?        # Essential HIPPI card
+ex*     at pci? dev ? function ?        # 3Com 90x[BC]
+...</programlisting>
+
+	<para>There is the ex device. So all of the rest under the PCI section
+	  can be removed. Additionally, every single line all the way down
+	  to this one:</para>
+
+	<programlisting>exphy*  at mii? phy ?                   # 3Com internal PHYs</programlisting>
+
+	<para>can be commented out as well as the remaining.</para>
+      </sect3>
+
+      <sect3 id="tuning-kernel-configure-multipass">
+	<title>Multi Pass</title>
+
+	<para>When I tune a kernel, I like to do it remotely
+	  in an X windows session,
+	  in one window the dmesg output, in the other the config file. It
+	  can sometimes take a few passes to rebuild a very trimmed kernel
+	  since it is easy to accidentally remove dependencies.</para>
+      </sect3>
+    </sect2>
+
+    <sect2 id="tuning-kernel-building">
+      <title>Building the New Kernel </title>
+
+      <para>Now it is time to build the kernel and put it in place.
+	In the
+	conf directory on the ftp server, the following command
+	prepares the build:</para>
+
+      <screen>&uprompt; <userinput>config FTP</userinput></screen>
+
+      <para>When it is done a message reminding me to make
+	depend will display, next:</para>
+
+      <screen>&uprompt; <userinput>cd ../compile/FTP</userinput>
+&uprompt; <userinput>make depend &amp;&amp; make</userinput></screen>
+
+      <para>When it is done, I backup the old kernel and drop
+	the new one in place:</para>
+
+      <screen>&rprompt; <userinput>cp /netbsd /netbsd.orig</userinput>
+&rprompt; <userinput>cp netbsd /</userinput></screen>
+
+      <para>Now reboot. If the kernel cannot boot, stop the boot process
+	when prompted and type <userinput>boot netbsd.orig</userinput> to
+	boot from the previous kernel.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="tuning-kernel-shrinking">
+      <title>Shrinking the NetBSD kernel</title>
+
+      <para>When building a kernel for embedded systems, it's often
+        necessary to modify the Kernel binary to reduce space or memory
+        footprint. </para>
+
+      <sect3 id="tuning-kernel-shrinking-elf">
+        <title>Removing ELF sections and debug information</title>
+
+        <para>We already know how to remove Kernel support for drivers
+	  and options that you don't need, thus saving memory and
+	  space, but you can save some KiloBytes of space by
+	  removing debugging symbols and two ELF sections
+	  if you don't need them: <literal>.comment</literal> and
+          <literal>.ident</literal>. They are used for storing RCS
+	  strings viewable with &man.ident.1; and a &man.gcc.1;
+	  version string. The following examples assume you have
+	  your <literal>TOOLDIR</literal> under
+	  <filename>/usr/src/tooldir.NetBSD-2.0-i386</filename>
+	  and the target architecture is <literal>i386</literal>.</para>
+
+        <screen>&uprompt; <userinput>/usr/src/tooldir.NetBSD-2.0-i386/bin/i386--netbsdelf-objdump -h /netbsd</userinput>
+
+/netbsd:     file format elf32-i386
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         0057a374  c0100000  c0100000  00001000  2**4
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .rodata       00131433  c067a380  c067a380  0057b380  2**5
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  2 .rodata.str1.1 00035ea0  c07ab7b3  c07ab7b3  006ac7b3  2**0
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  3 .rodata.str1.32 00059d13  c07e1660  c07e1660  006e2660  2**5
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  4 link_set_malloc_types 00000198  c083b374  c083b374  0073c374  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  5 link_set_domains 00000024  c083b50c  c083b50c  0073c50c  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  6 link_set_pools 00000158  c083b530  c083b530  0073c530  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  7 link_set_sysctl_funcs 000000f0  c083b688  c083b688  0073c688  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  8 link_set_vfsops 00000044  c083b778  c083b778  0073c778  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  9 link_set_dkwedge_methods 00000004  c083b7bc  c083b7bc  0073c7bc  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+ 10 link_set_bufq_strats 0000000c  c083b7c0  c083b7c0  0073c7c0  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+ 11 link_set_evcnts 00000030  c083b7cc  c083b7cc  0073c7cc  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+ 12 .data         00048ae4  c083c800  c083c800  0073c800  2**5
+                  CONTENTS, ALLOC, LOAD, DATA
+ 13 .bss          00058974  c0885300  c0885300  00785300  2**5
+                  ALLOC
+ 14 .comment      0000cda0  00000000  00000000  00785300  2**0
+                  CONTENTS, READONLY
+ 15 .ident        000119e4  00000000  00000000  007920a0  2**0
+                  CONTENTS, READONLY</screen>
+
+	<para>On the third column we can see the size of the sections
+	  in hexadecimal form. By summing
+	  <literal>.comment</literal> and <literal>.ident</literal>
+	  sizes we know how much we're going to save with their
+	  removal: around 120KB (= 52640 + 72164 = 0xcda0 + 0x119e4).
+	  To remove the sections and debugging symbols that may be
+	  present, we're going to use &man.strip.1;:</para>
+
+        <screen>&rprompt; <userinput>cp /netbsd /netbsd.orig</userinput>
+&rprompt; <userinput>/usr/src/tooldir.NetBSD-2.0-i386/bin/i386--netbsdelf-strip -S -R .ident -R .comment /netbsd</userinput>
+&rprompt; <userinput>ls -l /netbsd /netbsd.orig</userinput>
+-rwxr-xr-x  1 root  wheel  8590668 Apr 30 15:56 netbsd
+-rwxr-xr-x  1 root  wheel  8757547 Apr 30 15:56 netbsd.orig</screen>
+
+	<para>Since we also removed debugging symbols, the total amount
+	  of disk space saved is around 160KB.</para>
+      </sect3>
+
+      <sect3 id="tuning-kernel-shrinking-gzip">
+        <title>Compressing the Kernel</title>
+
+	<para>On some architectures, the bootloader can boot a compressed
+	  kernel. You can save several MegaBytes of disk space by
+	  using this method, but the bootloader will take longer to
+	  load the Kernel.</para>
+
+        <screen>&rprompt; <userinput>cp /netbsd /netbsd.plain</userinput>
+&rprompt; <userinput>gzip -9 /netbsd</userinput></screen>
+
+	<para>To see how much space we've saved:</para>
+
+        <screen>&uprompt; <userinput>ls -l /netbsd.plain /netbsd.gz</userinput>
+-rwxr-xr-x  1 root  wheel  8757547 Apr 29 18:05 /netbsd.plain
+-rwxr-xr-x  1 root  wheel  3987769 Apr 29 18:05 /netbsd.gz</screen>
+
+	<para>Note that you can only use gzip coding, by using
+	  &man.gzip.1;, bzip2 is not supported by the NetBSD
+	  bootloaders!</para>
+      </sect3>
+    </sect2>
+  </sect1>
+</chapter>

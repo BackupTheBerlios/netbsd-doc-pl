@@ -1,0 +1,626 @@
+<!-- $NetBSD: chap-edit.xml,v 1.11 2005/03/14 21:25:12 hubertf Exp $ -->
+
+<chapter id="chap-edit">
+  <title>Edycja</title>
+
+  <sect1 id="chap-edit-vi-tut">
+    <title>Wprowadzenie do vi</title>
+
+    <para>
+      Jest ma³o prawdopodobne, by trzeba by³o przedstawiaæ vi
+      wytrawnemu znawcy UNIXa. Program ten, napisany przez Billa 
+      Joya z Sun Microsystems, jest bez koñca rozszerzalnym, 
+      ³atwym w u¿yciu, <emphasis>lekkim</emphasis> edytorem 
+      ASCII. Zarazem jest zmor± pocz±tkuj±cych u¿ytkowników. 
+      Ten rozdzia³ przeznaczony jest w³a¶nie dla nich, 
+      choæ zapewne podrzuci parê pomys³ów tak¿e u¿ytkownikom 
+      zaawansowanym.
+
+<!--
+      Since I am such a huge fan of vi, I most certainly
+      intend on following up on this column later on this year with
+      more advanced vi topics.
+-->
+    </para>
+
+    <para>
+      Pierwsza czê¶æ rozdzia³u po¶wiêcona jest przegl±dowi 
+      czynno¶ci edycyjnych, zapisywaniu, wycinaniu i wstawianiu  
+      bloków tekstu oraz nawigacji po edytowanym pliku. 
+      Druga czê¶æ to przyk³adowa, przedstawiona krok po kroku sesja 
+      vi, pomocna w rozpoczêciu samodzielnej pracy.
+    </para>
+
+    <para>
+      Ca³o¶æ jest rodzajem elementarza, a nie kompletnym 
+      podrêcznikiem, i ma na celu dostarczenie u¿ytkownikowi 
+      po raz pierwszy stykaj±cemu siê z 
+      <application>vi</application> informacji 
+      niezbêdnych do tworzenia plików i wprowadzania w 
+      nich zmian.
+    </para>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-edit-vi-tut-interface">
+      <title>Interfejs <application>vi</application></title>
+
+      <para>
+        Korzystanie z edytora vi nie ró¿ni siê zasadniczo od 
+        korzystania z innych programów pracuj±cych w 
+        pe³noekranowym trybie tekstowym, z jednym wyj±tkiem: nie 
+        ma interfejsu opartego o menu (lub, je¶li wolisz, 
+        curses). <!-- ? tab type ? - nie wiem, o co chodzi --> 
+        Chocia¿ wiele wersji vi <emphasis>u¿ywa</emphasis> curses,
+        wygl±d i sposób dzia³ania vi nie jest typowy dla opartych 
+        o tê bibliotekê programów. Zamiast tego, vi znajduje siê 
+        zawsze w jednym z dwu trybów: <emphasis>poleceñ</emphasis> 
+        lub <emphasis>edycji</emphasis>. Choæ mo¿e siê to wydawaæ 
+        dziwne, je¶li siê zastanowiæ nie ró¿ni siê zbytnio od pracy 
+        w edytorze okienkowym. Oto przyk³ad: u¿ywaj±c, powiedzmy, 
+        edytora gedit zaznaczamy mysz± fragment tekstu, nastêpnie 
+        wybieraj±c odpowiednie opcje wycinamy go i wklejamy. Przez 
+        ca³y czas korzystania z myszy nie edytujemy - chocia¿ istnieje 
+        taka mo¿liwo¶æ. 
+        W vi te same operacje wykonuje siê w trybie poleceñ, usuwaj±c 
+        ca³± liniê komend± <command>dd</command>, przenosz±c kursor do 
+        lini, poni¿ej której chcemy wstawiæ wyciêty tekst, 
+        i przyciskaj±c klawisz <command>p</command>. Mo¿na powiedzieæ, 
+        ¿e istnieje analogia miêdzy 
+        <quote>trybem myszy i trybem poleceñ</quote>; choæ nie s± 
+        identyczne, maj± wiele podobieñstw.
+      </para>
+
+      <para>
+        Sesjê vi rozpoczynamy tak samo, jak pracê ka¿dego innego 
+        programu dzia³aj±cego w trybie znakowym:
+      </para>
+
+      <screen>&uprompt; <userinput>vi <replaceable>nazwa_pliku</replaceable></userinput></screen>
+
+      <para>
+        Istotn± do zapamiêtania kwesti± jest to, ¿e gdy edytujemy
+        plik, znajduje siê on w buforze pamiêci. Reszta tego tekstu, 
+        zale¿nie od kontekstu, bêdzie odnosiæ siê w³a¶nie do tego 
+        bufora lub do pliku dyskowego. Zawarto¶æ pliku ulega zmianie 
+        <emphasis>tylko</emphasis> wtedy, gdy u¿ytkownik za¿±da  
+        zapisania zmian jedn± ze s³u¿±cych do tego komend. 
+      </para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-edit-vi-tut-switch-to-edit-mode">
+      <title>Prze³±czanie siê do trybu edycji</title>
+
+      <para>
+        Choæ edytor vi posiada wiele opcji mo¿liwych do 
+        wykorzystania w momencie jego uruchamiania, na razie 
+        przyjrzymy siê trybowi domy¶lnemu. Przy wywo³aniu w 
+        pokazany wy¿ej sposób domy¶lnym trybem pracy jest 
+        tryb komend, zatem nie mo¿na od razu przyst±piæ do 
+        pisania w buforze. Aby wprowadziæ jaki¶ tekst najpierw 
+        nale¿y wyj¶æ z trybu komend. Poni¿ej znajduje
+        siê krótki spis s³u¿±cych do tego poleceñ:
+      </para>
+
+      <literallayout>a     Dopisuj tekst za kursorem.
+A       Dopisuj tekst na koñcu bie¿±cej linii.
+C       Zmieñ tekst do koñca bie¿±cej linii.
+cw      Zmieñ bie¿±ce (wskazywane przez kursor) s³owo.
+i       Wstawiaj tekst przed kursorem.
+I       Wstawiaj tekst przed pierwsz± niepust± lini±.
+o       Dodaj pust± liniê poni¿ej i przejd¼ do trybu wstawiania.
+O       Dodaj pust± liniê powy¿ej i przejd¼ do trybu wstawiania.</literallayout>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-edit-vi-tut-saving-to-files">
+      <title>Prze³±czanie trybów i zapisywanie buforów do plików</title>
+
+      <para>
+        Oczywi¶cie znajomo¶æ poleceñ edycyjnych nie przyda siê na 
+        wiele, je¶li nie mo¿emy prze³±czyæ siê z powrotem do trybu 
+        poleceñ i zapisaæ pliku. Aby wróciæ do trybu poleceñ, po 
+        prostu przyci¶nij klawisz <command>Esc</command>. Nastêpnie, 
+        by wprowadziæ odpowiednie polecenie - na przyk³ad zapisania 
+        pliku - nale¿y u¿yæ dwukropka. Po prostu wpisz 
+        <command>:</command>.
+      </para> 
+
+      <para>
+        Przyci¶niêcie dwukropka przenosi u¿ytkownika do znaku 
+        zachêty <emphasis>trybu poleceñ</emphasis> w lewym dolnym 
+        rogu ekranu. Przyjrzyjmy siê teraz poleceniom zapisu:
+      </para>
+
+      <literallayout>:w    Zapisz bufor do pliku.
+:wq     Zapisz bufor do pliku i wyjd¼ z vi.
+<!-- :ZZ   Save changes and exit. -->
+<!-- :w    Save changes and exit. --></literallayout>
+
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-edit-vi-tut-yank">
+      <title>Wycinanie i wklejanie tekstu</title>
+
+      <para>
+        Có¿ znaczy³by edytor, gdyby nie umo¿liwia³ manipulacji
+        blokami tekstu? Oczywi¶cie vi daje tê mo¿liwo¶æ, w sposób
+        równie intuicyjny, co przy innych komendach ;-) 
+        <!-- u¶mieszek mój --> 
+        Aby zaznaczyæ i zapamiêtaæ liniê tekstu 
+        <emphasis>nie</emphasis> usuwaj±c jej, nale¿y wydaæ (w 
+        trybie poleceñ) komendê <command>yy</command> lub 
+        <command>Y</command>. Bie¿±ca linia zostanie skopiowana do 
+        tymczasowego bufora. Aby wstawiæ j± w innym miejscu, 
+        przemieszczamy kursor do linii poni¿ej której chcemy 
+        wstawiæ liniê zapamiêtan±, i przyciskamy klawisz 
+        <command>p</command> (ang. <quote>put</quote>). Aby 
+        przenie¶æ liniê w inne miejsce, po prostu usuwamy j± 
+        komend± <command>dd</command>, przemieszczamy kursor i 
+        wstawiwamy tym samym poleceniem <command>p</command>.
+      </para>
+
+      <sect3 id="chap-edit-vi-tut-yank-did-not-mean">
+	<title>Ups! Nie chcia³em tego zrobiæ ...</title>
+
+        <para>
+          Odwo³anie ostatnio wprowadzonej zmiany jest proste,
+          polecenie <command>u</command> przywraca stan sprzed 
+          ostatnio wykonanej czynno¶ci, a <command>U</command> 
+          przywraca ostatnio skasowan± liniê, lub odwo³uje 
+          wykonane w niej zmiany.
+        </para>
+      </sect3>
+
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-edit-vi-tut-navi-in-buffer">
+      <title>Nawigowanie po buforze</title>
+
+      <para>
+        Wiêkszo¶æ samouczków vi zaczyna od nawigacji. Jednak, 
+        podobnie jak w wiêkszo¶ci innych edytorów, aby nawigowaæ po 
+        pliku musimy mieæ sk±d i dok±d siê przemie¶ciæ, wiêc ten 
+        tekst porusza kwestie w nieco odwróconej kolejno¶ci. Zale¿nie 
+        od rodzaju vi, z jakim mamy do czynienia (lub nawet je¶li 
+        jest to elvis, nvi lub vim) mo¿emy poruszaæ siê
+        po edytowanym tek¶cie zarówno w trybie edycji, jak i poleceñ.
+      </para>
+
+<!--
+      <para>
+	Navigating in editor mode can only be done if the terminals
+	arrow keys are supported since alphanumerics are used for
+	commands.
+      </para>
+-->
+
+      <para>
+        Dla pocz±tkuj±cego nawigowanie w trybie poleceñ
+        bêdzie nieco bezpieczniejsze - przynajmniej dopóki nie 
+        oswoi siê z vi. Oto klawisze nawigacyjne dla terminali, 
+        które nie rozpoznaj± poprawnie (lub w ogóle nie maj±) 
+        klawiszy strza³ek:
+      </para>
+
+      <literallayout>
+<!--
+j     Moves the cursor up one line.
+k     Moves the cursor down one line.
+-->
+k     Przenosi kursor o jedn± liniê w górê.
+j     Przenosi kursor o jedn± liniê w dó³.
+l     Przemieszcza kursor o jeden znak w prawo.
+h     Przemieszcza kursor o jeden znak w lewo.</literallayout>
+
+      <para>
+        W przypadku terminala obs³uguj±cego klawisze strza³ek, 
+        równie¿ ich mo¿na u¿ywaæ do nawigowania.
+      </para>
+
+      <para>
+        Oprócz takiej <quote>jednoklawiszowej</quote> nawigacji 
+        vi oferuje przechodzenie do konkretnej linii poprzez wpisanie
+        jej numeru za znakiem dwukropka. Na przyk³ad gdyby¶my (bêd±c 
+        w trybie edycji) chcieli przeskoczyæ do linii 232, 
+        przyciskamy nastêpuj±ce klawisze:
+      </para>
+
+      <literallayout><userinput>ESC</userinput>
+<userinput>:223</userinput></literallayout>
+
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-edit-vi-tut-search-file">
+      <title>Wyszukiwanie - alternatywna metoda nawigacji</title>
+
+      <para>
+        Edytor vi umo¿liwia wyszukiwanie przy zastosowaniu
+        sk³adni wyra¿eñ regularnych, jednak uruchamia siê je
+        nieco inaczej ni¿ tryb poleceñ. Nale¿y zamiast dwukropka
+        przycisn±æ klawisz <command>/</command> i wprowadziæ 
+        szukany wzorzec. Dla przyk³adu poszukamy wyra¿enia 
+        <emphasis>foo</emphasis>:
+      </para>
+
+      <literallayout><userinput>/foo</userinput></literallayout>
+
+      <para>
+        I ju¿! Aby zilustrowaæ wyszukiwanie nieco innym wyra¿eniem,
+        poszukajmy <emphasis>foo bar</emphasis>:
+      </para>
+
+      <literallayout><userinput>/foo bar</userinput></literallayout>
+
+      <sect3 id="chap-edit-vi-tut-search-file-additional-navi">
+	<title>Dodatkowe polecenia nawigacyjne</title>
+
+        <para>
+          Wyszukiwanie i przewijanie nie s± jedynymi sposobami
+          nawigowania po buforze vi. Poni¿sza lista zawiera kolejne 
+          zwiêz³e polecenia:
+        </para>
+
+
+<!--
+	<screen>
+0     Move to beginning of line.
+$     Move to end of line.
+B     Back up one word.
+E     Move forward one word.
+G     Move to the bottom of the buffer.
+H     Move to the top line on the screen.
+L     Move to the first non whitespace character.
+M     Move the cursor to the middle of the screen.
+N     Scan for next search match but opposite direction.
+n     Scan for next search match in the same direction.
+	</screen>
+-->
+        <literallayout>0     Przejd¼ na pocz±tek linii.
+$     Przejd¼ na koniec linii.
+b     Jedno s³owo wstecz.
+w     Jedno s³owo naprzód.
+G     Przejd¼ na koniec bufora.
+H     Przejd¼ do pierwszej linii widocznej na ekranie.
+L     Przejd¼ do ostatniej linii widocznej na ekranie.
+M     Przenie¶ kursor do linii na ¶rodku ekranu.
+N     Powtórz wyszukiwanie w przeciwnym kierunku.
+n     Powtórz wyszukiwnie w tym samym kierunku.</literallayout>
+      </sect3>
+
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-edit-vi-tut-sample-session">
+      <title>Przyk³adowa sesja</title>
+
+      <para>
+        Omówiwszy podstawy, przejdziemy do ich zastosowania. Najpierw
+        otwórzmy bufor z pustym plikiem nastêpuj±c± komend±:
+      </para>
+
+      <screen>&rprompt; <userinput>vi foo.txt</userinput></screen>
+
+      <para>
+        Nastêpnie prze³±czmy siê w tryb edycji i wprowad¼my dwie
+        linie oddzielone jedn± pust± lini±, pamiêtaj±c o tym, ¿e
+        nasz bufor jest pusty: zatemy u¿yjemy klawisza 
+        <command>i</command>, by wstawiæ trochê tekstu przed 
+        kursorem:
+      </para>
+
+      <screen>To jest trochê tekstu
+
+i przeskoczyli¶my jedn± liniê
+~
+~
+~
+~</screen>
+
+      <para>
+        Teraz wciskamy klawisz <command>Esc</command>, by wróciæ do
+        trybu poleceñ.
+      </para>
+
+      <para>
+        Teraz, w trybie poleceñ, zapiszmy bufor do pliku. 
+        Najpierw przyciskamy klawisz <command>:</command> - 
+        kursor powinien znale¼æ siê w lewym dolnym rogu ekranu
+        bezpo¶rednio za znakiem zachêty. Nastêpnie wciskamy 
+        <command>w</command> i <command>Enter</command>
+        lub <command>Return</command>. Plik zosta³ zapisany.
+        Powinna by³a pojawiæ siê informacja o tym fakcie;
+        niektóre edytory vi podaj± równie¿ nazwê, ilo¶æ linii i 
+        rozmiar pliku.
+      </para>
+
+      <para>
+        Czas zaj±æ siê nawigacj±. Kursor powinien znajdowaæ siê w
+        tym samym miejscu, w którym by³, gdy zapisywali¶my plik.
+        Spróbujmy pos³u¿yæ siê klawiszami strza³ek. Je¶li nie 
+        s± obs³ugiwane, lub chcemy wypróbowaæ tak¿e inne polecenia, 
+        przekonajmy siê jak dzia³aj± <command>hjkl</command>.
+      </para>
+
+      <para>
+        Na koniec jeszcze dwie czynno¶ci: najpierw przej¶cie 
+        do pierwszej linii, a nastêpnie do pierwszego znaku. 
+        Warto te¿ wypróbowaæ inne dzia³aj±ce w trybie poleceñ 
+        klawisze nawigacyjne, na przyk³ad przycisn±æ:
+      </para>
+
+      <literallayout><userinput>$</userinput>
+<userinput>0</userinput>
+<userinput>$</userinput>
+<userinput>0</userinput></literallayout>
+
+      <para>
+        Kursor powinien przeskoczyæ na koniec linii, wróciæ na
+        pocz±tek i przej¶æ ponownie na koniec.
+      </para>
+
+      <para>
+        Teraz poszukajmy wyra¿enia, wykorzystuj±c komendê
+        <command>/</command>:
+      </para>
+
+      <literallayout><userinput>/my</userinput></literallayout>
+
+      <para>
+        Kursor powinien przeskoczyæ do pierwszego wyst±pienia ci±gu 
+        <quote>my</quote>.
+      </para>
+
+      <para>
+        Teraz zapiszmy plik i wyjd¼my z vi:
+      </para>
+
+      <literallayout><userinput>:wq</userinput></literallayout>
+
+    </sect2>
+
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-edit-configuring-vi">
+    <title>Konfiguracja vi</title>
+
+    <para>
+      Standardowym edytorem dostarczanym z &os; jest, jak siê 
+      nietrudno domy¶liæ, <application>vi</application> - najbardziej
+      lubiany i najbardziej znienawidzony edytor na ¶wiecie.
+      Je¶li nie u¿ywasz vi, pomiñ tê sekcjê. W przeciwnym wypadku
+      przeczytaj j±, zanim zainstalujesz inne wersje vi.
+      &os;'s vi (<emphasis>nvi</emphasis>) napisa³ Keith
+      Bostic z UCB maj±c na celu uzyskanie rozprowadzanej
+      darmowo wersji tego edytora. Ma ona wiele przydatnych
+      rozszerzeñ wartych poznania, pozostaj±c wci±¿ w du¿ym
+      stopniu zgodn± z oryginalnym vi. Nvi sta³ siê 
+      standardow± wersj± vi dla BSD.
+    </para>
+
+    <para>
+      W¶ród najbardziej interesuj±cych rozszerzeñ znajduj± siê:
+    </para>
+
+    <itemizedlist>
+      <listitem>
+        <para>
+          Rozszerzone wyra¿enia regularne (w stylu egrep),
+          w³±czane opcj± <option>extended</option>.
+        </para>	  
+      </listitem>
+      <listitem>
+        <para>
+          Stosy znaczników.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        Nieograniczone undo (odwo³anie ostatniej zmiany 
+        uzyskuje siê poprzez naci¶niêcie klawisza 
+        <command>u</command>; odwo³ania wcze¶niejszych 
+        poprzez naciskanie <command>.</command>).
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Wyszukiwanie przyrostowe, w³±czane opcj± 		
+          <option>searchincr</option>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Przewijanie linii w poziomie, w³±czane opcj± 
+	  <option>leftright</option>; ilo¶æ kolumn do
+	  przewiniêcia definiowana jest opcj± 
+	  <option>sidescroll</option>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Edycja historii komend, w³±czana opcj±
+          <option>cedit</option>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Autouzupe³nianie nazw plików, w³±czane opcj± <option>filec</option>.	
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Wy¶wietlanie (ekrany) w tle.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Podzia³ ekranu przy edycji.
+        </para>
+      </listitem>
+    </itemizedlist>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-edit-configuring-vi-exrc">
+      <title>Rozszerzenia w <filename>.exrc</filename></title>
+
+      <para>
+        Oto przyk³adowy plik <filename>.exrc</filename> z w³±czonymi
+        niektórymi rozszerzeniami:
+      </para>
+      <programlisting>set showmode ruler
+set filec=^[
+set cedit=^[</programlisting>
+
+      <para>
+        Pierwsza linia powoduje wy¶wietlanie pozycji kursora (wiersza 
+        i kolumny) oraz aktualnego trybu (komend, wstawiania, 
+        dopisywania) w linii statusu.
+        Druga linia (gdzie ^[ oznacza znak ESC) w³±cza uzupe³nianie
+        nazwy pliku klawiszem Esc.
+        Trzecia linia umo¿liwia edycjê historii komend (równie¿ 
+        klawiszem Esc).
+        Na przyk³ad, wci¶niêcie <quote>:</quote> i Esc otwiera okno
+        z list± poprzednich poleceñ, które mog± byæ edytowane i 
+        wykonywane (wci¶niêcie Enter wykona dane polecenie.)
+      </para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-edit-configuring-vi-doc">
+      <title>Dokumentacja</title>
+
+      <para>
+        ¬ród³owe <emphasis>archiwum</emphasis>
+        (<filename>src.tgz</filename>) zawiera wiele u¿ytecznej
+        dokumentacji do (n)vi i ex. Dokumentacja znajduje siê w 
+        katalogu <filename>/usr/src/usr.bin/vi/docs</filename>.
+        Na przyk³ad:
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            Edit: A tutorial
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Ex Reference Manual
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Vi man page
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            An Introduction to Display Editing with Vi by
+            William Joy and Mark Horton
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Ex/Vi Reference Manual by Keith Bostic
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Vi Command &amp; Function Reference
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Vi tutorial (beginner and advanced)
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        Je¶li nigdy nie u¿ywa³e¶ vi, <quote>Vi tutorial</quote> 
+        bêdzie na pocz±tek najlepszy. Tutorial ten powinien 
+        zostaæ otworzony w vi; stopniowo zapoznaje czytelnika 
+        ze wszystkimi polecenimi vi, które mog± byæ testowane 
+        w miarê czytania.
+        <citetitle>An Introduction to Display Editing with Vi</citetitle> 
+        autorstwa Williama Joya and Marka Hortona bêdzie równie¿
+        dobrym wyborem.
+      </para>
+								        
+      <para>
+        Je¶l chcesz nauczyæ siê wiêcej o vi i rozszerzeniach nvi, 
+        powiniene¶ przeczytaæ 
+        <citetitle>Ex/Vi Reference Manual</citetitle>
+        Keitha Bostica, w którym udokumentowane zosta³y wszystkie
+        komendy i opcje edytora.
+      </para>
+
+    </sect2>
+
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-edit-using-tags">
+    <title>Stosowanie znaczników w vi</title>
+
+    <para>
+      Ten temat nie dotyczy bezpo¶rednio &os;, ale przydaje siê 
+      na przyk³ad przy edycji ¼róde³ j±dra.
+    </para>
+	    
+    <para>
+      U¿ycie <emphasis>znaczników</emphasis> mo¿e u³atwiæ 
+      przegl±danie wielu plików ¼ród³owych rozmieszczonych 
+      w drzewie katalogów i podkatalogów.   
+      Metoda jest nastêpuj±ca:
+    </para>
+
+    <procedure>
+      <step>
+        <para>
+          <command>cd</command> do bazowego katalogu ¼róde³.
+        </para>
+
+	<screen>&uprompt; <userinput>cd <replaceable>/path</replaceable></userinput></screen>
+      </step>
+      <step>
+        <para>
+          Wpisujemy nastêpuj±ce komendy
+        </para>
+
+    <screen>&uprompt; <userinput>find . -name "*.[ch]" &gt; <replaceable>lista_plików</replaceable></userinput>
+&uprompt; <userinput>cat <replaceable>lista_plików</replaceable> | xargs ctags</userinput></screen>
+      </step>
+
+      <step>
+        <para>
+          Oraz dodajemy nastêpuj±c± liniê do pliku <filename>.exrc</filename>
+        </para>
+
+        <programlisting>set tags=<replaceable>/¶cie¿ka</replaceable>/tags</programlisting>
+
+        <para>
+   	  (oczywi¶cie zamiast <replaceable>¶cie¿ka</replaceable>podaj±c swoj±
+	  konkretn± ¶cie¿kê.)
+        </para>
+      </step>
+    </procedure>
+
+  </sect1>
+
+</chapter>

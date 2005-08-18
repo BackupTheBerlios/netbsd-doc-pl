@@ -1,0 +1,601 @@
+<!-- $NetBSD: chap-x.xml,v 1.13 2005/05/05 12:21:23 hrs Exp $ -->
+
+<chapter id="chap-x">
+  <title>X</title>
+
+  <sect1 id="chap-x-whats-x">
+    <title>Czym jest X?</title>
+
+    <para>System X Window jest graficznym podsystemem dostêpnym dla &os; i
+      wielu systemów Unix'owych (i nie tylko). W rzeczywisto¶ci to co¶ wiêcej:
+      dziêki protoko³owi X, system X Window jest <quote>niewidoczny dla
+      sieci</quote> i mo¿na w nim uruchamiaæ aplikacje (klient-serwer).
+      Znaczy to, ¿e mo¿esz uruchamiaæ aplikacje na jednym komputerze
+      (kliencie) i w niewidoczny sposób otrzymaæ dane wyj¶ciowe na drugim
+      komputerze (serwerze); niewidoczny sposób znaczy, ¿e nie musisz
+      modyfikowaæ aplikacji by osi±gn±æ ten efekt. System X Window jest
+      produkowany przez X Consortium i obecna wersja to X11R6. 
+      Wersja systemu X u¿ywanego przez NetBSD jest XFree86, darmowa,
+      open-source'owa odmiana systemu X Window.</para>
+
+    <para>Zauwa¿, ¿e system X Window jest raczej go³ym szkieletem, który s³u¿y
+      jako podstawa dla nowoczesnych ¶rodowisk okienkowych, takich jak GNOME,
+      KDE czy XFCE. Nie s± one czê¶ci± systemu X Window i podczas gdy NetBSD
+      jest dostarczany razem z systemem X Window, brakuje w nim tych
+      mened¿erów okien. Je¶li bêdzie to konieczne mo¿na je ³atwo dodaæ pó¼niej
+      poprzez pkgsrc.</para>
+
+    <para>Gdy rozpoczniesz pracê z X napotkasz wiele nowych terminów, które z
+      pocz±tku mog± siê wydawaæ myl±ce. 
+      Podstawowymi elementami koniecznymi do pracy z X s±:</para>
+
+    <itemizedlist>
+      <listitem>
+	<para><firstterm>Sprzêt</firstterm> obs³ugiwany przez XFree86, np.
+          karta graficzna.</para> 
+      </listitem>
+
+      <listitem>
+        <para><firstterm>Serwer X</firstterm>, który dzia³a na sprzêcie.
+ 	  Serwer X zapewnia standardowy sposób otwierania okienek, obs³ugi
+	  grafiki (wliczaj±c w to czcionki do wy¶wietlania tekstu) i
+	  korzystania z myszki/klawiatury. X jest niewidoczny dla sieci, wiêc
+	  dziêki temu mo¿esz uruchamiaæ klienty X na innych maszynach, a
+	  serwer (np. monitor ze sprzêtem video) na innej maszynie.</para>
+      </listitem>
+
+      <listitem>
+  	<para><firstterm>Mened¿er okien</firstterm> dzia³aj±cy na serwerze X.
+	  Mened¿er okien jest specjalnym klientem, który ma prawo do
+	  kontrolowania pozycji okien. Równie¿ <quote>upiêksza</quote> okna
+	  dziêki <quote>efektom</quote> (zazwyczaj oferuj± one zmianê
+	  rozmiaru, po³o¿enia okna, minimalizowanie i wiele innych). 
+	  Mened¿ery okien pozwalaj± rówie¿ na zamykanie okien/programów.
+        </para>
+      </listitem>
+
+      <listitem>
+        <para><firstterm>¦rodowisko graficzne</firstterm> (opcjonalnie) na
+	  przyk³ad KDE i GNOME s± ¶rodowiskami graficznymi: s± one mniej lub
+	  bardziej zintegrowanymi pakietami zaprojektowanymi by zapewniæ Ci
+	  wyra¼nie okre¶lon± gamê oprogramowania i mniej wiêcej jednolity
+	  interfejs. W sk³ad wchodzi system pomocy, dostêp do Twojego systemu
+	  plików, terminale, ¶rodowiska programisytczne, systemy audio,
+	  programy graficzne, itp.</para>
+      </listitem>
+
+      <listitem>
+  	<para>Inne zainstalowane aplikacje. Te z kolei komunikuj± siê z
+	  serwerem X i z mened¿erem okien. ¦rodowisko graficzne nie bierze
+	  udzia³u w tym co robi± aplikacje, chyba ¿e mened¿er okien jest
+	  czê¶ci± ¶rodowiska graficznego. (Jednak¿e GNOME mo¿e wykryæ, ¿e
+	  zainstalowa³e¶, np. GIMP'a i zaoferowaæ uruchomienie go.)</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Podsumowuj±c: by korzystaæ ze ¶rodowiska graficznego potrzebujesz:</para>
+
+    <itemizedlist>
+      <listitem>
+	<para>Systemu XFree86</para>
+      </listitem>
+
+      <listitem>
+	<para>mened¿era okien (XFree86 jest ju¿ wyposa¿ony w bardzo prosty
+	  mened¿er <application>twm</application>.)</para>
+      </listitem>
+
+      <listitem>
+        <para>Je¶li wolisz bardziej zaawansowane mened¿ery pewnie bêdziesz
+	  chcia³ zainstalowaæ ¶rodowisko graficzne, ale to nie jest konieczne.
+	  ¦rodowiska graficzne maj± du¿o w³a¶ciwo¶ci pomocnych tym
+	  u¿ytkownikom, którzy przenosz± siê z systemów Macintosh czy MS
+	  Windows (na przyk³ad KDE ma bardzo podobny wygl±d do MS
+	  Windows).</para>
+      </listitem>
+    </itemizedlist>
+
+    <note>
+      <para>Teraz ju¿ powinno byæ jasne, ¿e ¶rodowiska graficzne takie jak KDE
+	czy GNOME nie oferuj± serwera X. Dzia³aj± dziêki serwerowi
+	dostarczanemu razem z XFree86. KDE i GNOME mog± korzystaæ ze swych
+	w³asnych mened¿erów okien lub z innych osobno zainstalowanych.</para>
+    </note>
+
+    <para>Mo¿esz uruchomiæ tylko jeden mened¿er okien w tym samym czasie na
+      tym samym X-serwerze. (Nadal mo¿esz uruchomiæ kilka X-serwerów na
+      pojedynczym komputerze.) Je¶li nie uruchamiasz w³asnego mened¿era okien,
+      a uruchamiasz KDE/GNOME, wtedy to ¶rodowisko graficzne uruchomi
+      mened¿era okien bez Twojej ingerencji.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-x-configuration">
+    <title>Konfiguracja</title>
+
+    <para>Je¶li nie wybra³e¶ minimalnej konfiguracji podczas instalacji, X
+      jest ju¿ zainstalowany i gotowy do uruchomienia. Konfiguracja serwera X
+      bêdzie konieczna w zale¿no¶ci od tego na jakiej platformie
+      zainstalowa³e¶ NetBSD. Wiêkszo¶æ platform (sparc, pmax, ...) dzia³a bez
+      dalszej konfiguracji je¶li u¿yjesz serwera, który jest dowi±zany do
+      <filename>/usr/X11R6/bin/X</filename>.</para>
+
+    <para>Na platformach PC (i386, amd64), Shark i kilku innych bêdziesz
+      musia³ wpierw dostroiæ serwer X tworz±c plik
+      <filename>/etc/X11/XF86Config</filename>. By dowiedzieæ siê wiêcej 
+      jak ten plik wygl±da zobacz plik 
+      <filename>/usr/X11R6/lib/X11/XF86Config.eg</filename>. Struktura pliku
+      konfiguracyjnego jest opisana w &man.XF86Config.5;, który mo¿e zostaæ
+      wywo³any nastêpuj±cym poleceniem:</para>
+
+    <screen>&rprompt; <userinput>man XF86Config</userinput></screen>
+
+    <para>Przed konfiguracj± systemu zalecane jest dok³adne przeczytanie
+      dokumentacji, któr± mo¿na znale¼æ w
+      <filename>/usr/X11R6/lib/X11/doc</filename>: s± tam ró¿ne pliki README
+      po¶wiêcone kartom graficznym, myszkom a nawet specjalnie &os;
+      (<filename>README.NetBSD</filename>.) Sugerujê by rozpocz±æ od
+      <filename>QuickStart.doc</filename>. Mo¿esz mieæ wra¿enie, ¿e inne
+      systemy wymagaj± mniej wysi³ku, ale czas spêdzony na czytaniu tej
+      dokumentacji nie bêdzie zmarnowany: zdobêdziesz wiedzê na temat swojej
+      konfiguracji i X, która mo¿e siê okazaæ przydatna w przysz³o¶ci i
+      bêdziesz w stanie wydobyæ wiêcej ze swojego sprzêtu (i
+      oprogramowania).</para>
+
+    <para>Plik <filename>/etc/X11/XF86Config</filename> mo¿esz utworzyæ
+      rêcznie za pomoc± edytora lub wygenerowaæ za pomoc± interaktywnego
+      programu konfiguracyjnego. Najbardziej znanymi programami s±
+      <application>xf86config</application>,
+      <application>XF86Setup</application> (XFree86 3.x) i
+      <application>xf86cfg</application> (XFree86 4.x). Obydwa xf86config i
+      xf86cfg s± instalowane domy¶lnie razem z X;
+      <application>XF86Setup</application> jest narzêdziem graficznym
+      instalowanym z pkgsrc.</para>
+
+    <para>Mo¿esz najpierw wygenerowaæ plik konfiguracyjny jednym z dwóch
+      programów, a pó¼niej sprawdziæ i dostroiæ go rêcznie za pomoc± edytora.
+      Przyk³adowo, dla graficznego <command>xf86cfg</command>:</para>
+
+    <screen>&rprompt; <userinput>xf86cfg</userinput>
+<replaceable># skonfiguruj wed³ug potrzeb i zapisz do pliku /etc/X11/XF86Config</replaceable>
+&rprompt; <userinput>vi /etc/X11/XF86Config</userinput> </screen>
+
+    <para>lub dla tekstowego <command>xf86config</command>:</para>
+
+    <screen>&rprompt; <userinput>xf86config</userinput>
+<replaceable># skonfiguruj wed³ug potrzeb i zapisz do pliku /etc/X11/XF86Config</replaceable>
+&rprompt; <userinput>vi /etc/X11/XF86Config</userinput> </screen>
+
+    <para>Interfejs obydwu programów jest inny, lecz oba wymagaj± tego samego
+      zestawu informacji:</para>
+
+    <itemizedlist>
+      <listitem>
+	<para>typ u¿ywanej myszki</para>
+      </listitem>
+
+      <listitem>
+	<para>typ i uk³ad klawiatury</para>
+      </listitem>
+
+      <listitem>
+	<para>model karty graficznej</para>
+      </listitem>
+
+      <listitem>
+	<para>model monitora</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Zanim rozpoczniesz konfiguracjê powiniene¶ siê zaopatrzyæ w te
+      informacje.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-x-mouse">
+    <title>Myszka</title>
+
+    <para>Najpierw powiniene¶ sprawdziæ typ u¿ywanej myszki (na przyk³ad,
+      szeregowa lub PS/2, ...) i urz±dzenie (na przyk³ad,
+      <emphasis>wsmouse</emphasis> wymaga innego protoko³u). Je¶li u¿ywasz
+      myszki szeregowej wybierz odpowiedni protokó³ i port, do którego jest
+      pod³±czona.</para>
+
+    <para>Na przyk³ad, myszki PS/2 i USB s± zazwyczaj pod³±czone do urz±dzenia
+      wsmouse:</para>
+
+    <programlisting>Section "InputDevice"
+        Identifier  "Mouse0"
+        Driver      "mouse"
+        Option      "Protocol" "wsmouse"
+        Option      "Device" "/dev/wsmouse"
+EndSection </programlisting>
+
+    <para>Je¶li u¿ywasz myszki z rolk±, przewijanie w górê i w dó³ jest
+      obs³ugiwane jako naci¶niêcie przycisków odpowiednio 4 i 5. Wiele
+      aplikacji, jak xterm czy Firefox obs³uguj± tê funkcjê. By uaktywniæ
+      rolkê dodaj nastêpuj±ce linijki do sekcji "Pointer":</para>
+
+    <programlisting>Section "InputDevice"
+        Identifier  "Mouse0"
+        Driver      "mouse"
+        Option      "Protocol" "wsmouse"
+        Option      "Device" "/dev/wsmouse"
+        <userinput>Option      "ZAxisMapping" "4 5"</userinput>
+EndSection </programlisting>
+
+    <para>Dla myszki szeregowej na pierwszym porcie wpisz:</para>
+
+    <programlisting>Section "InputDevice"
+        Identifier  "Mouse0"
+        Driver      "mouse"
+        Option      "Protocol" "auto"
+        Option      "Device" "/dev/tty00"
+EndSection </programlisting>
+
+    <para>W tym przyk³adzie <filename>/dev/tty00</filename> jest pierwszym
+      portem szeregowym, wpisz <filename>/dev/tty01</filename> dla portu
+      drugiego, itd. Protokó³ "auto" spróbuje wykryæ protokó³ automatycznie.
+      Je¶li to nie bêdzie dzia³aæ spróbuj wpisaæ "Microsoft", "ItelliMouse"
+      lub "Logitech". Wiêcej informacji znajdziesz w 
+      <filename>/usr/X11R6/lib/X11/XF86Config.eg</filename> i
+      <filename>/usr/X11R6/lib/X11/doc/README.mouse</filename>.</para> 
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-x-keyboard">
+    <title>Klawiatura</title>
+
+    <para>Nawet je¶li skonfigurowa³e¶ swoj± klawiaturê pod wscons, musisz
+      jeszcze skonfigurowaæ j± pod X, przynajmniej je¶li chcesz mieæ inny
+      uk³ad klawiatury ni¿ amerykañski.</para>
+
+    <para>Prostym rozwi±zaniem jest u¿ycie protoko³u <acronym>XKB</acronym>,
+      okre¶laj±cego typ i uk³ad klawiatury.</para>
+
+    <para>To jest obszar, z którym programy konfiguracyjne niezbyt dobrze
+      sobie radz± i czasem mo¿esz chcieæ wybraæ standardowy uk³ad i
+      zmodyfikowaæ wygenerowany plik konfiguracyjny rêcznie:</para>
+
+    <programlisting>Section "InputDevice"
+        Identifier  "Keyboard0"
+        Driver      "keyboard"
+        Option      "XkbRules" "xfree86"
+        Option      "XkbModel" "pc102"
+        Option      "XkbLayout" "de"
+        Option      "XkbOptions" "ctrl:nocaps"
+EndSection </programlisting>
+
+    <para>Je¶li chcesz u¿ywaæ klawisza <quote>Windows</quote> zamiast
+      <quote>pc102</quote> u¿yj <quote>pc105</quote> dla
+      <varname>XkbModel</varname>.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-x-monitor">
+    <title>Monitor</title>
+
+    <para>Jest bardzo wa¿ne by odpowiednio dobraæ warto¶ci czêstotliwo¶ci
+      poziomej i pionowej monitora: odpowiednio dobrane warto¶ci chroni±
+      monitor przed uszkodzeniem wynikaj±cym z niew³a¶ciwego ustawienia karty
+      graficznej. Odpowiednie dane znajdziemy w instrukcji do³±czonej do
+      monitora. W katalogu dokumentacji X znajdzuje siê plik zawieraj±cy
+      ustawienia dla wielu monitorów. Mo¿e zostaæ u¿yty jako punkt wyj¶ciowy
+      do regulowania w³asnych ustawieñ.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-x-videocard">
+    <title>Karta graficzna</title>
+
+    <para>Karta graficzna mo¿e zostaæ wybrana w programie konfiguracyjnym z
+      bazy; program sam zajmie siê wszystkimi wymaganymi ustawieniami. Obs³uga
+      kart graficznych ró¿ni siê od siebie w XFree86 3.x i 4.x.</para>
+
+    <para>XFree86 3.x posiada osobne serwery dla kart na ró¿nych chipsetach.
+      XFree86 4.x ma tylko jeden serwer. Ró¿ne chipsety s± obs³ugiwane poprzez
+      niezale¿ne sterowniki, które mog± byæ znalezione w
+      <filename>/usr/X11R6/lib/modules/drivers</filename>.</para>
+
+    <sect2 id="chap-x-videocard-xf3">
+      <title>XFree 3.x</title>
+
+      <para>Je¶li wybra³e¶ odpowiedni± kartê musisz dobraæ dla niej X-serwer.
+	Zazwyczaj programy konfiguracyjne potrafi± same okre¶liæ odpowiedni
+	serwer, lecz niektóre karty mog± byæ obs³ugiwane przez wiêcej ni¿
+	jeden serwer (na przyk³ad S3 Virge jest obs³ugiwane przez serwery SVGA
+	i S3V); w takim przypadku odwo³aj siê do dokumentacji serwerów by
+	wybraæ bardziej odpowiedni: ró¿ne serwery maj± zazwyczaj ró¿ne
+	mo¿liwo¶ci i lepiej lub gorzej radz± sobie z dan± kart±.</para>
+    </sect2>
+
+    <sect2 id="chap-x-videocard-xf4">
+      <title>XFree86 4.x</title>
+
+      <para>Po wybraniu odpowiedniej karty graficznej program konfiguracyjny
+	automatycznie wybierze lub zasugeruje odpowiedni sterownik. Je¶li nie
+	wybra³e¶ karty mo¿esz wybraæ odpowiedni modu³.</para>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-x-starting-x">
+    <title>Uruchamianie X</title>
+
+    <para>Gdy program konfiguracyjny zakoñczy pracê, utworzy plik
+      <filename>/etc/X11/XF86Config</filename>, który bêdzie mo¿na pó¼niej
+      zmodyfikowaæ rêcznie.</para>
+
+    <para>Przed uruchomieniem X powiniene¶:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>sprawd¼ czy dowi±zanie symboliczne 
+	  <filename>/usr/X11R6/bin/X</filename> wskazuje na poprawny
+	  serwer:</para>
+
+        <screen>&rprompt; <userinput>ls -l /usr/X11R6/bin/X</userinput></screen>
+      </listitem>
+
+      <listitem>
+	<para>Sprawd¼ czy konfiguracja jest poprawna. Uruchom:</para>
+
+        <screen>&rprompt; <userinput>X -probeonly</userinput></screen>
+
+        <para>i sprawd¼ wynik.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Teraz mo¿esz uruchomiæ X poleceniem:</para>
+
+    <screen>&rprompt; <userinput>startx</userinput></screen>
+
+    <para>Je¶li siê nie uruchamia prawdopodobnie wyst±pi³y b³êdy w pliku
+      konfiguracyjnym.</para>
+
+    <para>Je¶li siê uruchamia ale nie dzia³a tak jak by¶my tego chcieli (na
+      przyk³ad nie mo¿esz poruszaæ kursorem) mo¿esz szybko wyj¶æ naciskaj±c
+      kombinacjê klawiszy Ctrl-Alt-Backspace. Je¶li wszystko dzia³a poprawnie
+      znajdujesz siê w ¶rodowisku X z domy¶lnym mened¿erem okien
+      (<application>twm</application>): chocia¿ jest to raczej prosty
+      mened¿er, wielu u¿ytkowników uwa¿a, ¿e jest wystarczaj±cy. Je¶li chcesz
+      korzystaæ z bardziej rozbudowanego mened¿era okien pe³nego d¼wiêków,
+      grafiki i innych "wodotrysków" masz du¿y wybór. Zobacz <xref
+      linkend="chap-x-other-window-managers" />. </para>
+
+    <para>Na pocz±tek by zmieniæ kolor t³a wykonaj w xterm'ie nastêpuj±c±
+      komendê:</para>
+    <screen>&rprompt; <userinput>xsetroot -solid DarkSeaGreen</userinput></screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-x-customizing">
+    <title>Personalizacja X</title>
+
+    <para>Wygl±d ¶rodowiska X mo¿e zostaæ skonfigurowany na wiele sposobów.
+      Naj³atwiejszy sposób to skopiowanie domy¶lnego pliku
+      <filename>.xinitrc</filename> do swojego katalogu domowego i pó¼niejsza
+      jego modyfikacja, lub utworzenie nowego pliku od zera. Na
+      przyk³ad:</para>
+
+    <screen>&uprompt; <userinput>cp /usr/X11R6/lib/X11/xinit/xinitrc $HOME/.xinitrc</userinput>
+&uprompt; <userinput>vi $HOME/.xinitrc</userinput></screen>
+
+    <para>Nastêpny przyk³ad pokazuje jak uruchomiæ mened¿era okien
+      (<application>twm</application>), otworzyæ program
+      <application>xclock</application> w prawej dolnej czê¶ci ekranu i dwa
+      okna xterm.
+      Kolor <quote>Bisque4</quote> jest kolorem t³a.</para>
+
+    <programlisting>Pierwsza czê¶æ pliku pozostaje bez zmian
+...
+twm &amp;
+xclock -geometry 50x50-1-1 &amp;
+xterm -geometry 80x34-1+1 -bg OldLace &amp;
+xsetroot -solid Bisque4 &amp;
+exec xterm -geometry 80x44+0+0 -bg AntiqueWhite -name login</programlisting>
+
+    <para>Aby wyj¶æ z X przy tego typu konfiguracji musisz zamkn±æ ostatnie
+      okno xterm'a (to z tytu³em <quote>login</quote> - po prostu wpisz w nim
+      "exit").</para>
+    <para>Nawet przy takiej prostej konfiguracji X ma znaczenie ³adniejszy
+      wygl±d. By jeszcze go ulepszyæ mo¿esz doinstalowaæ jaki¶ program
+      narzêdziowy z kolekcji pakietów. Na przyk³ad:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>xcolorsel</term>
+
+        <listitem>
+      	  <para>wy¶wietla wszystkie kolory zdefiniowane w
+ 	    <filename>rgb.txt</filename>. U¿yj tego programu by zmieniæ kolor
+	    t³a w oknach xterm'a.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>xpmroot</term>
+
+        <listitem>
+          <para>pozwala ustawiæ tapetê.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>xscreensaver</term>
+
+        <listitem>
+          <para>ustawia wygaszacz ekranu.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>xdaemon</term>
+
+        <listitem>
+          <para>¿aden pulpit nie mo¿e dobrze wygl±daæ bez tego pakietu, który
+	    wy¶wietla logo diabe³ka BSD w dwóch dostêpnych rozmiarach.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-x-other-window-managers">
+    <title>Inne mened¿ery okien</title>
+
+    <para>Je¶li nie lubisz <application>twm</application>, który jest bardzo
+      prostym mened¿erem okien - brakuje w nim wielu rzeczy i nie jest zbyt
+      konfigurowalny, mo¿esz wybraæ mened¿ery z kolekcji pakietów.
+      Najpopularniejszymi s±:
+      <application>fvwm2</application>,
+      <application>olwm/olvwm (Open Look Window Manager)</application>,
+      <application>WindowMaker</application>,
+      <application>Enlightenment</application>,
+      <application>AfterStep</application>.</para>
+
+    <para>W dlaszej czê¶ci artyku³u jest opisana przyk³adowa instalacja
+      mened¿era <application>WindowMaker</application>. WindowMaker jest
+      bardzo ³adnym i konfigurowalnym mened¿erem. By dodaæ
+      <filename>windowmaker-0.60.tgz</filename> u¿yjemy prekompilowanego
+      pakietu, który do dzia³ania wymaga kilku innych pakietów. Tak jak to
+      zwykle bywa obydwa <command>pkg_add</command> i <command>make
+      install</command> pobior± wymagane pakiety automatycznie wiêc nie trzeba
+      bêdzie instalowaæ ich rêcznie.</para>
+
+    <screen>&rprompt; <userinput>cd /usr/pkgsrc/x11/windowmaker</userinput>
+&rprompt; <userinput>make depends-list</userinput>
+xpm-3.4k
+jpeg-6b
+pkglibtool-1.2p2
+giflib-3.0
+libproplist-0.9.1
+tiff-3.5.2</screen>
+
+    <note>
+      <para>Mo¿esz tak¿e podejrzeæ pakiety za pomoc± polecenia:</para>
+
+      <screen>&rprompt; <userinput>pkg_info -f windowmaker-0.61.0.tgz | grep depends</userinput></screen>
+    </note>
+
+    <para>Po dodaniu wymaganych pakietów dodajemy WindowMaker i mo¿emy tak¿e
+      dodaæ dodatkowe tematy:
+
+      <screen>&rprompt; <userinput>pkg_add windowmaker-0.61.0.tgz wmthemes-0.6x.tgz</userinput></screen></para>
+
+    <para>WindowMaker jest ju¿ zainstalowany; by go uruchomiæ musisz
+      zmodyfikowaæ swoje pliki <filename>.xinitrc</filename> i/lub
+      <filename>.xsession</filename>: zast±p linijkê, która wywo³uje
+      <filename>twm</filename> linijk±, która bêdzie wywo³ywaæ
+      <filename>wmaker</filename>. Na przyk³ad:</para>
+
+    <programlisting># start some nice programs
+# start WindowMaker
+wmaker &amp;
+xclock -geometry 50x50-1-1 &amp;
+xdaemon2 -geometry +0-70 &amp;
+...</programlisting>
+
+    <para>W tym przyk³adzie program xdaemon jest równie¿ uruchamiany
+      automatycznie.</para>
+
+    <para>Przed uruchomieniem <application>WindowMaker</application> musisz
+      uruchomiæ program konfiguracyjny:</para>
+
+    <screen>&uprompt; <userinput>wmaker.inst</userinput>
+&uprompt; <userinput>startx</userinput></screen>
+
+    <para>We wszystkich powy¿szych przyk³adach zamykaj±c mened¿er okien nie
+      zostaniesz wylogowany. By przy zamykaniu mened¿era równie¿ siê wylogowaæ
+      umie¶æ polecenie <command>wmaker</command> na koñcu pliku
+      <filename>.xinitrc</filename> bez znaku &amp;:</para>
+
+    <programlisting>...
+xclock -geometry 50x50-1-1 &amp;
+xdaemon2 -geometry +0-70 &amp;
+wmaker # tutaj bez &amp; !!!</programlisting>
+
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-x-xdm">
+    <title>Graficzny login za pomoc± xdm</title>
+
+    <para>Je¶li w swojej pracy zawsze korzystasz z X i pierwsz± komend± jak±
+      wydajesz po zalogowaniu siê jest <command>startx</command>, mo¿esz
+      skonfigurowaæ graficzny login dla swojego komputera.
+      Jest to bardzo proste:</para>
+
+    <procedure>
+      <step>
+	<para>Utwórz plik <filename>.xsession</filename> w swoim katalogu
+	  domowym. Plik ten jest podobny do <filename>~/.xinitrc</filename> i
+	  w³a¶ciwie mo¿e byæ do niego dowi±zaniem symbolicznym.</para>
+
+	<screen>&uprompt; <userinput>cd $HOME</userinput>
+&uprompt; <userinput>ln -s .xinitrc .xsession</userinput> </screen>
+      </step>
+
+      <step>
+        <para>Zmodyfikuj <filename>/etc/rc.conf</filename>:</para>
+
+        <programlisting>xdm=YES       xdm_flags=""       # x11 display manager</programlisting>
+
+        <para>Mo¿esz dodaæ nastêpuj±c± linijkê do pliku
+ 	  <filename>/etc/rc.local</filename> zamiast modyfikowaæ plik
+	  rc.conf:</para>
+
+        <programlisting>/usr/X11R6/bin/xdm</programlisting>
+
+  	<para>Ta metoda mo¿e byæ u¿ywana by uruchomiæ, na przyk³ad
+	  <application>kdm</application> lub
+	  <application>gdm</application> zamiast xdm.</para>
+      </step>
+    </procedure>
+
+    <para>Pliki konfiguracyjne dla <application>xdm</application> znajduj± siê
+      w katalogu <filename>/usr/X11R6/lib/X11/xdm</filename>. W pliku
+      <filename>Xservers</filename> X jest uruchamiany domy¶lnie na konsoli
+      <quote>vt05</quote>, na któr± siê prze³±czasz za pomoc± kombinacji
+      klawiszy <quote>Ctrl+Alt+F5</quote>; Je¶li zamiast niej chcesz u¿yæ
+      innej konsoli w³a¶nie tu powiniene¶ wprowadziæ zmiany. Aby unikn±æ
+      niezgodno¶ci pomiêdzy getty i xdm dobrze jest uruchomiæ xdm na konsoli,
+      na której getty jest wy³±czone. Na przyk³ad, je¶li w
+      <filename>Xservers</filename> mamy:</para>
+
+    <programlisting>:0 local /usr/X11R6/bin/X :0 vt04</programlisting>
+
+    <para>w <filename>/etc/ttys</filename> powiniene¶ mieæ</para>
+
+    <programlisting>ttyE3   "/usr/libexec/getty Pc"         vt220   off secure</programlisting>
+
+    <para>Zauwa¿, ¿ê vt04 odpowiada ttyE3, poniewa¿ vt rozpoczyna siê od 1 a
+      ttyE od 0).</para>
+
+    <para>Je¶li chcesz upiêkszyæ swój ekran logowania, mo¿esz zmodyfikowaæ
+      plik konfiguracyjny xdm.
+      Na przyk³ad, by zmieniæ kolor t³a dodaj nastêpuj±c± linijkê do pliku 
+      <filename>Xsetup_0</filename>:</para>
+
+    <programlisting>xsetroot -solid SeaGreen</programlisting>
+
+    <para>Mo¿esz równie¿ umie¶ciæ w tle obrazek u¿ywaj±c programu
+      <application>xpmroot</application>. Na przyk³ad:</para>
+
+    <programlisting>xpmroot <replaceable>/path_to_xpm/netbsd.xpm</replaceable></programlisting>
+
+    <para>Je¶li poeksperymentujesz trochê z plikiem konfiguracyjnym mo¿esz
+      osi±gn±æ wiele ró¿nych efektów i stworzyæ ciekawy ekran logowania.
+      Zauwa¿, ¿e gdm i kdm zapewniaj± inne metody konfiguracji, zazwyczaj
+      oparte na interfejsie graficznym.</para>
+  </sect1>
+</chapter>

@@ -1,0 +1,291 @@
+<!-- $NetBSD: chap-veriexec.xml,v 1.8 2005/08/07 17:32:56 rpaulo Exp $ -->
+
+<chapter id="chap-veriexec">
+  <title>&os; Veriexec subsystem</title>
+
+  <para>Veriexec is &os;'s file integrity subsystem. It's kernel
+    based, hence can provide some protection even in the case of a root
+    compromise. This chapter applies only to NetBSD 3.0 and ownards.</para>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-veriexec-works">
+    <title>How it works</title>
+
+    <para>Veriexec works by loading a specification file, also called the
+      <emphasis role="bold">signatures file</emphasis>, to the
+      kernel. This file contains information about files Veriexec
+      should monitor, as well as their digital fingerprint (along with
+      the hashing algorithm used to produce this fingerprint), and
+      various flags that will be discussed later.</para>
+
+    <para>At the moment, the following hashing algorithms are
+      supported by Veriexec: 
+      <emphasis role="bold">MD5</emphasis>,
+      <emphasis role="bold">SHA1</emphasis>,
+      <emphasis role="bold">SHA256</emphasis>,
+      <emphasis role="bold">SHA384</emphasis>,
+      <emphasis role="bold">SHA512</emphasis>, and
+      <emphasis role="bold">RMD160</emphasis>.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-veriexec-signature">
+    <title>Signatures file</title>
+
+    <para>An entry in the Veriexec signatures file looks like
+      this:</para>
+
+    <screen>	/path/to/file algorithm fingerprint flags</screen>
+
+    <para>Where the first element, the path, must always be an
+      absolute path. The algorithm is one of the algorithms listed
+      above, and fingerprint is the ASCII fingerprint.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-veriexec-gen-fingerprints">
+    <title>Generating fingerprints</title>
+
+    <para>You can generate ASCII fingerprints for each
+      algorithm using the following tools:</para>
+
+    <blockquote>
+      <table id="tab-veriexec-fingerprints">
+	<title>Veriexec fingerprints tools</title>
+
+	<tgroup cols="2">
+	  <thead>
+	    <row>
+	      <entry>Algorithm</entry>
+	      <entry>Tool</entry>
+	    </row>
+	  </thead>
+	  
+	  <tbody>
+	    <row>
+	      <entry>MD5</entry>
+	      <entry><filename>/usr/bin/md5</filename></entry>
+	    </row>
+	    <row>
+	      <entry>SHA1</entry>
+	      <entry><filename>/usr/bin/sha1</filename></entry>
+	    </row>
+	    <row>
+	      <entry>SHA256</entry>
+	      <entry><filename>digest sha256</filename> (from
+		pkgsrc)</entry>
+	    </row>
+	    <row>
+	      <entry>SHA384</entry>
+	      <entry><filename>digest sha384</filename> (from
+		pkgsrc)</entry>
+	    </row>
+	    <row>
+	      <entry>SHA512</entry>
+	      <entry><filename>digest sha512</filename> (from
+		pkgsrc)</entry>
+	    </row>
+	    <row>
+	      <entry>RMD160</entry>
+	      <entry><filename>/usr/bin/rmd160</filename></entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+    </blockquote>
+
+    <para>For example, to generate a MD5 fingerprint for
+      <filename>/bin/ls</filename>:</para>
+
+    <screen>	&cprompt; <userinput>md5 &lt; /bin/ls</userinput>
+	a8b525da46e758778564308ed9b1e493</screen>
+
+    <para>And to generate a SHA512 fingerprint for
+      <filename>/bin/ps</filename>:</para>
+
+    <screen>	&cprompt; <userinput>digest sha512 &lt; /bin/ps</userinput>
+	381d4ad64fd47800897446a2026eca42151e03adeae158db5a34d12c529559113d928a9fef9a7c4615d257688d1da4645db004081030d7f080bb7198067eb890</screen>
+
+    <para>Each entry may be associated with zero or more flags.
+      Currently, these flags indicate how the file the entry is describing
+      should be accessed.
+      Note that this access type is enforced only in strict level 2 (IPS
+      mode) and above.</para>
+
+    <para>The access types you can use are <quote>DIRECT</quote>,
+      <quote>INDIRECT</quote>, and <quote>FILE</quote>.</para>
+
+    <itemizedlist>
+      <listitem><para><emphasis role="bold">DIRECT</emphasis> access
+	  means that the file is executed directly, and not invoked
+	  as an interpreter     for some script, or opened with an editor.
+	  Usually, most programs you use will be accessed using this
+	  mode:</para>
+	<screen>	&cprompt; <userinput>ls /tmp</userinput>
+	&cprompt; <userinput>cp ~/foo /tmp/bar</userinput>
+	&cprompt; <userinput>rm ~/foo</userinput></screen></listitem>
+
+	<listitem><para><emphasis role="bold">INDIRECT</emphasis>
+	    access means that the file is executed indirectly, and is
+	    invoked to interpret a script. This happens usually when
+	    scripts have a #! magic as their first line. For example,
+	    if you have a script with the following as its first
+	    line:</para>
+	  <screen>	#!/bin/sh</screen>
+	  <para>And you run it as:</para>
+	  <screen>	&cprompt; <userinput>./script.sh</userinput></screen>
+	  <para>Then <filename>/bin/sh</filename> will be executed
+	    indirectly -- it will be invoked to interpret the
+	    script.</para></listitem>
+
+	<listitem><para><emphasis role="bold">FILE</emphasis> entries
+	    refer to everything which is not (or should not) be
+	    an executeable. This includes shared libraries,
+	    configuration files, etc.</para>
+	  <para>Some examples for Veriexec signature file
+	    entries:</para>
+	  <screen>	/bin/ls         MD5 dc2e14dc84bdefff4bf9777958c1b20b DIRECT
+	/usr/bin/perl   MD5 914aa8aa47ebd79ccd7909a09ed61f81 INDIRECT
+	/etc/pf.conf    MD5 950e1dd6fcb3f27df1bf6accf7029f7d  FILE</screen></listitem>
+    </itemizedlist>
+
+    <para>Veriexec allows you to specify more than one way to access a
+      file in an entry. For example, even though
+      <filename>/usr/bin/perl</filename> is mostly used as an
+      interpreter, it may be desried to be able to execute it
+      directly, too:</para>
+    <screen>	/usr/bin/perl MD5 914aa8aa47ebd79ccd7909a09ed61f81 DIRECT, INDIRECT</screen>
+
+    <para>Shell scripts using #! magic to be <quote>executable</quote>
+      also require two access types: We need them to be
+      <quote>DIRECT</quote> so we can execute them, and we need them
+      to be <quote>FILE</quote> so that the kernel can feed their
+      contents to the interpreter they define:</para>
+    <screen>	/usr/src/build.sh MD5 e80dbb4c047ecc1d84053174c1e9264a DIRECT, FILE</screen>
+
+    <para>To make it easier to create signature files, and to make the
+      signature files themselves more readable, Veriexec allows you to use
+      the following aliases:
+    </para>
+
+    <blockquote>
+      <table id="tab-veriexec-aliases">
+	<title>Veriexec access type aliases</title>
+	
+	<tgroup cols="2">
+	  <thead>
+	    <row>
+	      <entry>Alias</entry>
+	      <entry>Expansion</entry>
+	    </row>
+	  </thead>
+	  
+	  <tbody>
+	    <row>
+	      <entry>PROGRAM</entry>
+	      <entry>DIRECT</entry>
+	    </row>
+	    <row>
+	      <entry>INTERPRETER</entry>
+	      <entry>INDIRECT</entry>
+	    </row>
+	    <row>
+	      <entry>SCRIPT</entry>
+	      <entry>DIRECT, FILE</entry>
+	    </row>
+	    <row>
+	      <entry>LIBRARY</entry>
+	      <entry>FILE</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+    </blockquote>
+
+    <para>Sample scripts for generating fingerprints are available in
+      <filename>/usr/share/examples/veriexecctl</filename>. After you've
+      generated a signatures file, you should save it as
+      <filename>/etc/signatures</filename>, and enable Veriexec in
+      <filename>rc.conf</filename>:</para>
+    <screen>	veriexec=YES</screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-veriexec-strict">
+    <title>Strict levels</title>
+
+    <para>Since different people might want to use Veriexec for
+      different purposes, we also define four strict levels, ranging
+      0-4, and named <quote>learning</quote>, <quote>IDS</quote>,
+      <quote>IPS</quote>, and <quote>lockdown</quote> modes.</para>
+
+    <para>In <emphasis role="bold">strict level 0</emphasis>, learning
+      mode, Veriexec will act passively and simply warn about any
+      anomalies. Combined with verbose level 1, running the system in
+      this mode can help you fine-tune the signatures file. This is
+      also the only strict level in which you can load new entries
+      to the kernel.</para>
+
+    <para><emphasis role="bold">Strict level 1</emphasis>, or IDS
+      mode, will deny access to files with a fingerprint
+      mismatch. This mode suits mostly to users who simply want to
+      prevent access to files which might've been maliciously modified
+      by an attacker.</para>
+
+    <para><emphasis role="bold">Strict level 2</emphasis>, IPS mode,
+      takes a step towards trying to protect the integrity of
+      monitored files. In addition to preventing access to files with
+      a fingerprint mismatch, it will also deny write access and
+      prevent the removal of monitored files, and enforce the way
+      monitored files are accessed. (as the signatures file
+      specifies).</para>
+
+    <para>Lockdown mode (<emphasis role="bold">strict level 3</emphasis>)
+      can be used in highly critical situations such as custom made
+      special-purpose machines, or as a last line of defense after an
+      attacker compromised the system and we want to prevent traces
+      from being removed, so we can perform post-mortem analysis. It will
+      prevent the creation of new files, and deny access to files not
+      monitored by Veriexec.</para>
+
+    <para>It's recommended to first run Veriexec in strict level 0 and
+      verbose level 1 to fine-tune your signatures file, ensuring that
+      desired applications run correctly,  and only then raise the
+      strict level (and lower the verbosity level). You can use
+      <filename>/etc/sysctl.conf</filename> to auto raise the
+      strict level to the desired level after a reboot:</para>
+    <screen>	kern.veriexec.strict=1</screen>
+  </sect1>
+
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-veriexec-kernconf">
+    <title>Kernel configuration</title>
+
+    <para>To use Veriexec, aside from creating a signatures file, you
+      should enable it in your kernel's config file: (e.g.
+      <filename>/usr/src/sys/arch/i386/conf/GENERIC.local</filename>):</para>
+
+    <screen>	options VERIFIED_EXEC</screen>
+
+    <para>Then, you need to enable the hashing algorithms you wish to
+      support:</para>
+
+    <screen>	options VERIFIED_EXEC_FP_MD5
+	options VERIFIED_EXEC_FP_SHA1
+	options VERIFIED_EXEC_FP_RMD160
+	options VERIFIED_EXEC_FP_SHA512
+	options VERIFIED_EXEC_FP_SHA384
+	options VERIFIED_EXEC_FP_SHA256</screen>
+
+    <para>And finally, enable the Veriexec pseudo device:</para>
+    <screen>	pseudo-device veriexec 1</screen>
+    <para>All in the same file. Once done, rebuild and reinstall your
+      kernel.</para>
+  </sect1>
+</chapter>

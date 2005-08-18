@@ -1,0 +1,310 @@
+<!-- $NetBSD: chap-rc.xml,v 1.11 2005/03/12 05:20:30 reed Exp $ -->
+
+<chapter id="chap-rc">
+  <title>System rc.d</title>
+
+  <para>
+    Od &os; wersji 1.5 procedura startowania systemu odrobinê siê zmieni³a
+    i zacze³a wykorzystywaæ skrypty rc dla kontroli uruchamiania us³ug, 
+    podobnie do init-system Systemu V i Linux'a, ale bez tzw. runleveli.
+    Ten rozdzia³ mówi o konfiguracji skryptów rc w &os; wersji 1.5 i wy¿szych.
+  </para>
+
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-rc-configuration">
+    <title>Konfiguracja rc.d</title>
+
+    <para>Pliki startowe rc znajduj± siê w katalogu 
+      <filename>/etc</filename>:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><filename>/etc/rc</filename></para>
+      </listitem>
+
+      <listitem>
+        <para><filename>/etc/rc.conf</filename></para>
+      </listitem>
+
+      <listitem>
+        <para><filename>/etc/rc.d/*</filename></para>
+      </listitem>
+
+      <listitem>
+        <para><filename>/etc/rc.lkm</filename></para>
+      </listitem>
+
+      <listitem>
+        <para><filename>/etc/rc.local</filename></para>
+      </listitem>
+
+      <listitem>
+        <para><filename>/etc/rc.shutdown</filename></para>
+      </listitem>
+
+      <listitem>
+        <para><filename>/etc/rc.subr</filename></para>
+      </listitem>
+
+      <listitem>
+        <para><filename>/etc/defaults/*</filename></para>
+      </listitem>
+
+      <listitem>
+        <para><filename>/etc/rc.conf.d/*</filename></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Wpierw zobacz do dokumentu &man.rc.8;
+
+    <itemizedlist>
+      <listitem><para>Kiedy j±dro inicjuje wszystkie urz±dzenia zwykle zaczyna 
+	od  &man.init.8; kieruj±c siê do <filename>/etc/rc</filename></para>
+      </listitem>
+
+      <listitem>
+        <para>
+	  <filename>/etc/rc</filename> uruchamia skrypty z 
+	  <filename>/etc/rc.d</filename> u¿ywaj±c &man.rcorder.8; i uruchamia
+	  je w okre¶lonym porz±dku. Aby dowiedzieæ siê wiêcej zobacz
+	  &man.rcorder.8;
+	</para>
+      </listitem>
+
+      <listitem>
+        <para><filename>/etc/rc.subr</filename>
+	  zawiera funkcje pomocnicze u¿ywane przez skrypty 
+	  <filename>/etc/rc.d/*</filename></para> 
+      </listitem>
+
+      <listitem>
+        <para>Kiedy system jest zamykany przez polcenie &man.shutdown.8;,
+	  <filename>/etc/rc.shutdown</filename> uruchamia skrypty w 
+	  <filename>/etc/rc.d</filename>. Dokonywane jest to w okre¶lonym 
+	  porz±dku (jak zosta³o to zdefiniowane przez &man.rcorder.8;).</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>
+      Dodatkowe skrypty z poza katalogu <filename>rc.d</filename>:
+    </para>
+
+    <itemizedlist>
+      <listitem>
+        <para><filename>/etc/rc.lkm</filename> ³aduje lub wy³adowuje modu³y 
+   	  LKM (Loadable Kernel Modules). Zobacz tak¿e &man.modload.8; oraz
+	  <filename>/etc/rc.d/lkm[123]</filename>.</para>
+      </listitem>
+
+      <listitem>
+	<para><filename>/etc/rc.local</filename> jest praktycznie ostatnim
+	  uruchamianym skryptem. Ten skrypt mo¿e byæ edytowany przez 
+	  administratora w celu dodania lokalnych demonów, które nie nale¿± do
+	  koncepcji skryptów rc.</para>
+
+	<para>Oto przyk³ad, programy zainstalowane z pkgsrc zwykle dodaj±
+  	  swoje pliki startowe do <filename>/usr/pkg/etc/rc.d</filename>, teraz
+	  administrator podejmuje decyzjê czy chce je skopiowaæ lub podlinkowaæ
+	  do <filename>/etc/rc.d</filename>, lub te¿ dodaæ je do 
+	  <filename>/etc/rc.local</filename>. Oto przyk³ad z systemu dla 
+	  serwera www z apachem dodanym do 
+	  <filename>/etc/rc.local</filename>:</para>
+
+        <programlisting>if [ -f /usr/pkg/etc/rc.d/apache ]; then
+	/usr/pkg/etc/rc.d/apache start
+fi</programlisting>
+      </listitem>
+    </itemizedlist>
+
+
+    <para>
+    <para>G³ówny plik configuracyjny &man.rc.conf.5; znajduje siê w
+      <filename>/etc/rc.conf</filename>.
+      <filename>/etc/rc.conf</filename> zawiera domy¶lne ustawienia z pliku 
+      <filename>/etc/defaults/rc.conf</filename>, zawarto¶æ tego ostatniego 
+      nie powinna byæ zmieniana. Zmiany nale¿y wprowadzaæ do pliku 
+      <filename>/etc/rc.conf</filename>.
+    </para>
+
+    <para>
+      Na przyk³ad, je¶li chcesz w³±czyæ us³ugê Secure Shell Daemon wykonaj:
+    </para>
+
+    <screen>&rprompt; <userinput>cd /etc; grep ssh defaults/rc.conf</userinput>
+sshd=NO                 sshd_flags=""
+&rprompt; <userinput>echo "sshd=YES" >> rc.conf</userinput></screen>
+
+    <para>albo po prostu zmodyfikuj plik <filename>/etc/rc.conf</filename> w
+      Twoim ulubionym edytorem. To samo mo¿esz uczyniæ z ka¿dym innym 
+      standardowym ustawieniem, które potrzebujesz zmieniæ. Czêsto po ponownym
+      zainstalowaniu ¶wie¿ego &os; wykonuje siê:</para>
+
+    <screen>&rprompt; <userinput>cat /etc/defaults/rc.conf &gt;&gt;/etc/rc.conf</userinput>
+&rprompt; <userinput>vi /etc/rc.conf</userinput> </screen>
+
+    <para>B±d¼ ostro¿ny, u¿yj <quote>&gt;&gt;</quote> a nie 
+      <quote>&gt;</quote>, poniewa¿ mo¿esz zniszczyæ domy¶lne ustawienia w 
+      <filename>/etc/rc.conf</filename>, który ma krytyczne znaczenie dla 
+      systemu! Po przekopiowaniu domy¶lnych ustawieñ, zmieñ wszystko to co 
+      potrzebujesz w pliku <filename>/etc/rc.conf</filename>. Przegl±daj±c 
+      &man.rc.conf.5; dowiesz siê wyszystkiego o ustawieniach tego pliku.
+    </para>
+
+    <para>
+      Nale¿y pamietaæ, ze katalog <filename>/etc/rc.conf.d/</filename>
+      mo¿e byæ u¿ywany rownie¿ przez inne skrypty dostarczone z
+      konkretnym oprogramowaniem
+  </para>  
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-rc-scripts">
+    <title>Skrypty rc.d</title>
+
+  <para>
+    Skrypty, które faktycznie kontroluj± us³ugi systemowe s± w
+    <filename>/etc/rc.d</filename>. Gdy serwis zostanie aktywowany
+    lub dezaktywowany w <filename>/etc/rc.conf</filename>, mo¿e on byæ równie¿
+    modyfikowany przez uruchomienie skryptów rc z linii poleceñ, na przyk³ad 
+    gdy administrator potrzebuje uruchomiæ us³uge Secure Shell (SSH):
+  </para>
+
+    <screen>&rprompt; <userinput>/etc/rc.d/sshd start</userinput>
+Starting sshd.</screen>
+
+  <para>Skrypty rc musza otrzymaæ jeden z nastêpuj±cych argumentów:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>start</para>
+      </listitem>
+
+      <listitem>
+        <para>stop</para>
+      </listitem>
+
+      <listitem>
+        <para>restart</para>
+      </listitem>
+
+      <listitem>
+        <para>kill</para>
+      </listitem>
+    </itemizedlist>
+
+  <para>
+    Przyk³adem mo¿e byæ restart named'a po dodaniu nowego rekordu w pliku opisu
+    strefy jakiej¶ domeny:
+  </para>
+
+    <screen>&rprompt; <userinput>/etc/rc.d/named restart</userinput>
+Stopping named.
+Starting named.</screen>
+
+  <para>
+    Odrobinê bardziej z³o¿onym przyk³adem jest sytuacja, kiedy seria ustawieñ 
+    zosta³a zmieniona, na przyk³ad reguly ipfilter'a, konfiguracja ipnat'a,
+    czy Secure Shell Server zmieni³ rodzaj szyfrowania:
+  </para>
+
+    <screen>&rprompt; <userinput>sh /etc/rc.d/ipfilter restart</userinput>
+&rprompt; <userinput>sh /etc/rc.d/ipnat restart</userinput>
+&rprompt; <userinput>sh /etc/rc.d/sshd restart</userinput> </screen>
+
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-rc-rcorder">
+    <title>Rola rcorder'a i skryptów rc</title>
+
+    <para>System startowy we wszystkich systemach Unix'owych pozwala okre¶liæ 
+      w ten lub inny sposób porz±dek wykonywania skryptów starowych. W 
+      niektórych systemach UNIX jest to uzyskiwane przez numerowanie plików 
+      i/lub wrzucanie ich do osobnych katalogów odpowiadaj±cych poszczególnym 
+      runlevelom. (Solaris polega na symbolach wiloznacznych takich jak 
+      <filename>/etc/rc[23].d/S*</filename>). Sposób ten polega na w³o¿eniu
+      wszystkich poleceñ, które powinny startowaæ system do jednego 
+      monolitycznego skryptu. To jest bardzo niechlujne podej¶cie. (Tak by³o
+      w starych wersjach BSD oraz &os; przed wprowadzeniem systemu rc). W &os;
+      jest to robione przez skrypty kontroluj±ce wykonanie innych skryptów, o
+      których wspomniano na pocz±tku tego dokumentu i przez zawarto¶æ ka¿dego 
+      ze kryptów rc. Zauwa¿, ¿e system &os; nie ma tzw. runleveli jak to jest w 
+      systemach typu System V jak Solaris lub Linux.</para>
+
+    <para>Na pocz±tku ka¿dego skryptu rc w katalogu 
+      <filename>/etc/rc.d/*</filename>, obecne s± linie, zawieraj±ce jedno z
+      nastêpuj±cych s³ów:</para>
+
+    <itemizedlist>
+      <listitem>
+	<para>REQUIRE</para>
+      </listitem>
+
+      <listitem>
+	<para>PROVIDE</para>
+      </listitem>
+
+      <listitem>
+	<para>BEFORE</para>
+      </listitem>
+
+      <listitem>
+	<para>KEYWORD</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>
+      Okre¶laj± one zale¿no¶ci danego skryptu rc dziêki czemu rcorder
+      mo¿e ustaliæ jego powi±zania z innymi skryptami jako zale¿no¶ci
+      <quote>w góre</quote> lub <quote>w dó³</quote> zale¿nie od sytuacji.
+      Oto przyk³ad ze skryptu uruchamiaj±cego 
+      <filename>/etc/rc.d/nfsd</filename>:
+    </para>
+
+
+    <programlisting>...
+ PROVIDE: nfsd
+ REQUIRE: mountd
+
+. /etc/rc.subr
+...</programlisting>
+
+    <para>
+      To wskazuje, ¿e ten skrypt dostarcza obslugi <quote>nfsd</quote>,
+      jednak¿e, wymaga aby <quote>mountd</quote> by³ ju¿ uruchomiony. 
+      Narzêdzie &man.rcorder.8; bêdzie u¿yte w czasie startu systemu do 
+      czytania wszystkich skryptów rc oraz okre¶li poprawny porz±dek, w którym
+      te skrypty bêd± uruchamiane.</para> 
+
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-rc-reading">
+    <title>Dodatkowo do przeczytania</title>
+
+    <para>Dostêpne s± inne ¼ród³a dotycz±ce systemu rc.d:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Jeden z g³ównych projektantów systemu rc.d, Luke Mewburn, 
+	  dokona³ prezentacji w systemie USENIX 2001. Jest ona dostêpna w 
+	  formacie 
+          <ulink url="http://www.mewburn.net/luke/papers/rc.d.pdf">PDF</ulink>.
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>Will Andrews napisa³ na ³amach
+          <ulink url="http://www.daemonnews.org/">Daemonnews</ulink>
+          artyku³ zatytu³owany
+          <ulink url="http://www.daemonnews.org/200108/rcdsystem.html">The
+	    NetBSD rc.d System</ulink>.</para>
+      </listitem>
+    </itemizedlist>
+  </sect1>
+</chapter>

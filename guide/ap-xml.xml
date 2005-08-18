@@ -1,0 +1,238 @@
+<!-- $NetBSD: ap-xml.xml,v 1.17 2004/12/14 13:23:15 hrs Exp $ -->
+
+<appendix id="ap-xml">
+  <title>Getting started with XML/DocBook</title>
+
+  <para>This appendix describes the installation of the tools needed to
+    produce a formatted version of the NetBSD guide. Besides that
+    it contains instructions that describe how to build the guide.
+    This appendix assumes knowledge of pkgsrc, see
+    see <xref linkend="chap-pack" /> for details.</para>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="ap-xml-whats-xml-docbook">
+    <title>What is XML/DocBook</title>
+
+    <para><acronym>XML</acronym> (eXtensible Markup Language)
+      is a language which is used to define other languages based on
+      markups, i.e. with XML you can define the grammar (i.e. the
+      valid constructs) of markup languages.
+      <acronym>HTML</acronym>, for example, can be defined using
+      XML.  If you are a programmer, think of XML like the
+      <acronym>BNF</acronym> (Backus-Naur Form): a tool used to
+      define grammars.</para>
+
+    <para>DocBook is a markup template defined using XML; DocBook
+      lists the valid tags that can be used in a DocBook document
+      and how they can be combined together.
+      If you are a programmer, think of DocBook as the grammar of a
+      language specified with the BNF.
+      For example, it says that the tags:</para>
+
+    <screen>&lt;para&gt; ... &lt;/para&gt;</screen>
+
+    <para>define a paragraph, and that a &lt;para&gt; can be inside a
+      &lt;sect1&gt; but that a &lt;sect1&gt; cannot be inside a
+      &lt;para&gt;.</para>
+
+    <para>Therefore, when you write a document, you write a document in
+      DocBook and not in XML: in this respect DocBook is the
+      counterpart of HTML (although the markup is richer and a few
+      concepts are different).</para>
+
+    <para>The DocBook specification (i.e. the list of tags and rules)
+      is called a <acronym>DTD</acronym> (Document Type
+      Definition.)</para>
+
+    <para>In short, a DTD defines how your source documents look like
+      but it gives no indication about the format of your final
+      (compiled) documents.
+      A further step is required: the DocBook sources must be
+      converted to some other representation like, for example,
+      HTML or PDF.
+      This step is performed by a tool like <application>Jade</application>,
+      which applies the DSSSL transforms to the source document.
+      <acronym>DSSSL</acronym> (Document Style Semantics and
+      Specification Language) is a format used to define the
+      <firstterm>stylesheets</firstterm> necessary to perform the
+      conversion from DocBook to other formats. The build structure
+      for the guide also supports the <acronym>XSL</acronym>
+      (Extensible Stylesheet Language) stylesheet language.
+      The <command>xsltproc</command> program is used for
+      transforming XML with XSL stylesheets.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="ap-xml-installing-tools">
+    <title>Installing the necessary tools</title>
+
+    <para>All the tools that are needed to generate the guide in various
+      formats can be installed through the <emphasis>netbsd-www</emphasis>,
+      <emphasis>netbsd-doc</emphasis>,
+      and <emphasis>netbsd-doc-print</emphasis> meta-packages. Together
+      the <emphasis>netbsd-doc</emphasis> and <emphasis>netbsd-www</emphasis>
+      packages install everything that is
+      needed to generate the HTML version of the guide. To be able
+      to generate printable formats, such as Postscript and PDF,
+      install the <emphasis>netbsd-doc-print</emphasis> meta-package.</para>
+
+    <para>Supposing that a current pkgsrc tree is installed at
+      <filename>/usr/pkgsrc</filename>, you can install all these
+      meta-packages with:</para>
+
+    <screen>&uprompt; <userinput>cd /usr/pkgsrc/meta-pkgs/netbsd-www</userinput>
+&uprompt; <userinput>make install</userinput>
+&uprompt; <userinput>cd /usr/pkgsrc/meta-pkgs/netbsd-doc</userinput>
+&uprompt; <userinput>make install</userinput>
+&uprompt; <userinput>cd /usr/pkgsrc/meta-pkgs/netbsd-doc-print</userinput>
+&uprompt; <userinput>make install</userinput></screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="ap-xml-using-tools">
+    <title>Using the tools</title>
+
+    <para>This section provides an overview of how the guide can be
+      compiled from XML to any of the following target formats:
+      <emphasis>html</emphasis>, <emphasis>html-split</emphasis>,
+      <emphasis>ascii</emphasis>, <emphasis>ps</emphasis>, and
+      <emphasis>pdf</emphasis>. Creating all formats is
+      the default. To produce any of the above output formats, run
+      <command>make</command> with the format(s) as argument.  </para>
+
+    <para>Let's look at a few examples.</para>
+
+    <para>Before looking at the output generated in any of the
+      above-mentioned formats, integrity of the XML structure has to
+      be ensured. This can be done by running <command>make
+      lint</command>:</para>
+
+    <screen>&uprompt; <userinput>cd htdocs/guide/en</userinput>
+&uprompt; <userinput>make lint</userinput></screen>
+
+    <para>Fix any errors you may get. When working on the contents of the
+      guide, you may want to produce the HTML version to have a look
+      at it for proofreading:</para>
+
+    <screen>&uprompt; <userinput>cd htdocs/guide/en</userinput>
+&uprompt; <userinput>make html-split</userinput></screen>
+
+    <para>After this, please update the Postscript and PDF
+      versions of the guide too.  The command for this is:</para>
+
+    <screen>&uprompt; <userinput>cd htdocs/guide/en</userinput>
+&uprompt; <userinput>make pdf</userinput></screen>
+
+
+    <para>Before you go and commit the generated files, please make sure
+      that you commit the XML files first, then re-generated all
+      formats, i.e. the procedure would be something like:</para>
+
+    <screen>&uprompt; <userinput>cd htdocs/guide/en</userinput>
+&uprompt; <userinput>cvs commit *.xml</userinput>
+&uprompt;
+&uprompt; <userinput>make lint</userinput>
+&uprompt; <userinput>make</userinput>
+&uprompt; <userinput>make install-doc</userinput>
+&uprompt;
+&uprompt; <userinput>cd ..</userinput>
+&uprompt; <userinput>cvs commit en download</userinput> </screen>
+
+    <para>When running <command>make</command> with no argument, all
+      formats will be re-generated. This is the default way to build
+      the guide for the NetBSD.org website.</para>
+  </sect1>
+
+    <!-- ........................................................... -->
+
+  <sect1 id="ap-xml-lang-specific">
+    <title>Language-specific notes</title>
+
+    <sect2 id="ap-xml-lang-specific-italian">
+      <title>Enabling hyphenation for the Italian language</title>
+
+      <para>The &os; guide is currently available in three languages:
+	English, French and Italian.
+	Of these, only English and French are automatically
+	hyphenated by TeX.
+	To turn on hyphenation for the Italian language, some simple
+	steps are required:</para>
+
+      <para>Edit
+	<filename>/usr/pkg/share/texmf/tex/generic/config/language.dat</filename>
+	and remove the comment (<literal>%</literal>) from the line
+	of the Italian hyphenation.  I.e.</para>
+
+      <screen>%italian ithyph.tex</screen>
+
+      <para>becomes</para>
+
+      <screen>italian ithyph.tex</screen>
+
+      <note>
+	<para>As more translations of the guide become available, you
+	  will probably need to enable other hyphenation patterns as
+	  well.</para>
+      </note>
+
+      <para>Now the latex and pdflatex formats must be recreated:</para>
+
+      <screen>&rprompt; <userinput>cd /usr/pkg/share/texmf/web2c</userinput>
+&rprompt; <userinput>fmtutil --byfmt latex</userinput>
+&rprompt; <userinput>fmtutil --byfmt pdflatex</userinput></screen>
+
+      <para>If you check, for example, <filename>latex.log</filename>
+	you will find something like:</para>
+
+      <screen>Babel &lt;v3.6Z&gt; and hyphenation patterns for american, french, german,
+ngerman, italian, nohyphenation, loaded.</screen>
+
+      <para>Please note that there are many ways to perform these
+        operations, depending
+        on your level of expertise with the TeX system (mine is
+        very low).
+        For example, you could use the "texconfig" interactive
+        program, or you could recreate the formats by hand using
+        the <command>tex</command> program.</para>
+
+      <para>If you know a better way of doing the operations
+        described in this appendix, please let me know.</para>
+    </sect2>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="ap-xml-links">
+    <title>Links</title>
+
+    <para>
+      <ulink url="http://www.oasis-open.org/docbook/">The official
+	DocBook home page</ulink> is where you can find the definitive
+      documentation on DocBook.
+      You can also read online or download a copy of the book
+      <ulink url="http://www.oasis-open.org/docbook/documentation/reference/"
+	>DocBook: The Definitive Guide</ulink> by Norman Walsh and Leonard
+      Muellner.</para>
+
+    <para>For DSSSL start looking at <ulink url="http://nwalsh.com" />.</para>
+
+    <para>XSL is described at <ulink url="http://www.w3.org/Style/XSL/" />.</para>
+
+    <para>Jade/OpenJade sources and info can be found on the
+      <ulink url ="http://openjade.sourceforge.net/">OpenJade Home
+	Page</ulink>.</para>
+
+    <para>If you want to produce Postscript and PDF documents from your
+      DocBook source, look at the home page of <ulink
+	url="http://sourceforge.net/projects/jadetex">JadeTex</ulink>.</para>
+
+    <para>The
+      <ulink url="http://ourworld.compuserve.com/homepages/hoenicka_markus/"
+	>home page of Markus Hoenicka</ulink> explains everything you need
+      to know if you want to work with SGML/DocBook on the Windows
+      NT platform.</para>
+  </sect1>
+</appendix>

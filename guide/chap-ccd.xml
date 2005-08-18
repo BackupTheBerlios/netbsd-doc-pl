@@ -1,0 +1,406 @@
+<!-- $NetBSD: chap-ccd.xml,v 1.15 2005/05/05 12:21:22 hrs Exp $ -->
+
+<chapter id="chap-ccd">
+
+<!--
+  <chapterinfo>
+    <authorgroup>
+      <author>
+        <firstname>Brian</firstname>
+
+        <surname>Seklecki</surname>
+
+        <othername role="mi">A</othername>
+
+        <affiliation>
+          <address><email>lavalamp@burghcom.com</email></address>
+        </affiliation>
+
+        <contrib>This chapter (CCD Configuration)
+          has been contributed by </contrib>
+      </author>
+    </authorgroup>
+  </chapterinfo>
+-->
+
+  <title>Concatenated Disk Device (CCD) configuration</title>
+
+  <para>The <acronym>CCD</acronym> driver allows the user to
+    <quote>concatenate</quote> several physical disks into one pseudo
+    volume. While RAIDframe (see <xref linkend="chap-rf" />) also allows
+    doing this to create RAID level 0 sets, it does not allow you
+    to do striping across disks of different geometry, which is where
+    CCD comes in handy.  CCD also allows for an
+    <quote>interleave</quote> to improve disk performance with a
+    gained space loss.  This example will not cover that
+    feature.</para>
+
+  <para>The steps required to setup a CCD are as follows:</para>
+
+  <procedure>
+    <step>
+      <para>Install physical media</para>
+    </step>
+
+    <step>
+      <para>Configure kernel support</para>
+    </step>
+
+    <step>
+      <para>Disklabel each volume member of the CCD</para>
+    </step>
+
+    <step>
+      <para>Configure the CCD conf file</para>
+    </step>
+
+    <step>
+      <para>Initialize the CCD device</para>
+    </step>
+
+    <step>
+      <para>Create a filesystem on the new CCD device</para>
+    </step>
+
+    <step>
+      <para>Mount the CCD filesystem</para>
+    </step>
+  </procedure>
+
+  <para>This example features a CCD setup on &os;/sparc 1.5.
+    The CCD will reside on 4 SCSI disks in a generic external Sun
+    disk pack chassis connected to the external 50 pin SCSI port.</para>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-ccd-install-physical-media">
+    <title>Install physical media</title>
+
+    <para>This step is at your own discretion, depending on your platform and the
+      hardware at your disposal.</para>
+
+    <para>From my DMESG:</para>
+
+    <screen>Disk #1:
+  probe(esp0:0:0): max sync rate 10.00MB/s
+  sd0 at scsibus0 target 0 lun 0: &lt;SEAGATE, ST32430N SUN2.1G, 0444&gt; SCSI2 0/direct fixed
+  sd0: 2049 MB, 3992 cyl, 9 head, 116 sec, 512 bytes/sect x 4197405 sectors
+
+Disk #2
+  probe(esp0:1:0): max sync rate 10.00MB/s
+  sd1 at scsibus0 target 1 lun 0: &lt;SEAGATE, ST32430N SUN2.1G, 0444&gt; SCSI2 0/direct fixed
+  sd1: 2049 MB, 3992 cyl, 9 head, 116 sec, 512 bytes/sect x 4197405 sectors
+
+Disk #3
+  probe(esp0:2:0): max sync rate 10.00MB/s
+  sd2 at scsibus0 target 2 lun 0: &lt;SEAGATE, ST11200N SUN1.05, 9500&gt; SCSI2 0/direct fixed
+  sd2: 1005 MB, 1872 cyl, 15 head, 73 sec, 512 bytes/sect x 2059140 sectors
+
+Disk #4
+  probe(esp0:3:0): max sync rate 10.00MB/s
+  sd3 at scsibus0 target 3 lun 0: &lt;SEAGATE, ST11200N SUN1.05, 8808 &gt; SCSI2 0
+  sd3: 1005 MB, 1872 cyl, 15 head, 73 sec, 512 bytes/sect x 2059140 sectors</screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-ccd-configuring-kernel">
+    <title>Configure Kernel Support</title>
+
+    <para>The following kernel configuration directive is needed to
+      provide CCD device support.  It is enabled in the GENERIC
+      kernel:</para>
+
+    <programlisting>pseudo-device  ccd  4    # concatenated disk devices</programlisting>
+
+    <para>In my kernel config, I also hard code SCSI ID associations
+      to <filename>/dev</filename> device entries to prevent bad
+      things from happening:</para>
+
+    <programlisting>sd0     at scsibus0 target 0 lun ?
+# SCSI disk drives
+sd1     at scsibus0 target 1 lun ?
+# SCSI disk drives
+sd2     at scsibus0 target 2 lun ?
+# SCSI disk drives
+sd3     at scsibus0 target 3 lun ?
+# SCSI disk drives
+sd4     at scsibus0 target 4 lun ?
+# SCSI disk drives
+sd5     at scsibus0 target 5 lun ?
+# SCSI disk drives
+sd6     at scsibus0 target 6 lun ?
+# SCSI disk drives</programlisting>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-ccd-disklabel-volume">
+    <title>Disklabel each volume member of the CCD</title>
+
+    <para>Each member disk of the CCD will need a special file system
+      established.  In this example, I will need to disklabel:</para>
+
+    <literallayout><filename>/dev/rsd0c</filename>
+<filename>/dev/rsd1c</filename>
+<filename>/dev/rsd2c</filename>
+<filename>/dev/rsd3c</filename></literallayout>
+
+    <note>
+      <para>Always remember to disklabel the character device,
+	not the block device, in
+	<filename>/dev/r{s,w}d*</filename></para>
+    </note>
+
+    <note>
+      <para>On all platforms, the <filename>c</filename> slice is
+	symbolic of the entire &os; partition and is reserved.</para>
+    </note>
+
+<!-- TODO - ask
+    <note>
+      <para>
+	on i386 platforms, the <filename>d</filename> slice is
+	symbolic of the BSD partition of the disk and is reserved.
+      </para>
+    </note>
+-->
+
+    <para>You will probably want to remove any pre-existing disklabels
+      on the disks in the CCD.  This can be accomplished in one of two ways
+      with the &man.dd.1; command:</para>
+
+    <screen>&rprompt; <userinput>dd if=/dev/zero of=/dev/rsd0c bs=8k count=1</userinput>
+&rprompt; <userinput>dd if=/dev/zero of=/dev/rsd1c bs=8k count=1</userinput>
+&rprompt; <userinput>dd if=/dev/zero of=/dev/rsd2c bs=8k count=1</userinput>
+&rprompt; <userinput>dd if=/dev/zero of=/dev/rsd3c bs=8k count=1</userinput></screen>
+
+    <para>If your port uses a MBR (Master Boot Record) to partition the disks
+      so that the &os; partitions are only part of the overall disk,
+      and other OSs like Windows or Linux use other parts, you can void the
+      MBR and all partitions on disk by using the command:</para>
+
+    <screen>&rprompt; <userinput>dd if=/dev/zero of=/dev/rsd0d bs=8k count=1</userinput>
+&rprompt; <userinput>dd if=/dev/zero of=/dev/rsd1d bs=8k count=1</userinput>
+&rprompt; <userinput>dd if=/dev/zero of=/dev/rsd2d bs=8k count=1</userinput>
+&rprompt; <userinput>dd if=/dev/zero of=/dev/rsd3d bs=8k count=1</userinput> </screen>
+
+    <para>This will make all data on the entire disk inaccessible. Note
+      that the entire disk is slice <filename>d</filename> on i386
+      (and some other ports), and <filename>c</filename> elsewhere (e.g. on
+      sparc). See the <quote>kern.rawpartition</quote> sysctl - "3"
+      means "d", "2" means "c".</para>
+
+    <para>The default disklabel for the disk will look similar to this:</para>
+
+    <screen>&rprompt; <userinput>disklabel -r sd0</userinput>
+[...snip...]
+bytes/sector: 512
+sectors/track: 116
+tracks/cylinder: 9
+sectors/cylinder: 1044
+cylinders: 3992
+total sectors: 4197405
+[..snip...]
+3 partitions:
+#        size   offset    fstype   [fsize bsize   cpg]
+  c:  4197405       0     unused     1024  8192        # (Cyl.    0 - 4020*)</screen>
+
+    <para>You will need to create one <quote>slice</quote> on the
+      &os; partition of the disk that consumes the entire
+      partition.  The slice must begin at least one cylinder
+      offset from the beginning of the disk/partition to provide
+      space for the special CCD disklabel.  The offset should be
+      1x sectors/cylinder (see following note).
+      Therefore, the <quote>size</quote> value should be
+      <quote>total sectors</quote> minus 1x
+      <quote>sectors/cylinder</quote>. Edit your disklabel
+      accordingly: </para>
+
+    <screen>&rprompt; <userinput>disklabel -e sd0</userinput></screen>
+
+    <note>
+      <para>The offset of a slice of type <quote>ccd</quote> must be a
+	multiple of the <quote>sectors/cylinder</quote> value.</para>
+    </note>
+
+    <note>
+      <para>Be sure to <command>export EDITOR=[path to your favorite
+	editor]</command> before editing the disklabels.</para>
+    </note>
+
+    <note>
+      <para>The slice must be fstype <literal>ccd</literal>.</para>
+    </note>
+
+    <para>Because there will only be one slice on this partition,
+      you can recycle the <literal>c</literal> slice (normally
+      reserved for symbolic uses).  Change your disklabel to
+      the following:</para>
+
+    <screen>3 partitions:
+#        size   offset    fstype   [fsize bsize   cpg]
+  c:  4196361     1044       ccd                       # (Cyl. 1 - 4020*)</screen>
+
+    <para>Optionally you can setup a slice other than
+      <literal>c</literal> to use, simply adjust accordingly
+      below:</para>
+
+    <screen>3 partitions:
+#        size   offset    fstype   [fsize bsize   cpg]
+  a:  4196361     1044       ccd                       # (Cyl. 1 - 4020*)
+  c:  4197405       0     unused     1024  8192        # (Cyl. 0 - 4020*)</screen>
+
+    <para>Be sure to write the label when you have completed.
+      Disklabel will object to your disklabel and prompt you to
+      re-edit if it does not pass its sanity checks.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-ccd-configure">
+    <title>Configure the CCD</title>
+
+    <para>Once all disks are properly labeled, you will need to
+      generate a configuration file,
+      <filename>/etc/ccd.conf</filename>.  The file does not exist by
+      default, and you will need to create a new one.  The format
+      is:</para>
+
+    <programlisting>#ccd    ileave    flags   component    devices</programlisting>
+
+    <note>
+      <para>For the <quote>ileave</quote>, if a value of zero is used
+	then the disks are concatenated, but if you use a value
+	equal to the <quote>sectors/track</quote> number the disks
+	are interleaved.</para>
+    </note>
+
+    <para>Example in this case:</para>
+
+    <screen>&rprompt; <userinput>more /etc/ccd.conf</userinput>
+ccd0  0  none /dev/sd0c /dev/sd1c /dev/sd2c /dev/sd3c</screen>
+
+    <note>
+      <para>The CCD configuration file references the device file
+	for the newly created CCD filesystems.	Be sure not to
+	reference the block device at this point; instead use
+	the character device.</para>
+    </note>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-ccd-initialize-device">
+    <title>Initialize the CCD device</title>
+
+    <para>Once you are confident that your CCD configuration is sane,
+      you can initialize the device using the
+      &man.ccdconfig.8; command:
+      Configure:</para>
+
+    <screen>&rprompt; <userinput>ccdconfig -c -f /etc/ccd.conf</userinput></screen>
+
+    <para>Unconfigure:</para>
+
+    <screen>&rprompt; <userinput>ccdconfig -u -f /etc/ccd.conf</userinput></screen>
+
+    <para>Initializing the CCD device will activate
+      <filename>/dev</filename> entries:
+      <filename>/dev/{,r}ccd#:</filename></para>
+
+    <screen>&rprompt; <userinput>ls -la  /dev/{,r}ccd0*</userinput>
+brw-r-----  1 root  operator   9, 0 Apr 28 21:35 /dev/ccd0a
+brw-r-----  1 root  operator   9, 1 Apr 28 21:35 /dev/ccd0b
+brw-r-----  1 root  operator   9, 2 May 12 00:10 /dev/ccd0c
+brw-r-----  1 root  operator   9, 3 Apr 28 21:35 /dev/ccd0d
+brw-r-----  1 root  operator   9, 4 Apr 28 21:35 /dev/ccd0e
+brw-r-----  1 root  operator   9, 5 Apr 28 21:35 /dev/ccd0f
+brw-r-----  1 root  operator   9, 6 Apr 28 21:35 /dev/ccd0g
+brw-r-----  1 root  operator   9, 7 Apr 28 21:35 /dev/ccd0h
+crw-r-----  1 root  operator  23, 0 Jun 12 20:40 /dev/rccd0a
+crw-r-----  1 root  operator  23, 1 Apr 28 21:35 /dev/rccd0b
+crw-r-----  1 root  operator  23, 2 Jun 12 20:58 /dev/rccd0c
+crw-r-----  1 root  operator  23, 3 Apr 28 21:35 /dev/rccd0d
+crw-r-----  1 root  operator  23, 4 Apr 28 21:35 /dev/rccd0e
+crw-r-----  1 root  operator  23, 5 Apr 28 21:35 /dev/rccd0f
+crw-r-----  1 root  operator  23, 6 Apr 28 21:35 /dev/rccd0g
+crw-r-----  1 root  operator  23, 7 Apr 28 21:35 /dev/rccd0h</screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-ccd-create-ufs-filesystem">
+    <title>Create a 4.2BSD/UFS filesystem on the new CCD device</title>
+
+    <para>You may now disklabel the new virtual disk device associated
+      with your CCD:</para>
+
+    <screen>&rprompt; <userinput>disklabel -e ccd0</userinput></screen>
+
+    <para>Once again, there will be only one slice, so you may either
+      recycle the <filename>c</filename> slice or create a separate
+      slice for use.</para>
+
+    <screen>&rprompt; <userinput>disklabel -r ccd0</userinput>
+# /dev/rccd0c:
+type: ccd
+disk: ccd
+label: default label
+flags:
+bytes/sector: 512
+sectors/track: 2048
+tracks/cylinder: 1
+sectors/cylinder: 2048
+cylinders: 6107
+total sectors: 12508812
+rpm: 3600
+interleave: 1
+trackskew: 0
+cylinderskew: 0
+headswitch: 0           # microseconds
+track-to-track seek: 0  # microseconds
+drivedata: 0
+#        size   offset    fstype   [fsize bsize   cpg]
+  c: 12508812        0    4.2BSD     1024  8192    16  # (Cyl. 0 - 6107*)</screen>
+
+    <para>The filesystem will then need to be formatted:</para>
+
+    <screen>&rprompt; <userinput>newfs /dev/rccd0c</userinput>
+Warning: 372 sector(s) in last cylinder unallocated
+/dev/rccd0c:    12508812 sectors in 6108 cylinders of 1 tracks, 2048 sectors
+        6107.8MB in 382 cyl groups (16 c/g, 16.00MB/g, 3968 i/g)
+
+super-block backups (for fsck -b #) at:
+[...]</screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-ccd-mount-filesystem">
+    <title>Mount the filesystem</title>
+
+    <para>Once you have a  created a file system on the CCD device,
+      you can then mount the file system against a mount point
+      on your system. Be sure to mount the slice labeled type
+      <literal>ffs</literal> or <literal>4.2BSD</literal>:</para>
+
+    <screen>&rprompt; <userinput>mount /dev/ccd0c /mnt</userinput></screen>
+
+    <para>Then:</para>
+
+    <screen>&rprompt; <userinput>export BLOCKSIZE=1024; df</userinput>
+Filesystem  1K-blocks     Used   Avail Capacity  Mounted on
+/dev/sd6a      376155   320290   37057    89%    /
+/dev/ccd0c    6058800       1  5755859     0%    /mnt</screen>
+
+    <para>Congratulations, you now have a working CCD. To configure
+      the CCD device at boot time, set
+      <varname>ccd=yes</varname> in
+      <filename>/etc/rc.conf</filename>. You can adjust
+      <filename>/etc/fstab</filename> to get the filesystem mounted at
+      boot:</para>
+
+    <screen>/dev/ccd0c  /home ffs     rw,softdep    1 2 </screen>
+  </sect1>
+</chapter>

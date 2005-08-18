@@ -1,0 +1,1494 @@
+<!-- $NetBSD: chap-pam.xml,v 1.7 2005/05/05 12:21:22 hrs Exp $ -->
+
+<!--
+  - Copyright (c) 2001-2003 Networks Associates Technology, Inc.
+  - All rights reserved.
+  -
+  - This software was developed for the FreeBSD Project by ThinkSec AS and
+  - Network Associates Laboratories, the Security Research Division of
+  - Network Associates, Inc.  under DARPA/SPAWAR contract N66001-01-C-8035
+  - ("CBOSS"), as part of the DARPA CHATS research program.
+  -
+  - Redistribution and use in source and binary forms, with or without
+  - modification, are permitted provided that the following conditions
+  - are met:
+  - 1. Redistributions of source code must retain the above copyright
+  -    notice, this list of conditions and the following disclaimer.
+  - 2. Redistributions in binary form must reproduce the above copyright
+  -    notice, this list of conditions and the following disclaimer in the
+  -    documentation and/or other materials provided with the distribution.
+  - 3. The name of the author may not be used to endorse or promote
+  -    products derived from this software without specific prior written
+  -    permission.
+  -
+  - THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+  - ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  - ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+  - FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+  - DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+  - OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+  - HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  - LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+  - OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+  - SUCH DAMAGE.
+  -->
+
+<chapter id="chap-pam">
+<!-- NetBSD
+
+  <articleinfo>
+NetBSD -->
+	<title>Do³±czalne Modu³y Uwierzytelniania (&quot;Pluggable Authentication Modules&quot; - PAM)</title>
+
+<!-- NetBSD
+    <pubdate>$FreeBSD: /repoman/r/dcvs/doc/en_US.ISO8859-1/articles/pam/article.sgml,v 1.28 2004/08/08 13:43:55 hrs Exp $</pubdate>
+
+    <abstract>
+NetBSD -->
+      <sect1 id="pam-about">
+	  <title>O czym jest ten rozdzia³?</title>
+	  <para>Rozdzia³ ten opisuje podstawowe za³o¿enia i mechanizmy biblioteki PAM, wyja¶nia jak skonfigurowaæ i zintegrowaæ PAM z aplikacjami, oraz jak pisaæ modu³y PAM.</para>
+  </sect1>
+<!-- NetBSD
+    </abstract>
+
+XXX NetBSD: The license for this file was added to ap-ack.xml!
+
+    <copyright>
+      <year>2001</year>
+      <year>2002</year>
+      <year>2003</year>
+      <holder>Networks Associates Technology, Inc.</holder>
+    </copyright>
+
+    <authorgroup>
+      <author>
+	<firstname>Dag-Erling</firstname>
+	<surname>Sm&oslash;rgrav</surname>
+	<contrib>Contributed by </contrib>
+      </author>
+    </authorgroup>
+
+    <legalnotice>
+      <para>This article was written for the FreeBSD Project by
+	ThinkSec AS and Network Associates Laboratories, the Security
+	Research Division of Network Associates, Inc. under
+	DARPA/SPAWAR contract N66001-01-C-8035 (<quote>CBOSS</quote>),
+	as part of the DARPA CHATS research program.</para>
+    </legalnotice>
+
+    <legalnotice id="trademarks" role="trademarks">
+      &tm-attrib.freebsd;
+      &tm-attrib.linux;
+      &tm-attrib.opengroup;
+      &tm-attrib.sun;
+      &tm-attrib.general;
+    </legalnotice>
+  </articleinfo>
+NetBSD -->
+
+  <sect1 id="pam-intro">
+	  <title id="pam-intro.title">Wprowadzenie</title>
+	  <para>Biblioteka PAM jest ogólnym interfejsem (API) dla us³ug zwi±zanych z uwierzytelnianiem, pozwalaj±cym administratorowi dodawaæ nowe metody uwierzytelniania przez po prostu instalowanie nowych modu³ów PAM, oraz modyfikowaæ politykê uwierzytelniania poprzez edycjê plików konfiguracyjnych.</para>
+	 <para>Koncepcjê PAM zdefiniowali i rozwinêli w 1995 r. Vipin Samar 
+	  i Charlie Lai z Sun Microsystems. Od tego czasu wiele siê nie zmieni³a.
+	  W 1997 r. Open Group opublikowa³a wstêpn± specyfikacjê X/Open 
+	  Single Sign-on (XSSO), która ustandardyzowa³a PAM API i doda³a 
+	  rozszerzenie dla pojedynczego (a raczej zintegrowanego) logowania.
+	  W czasie przygotowywania niniejszego dokumentu specyfikacja ta nie 
+	  jest jednak jeszcze przyjêtym standardem.</para>
+	<para>Chocia¿ ten tekst przygotowywany jest przede wszystkim z my¶l± o
+	  FreeBSD 5.x i NetBSD 3.x (oba u¿ywaj± OpenPAM), powinien równie dobrze 
+	  stosowaæ siê do FreeBSD 4.x, które korzysta z Linux-PAM i do innych
+	  systemów operacyjnych, jak Linux i &solaris;.</para>
+</sect1>
+
+  <sect1 id="pam-terms">
+	  <title id="pam-terms.title">Terminologia i konwencje u¿ywane w tym dokumencie</title>
+    <sect2 id="pam-definitions">
+		<title id="pam-definitions.title">Definicje</title>
+	<para>Terminologia dotycz±ca PAM jest do¶æ niejednoznaczna.
+	Ani Samar i Lai w swoim oryginalnym dokumencie, ani specyfikacja XSSO
+	nie podjêli ¿adnych kroków w kierunku sformalizowania 
+	terminologii u¿ywanej przy opisywaniu ró¿norodnych
+	czynników i elementów sk³adaj±cych siê na PAM, a
+	u¿ywane przez nich (ale nie zdefiniowane) nazewnictwo 
+	bywa myl±ce i wieloznaczne. Pierwsz± prób± ustanowienia 
+	spójnej i jednoznacznej terminologii by³ pochodz±cy z 1999 r. 
+	dokument Andrew'a G. Morgana (autora Linux-PAM).
+	Chocia¿ wybrana terminologia by³a du¿ym krokiem naprzód, 
+	nadal zdaniem autora jest daleka od doskona³o¶ci. W dalszym 
+	ci±gu tego tekstu podjêto próbê, w wielkim stopniu zainspirowan± 
+	przez Morgana, zdefiniowania precyzyjnych i jednoznacznych 
+	terminów dla wszystkich czynników i elementów wchodz±cych w sk³ad PAM.</para>
+
+<para>(Od t³umacza: w kontek¶cie PAM, znane sk±din±d terminy bywaj± u¿ywane przez autora w nieco innym znaczeniu. Autor proponuje jednak do¶æ ¶cis³± terminologiê, któr± nale¿a³o utrzymaæ. Nie uda³o mi siê w ogóle dotrzeæ do odpowiedniej jako¶ci polskojêzycznej dokumentacji PAM; autorzy t³umaczeñ pozostawali zwykle przy terminologii anglojêzycznej, informacje by³y znacznie okrojone i podane w innej perspektywie.</para>
+<para>Proszê zatem o konstruktywne uwagi oraz udostêpnienie istniej±cych polskojêzycznych materia³ów, mog±cych pomóc w poprawieniu tego t³umaczenia i ujednoliceniu polskojêzycznej terminologii zwi±zanej z PAM.)</para>
+	
+      <glosslist>
+	<glossentry>
+	  <glossterm>konto (account)</glossterm>
+	  <glossdef>
+	    <para>Zestaw uwierzytelnieñ (credentials), których aplikant ¿±da od arbitra.</para>
+	  </glossdef>
+	</glossentry>
+
+	<glossentry>
+	  <glossterm>aplikant (applicant)</glossterm>
+	  <glossdef>
+	    <para>U¿ytkownik lub inny element (byt - entity) wystêpuj±cy z ¿±daniem uwierzytelnienia.</para>
+	  </glossdef>
+	</glossentry>
+
+	<glossentry>
+	  <glossterm>arbiter (arbitrator)</glossterm>
+	  <glossdef>
+	    <para>U¿ytkownik lub inny byt posiadaj±cy uprawnienia wymagane do weryfikacji uwierzytelnienia aplikanta, oraz autoryzowany do udzielenia zezwolenia (lub odmowy) w odpowiedzi na na dane ¿±danie.</para>
+	  </glossdef>
+	</glossentry>
+
+	<glossentry>
+	  <glossterm>³añcuch (chain)</glossterm>
+	  <glossdef>
+	    <para>Sekwencja modu³ów, które bêd± wywo³ane w odpowiedzi 
+		 na ¿±danie PAM. £añcuch obejmuje informacjê
+		 o kolejno¶ci, w jakiej modu³y maj± byæ wywo³ane, jakie 
+		 argumenty do nich przekazaæ i jak zinterpretowaæ wyniki.</para>
+	  </glossdef>
+	</glossentry>
+
+	<glossentry>
+	  <glossterm>klient</glossterm>
+	  <glossdef>
+	    <para>Aplikacja odpowiedzialna za inicjacjê ¿±dania 
+		 uwierzytelnienia w imieniu aplikanta, i za uzyskanie 
+		 od niego informacji koniecznych do przeprowadzenia tego 
+		 procesu.</para>
+	  </glossdef>
+	</glossentry>
+
+	<glossentry>
+		<glossterm>funkcja PAM (facility)</glossterm>
+
+	  <glossdef>
+		  <para>Jedna z czterech podstawowych grup funkcjonalnych 
+			  dostarczanych przez PAM: uwierzytelniania, 
+			  zarz±dzania kontem, zarz±dzania sesj± i aktualizacji tokena uwierzytelniaj±cego.</para>
+
+	  </glossdef>
+	</glossentry>
+
+	<glossentry>
+	  <glossterm>modu³</glossterm>
+	  <glossdef>
+	    <para>Zbiór jednej lub wiêcej powi±zanych funkcji programowych, 
+		 implementuj±cych jak±¶ funkcjê uwierzytelniania (grupê funkcjonaln± PAM). 
+		 Funkcje te zebrane s± razem w formie pojedynczego (zwykle ³adowanego
+		 dynamicznie) pliku binarnego, i identyfikowane przez jedn± nazwê.</para>
+	  </glossdef>
+	</glossentry>
+
+	<glossentry>
+	  <glossterm>polityka (policy)</glossterm>
+	  <glossdef>
+	    <para>Skoñczony zestaw deklaracji konfiguracyjnych opisuj±cy, 
+		 jak obs³u¿yæ ¿±dania PAM dla danej us³ugi.
+		 Polityka zwykle sk³ada siê z czterech ³añcuchów, po jednym
+		 dla ka¿dej funkcji PAM, choæ niektóre us³ugi nie u¿ywaj± 
+		 wszystkich czterech funkcji.</para>
+	  </glossdef>
+	</glossentry>
+
+	<glossentry>
+	  <glossterm>serwer</glossterm>
+	  <glossdef>
+	    <para>Aplikacja dzia³aj±ca w imieniu arbitra w 
+		 procesie wymiany informacji z klientem. Pobiera
+		 informacje potrzebne do przeprowadzenia procesu 
+		 uwierzytelnienia, weryfikuje je i obs³uguje (akceptuje lub
+		 odrzuca ¿±dania).</para>
+	  </glossdef>
+	</glossentry>
+
+	<glossentry>
+	  <glossterm>us³uga (service)</glossterm>
+	  <glossdef>
+	    <para>Klasa serwerów dostarczaj±cych podobn± lub powi±zan±
+		 ze sob± funkcjonalno¶æ i wymagaj±ca podobnego uwierzytelnienia.
+		 Polityki PAM definiowane s± dla us³ug, zatem wszystkie
+		 serwery ¿±daj±ce tej samej us³ugi bêd± przedmiotem
+		 tej samej polityki.</para>
+	  </glossdef>
+	</glossentry>
+
+	<glossentry>
+	  <glossterm>sesja</glossterm>
+	  <glossdef>
+	    <para>Kontekst, w jakim us³uga jest dostarczana przez serwer
+		 aplikantowi. Jedna z czterech funkcji PAM, zarz±dzanie 
+		 sesj±, zajmuje siê wy³±cznie ustawianiem i usuwaniem 
+		 tego kontekstu.</para>
+	  </glossdef>
+	</glossentry>
+
+	<glossentry>
+	  <glossterm>¿eton (token)</glossterm>
+	  <glossdef>
+	    <para>Porcja informacji zwi±zana z kontem, jak has³o 
+		 lub fraza (passphrase), któr± aplikant musi dostarczyæ by udowodniæ
+		 swoj± to¿samo¶æ.</para>
+	  </glossdef>
+	</glossentry>
+
+	<glossentry>
+	  <glossterm>transakcja</glossterm>
+	  <glossdef>
+	    <para>Sekwencja ¿±dañ od danego aplikanta
+		 do tej samej instancji danego serwera, rozpoczynaj±ca 
+		 siê uwierzytelnieniem i ustawieniem sesji, i 
+		 koñcz±ca siê jej usuniêciem.</para>
+	  </glossdef>
+	</glossentry>
+      </glosslist>
+    </sect2>
+
+    <sect2 id="pam-usage-examples">
+      <title id="pam-usage-examples.title">Przyk³ady u¿ycia</title>
+
+      <para>Celem tej sekcji jest zilustrowanie znaczenia niektórych 
+		zdefiniowanych powy¿ej terminów gar¶ci± prostych przyk³adów.</para>
+
+      <sect3 id="pam-usage-examples-cs-one">
+	<title>Klient i serwer s± tym samym</title>
+
+	<para>Ten prosty przyk³ad pokazuje, jak <literal>alice</literal>
+	  u¿ywa &man.su.1; by dzia³aæ z prawami <literal>root</literal>a.</para>
+
+	<screen>&prompt.user; <userinput>whoami</userinput>
+alice
+&prompt.user; <userinput>ls -l `which su`</userinput>
+-r-sr-xr-x  1 root  wheel  10744 Dec  6 19:06 /usr/bin/su
+&prompt.user; <userinput>su -</userinput>
+Password: <userinput>xi3kiune</userinput>
+&prompt.root; whoami
+root</screen>
+
+	<itemizedlist>
+	  <listitem>
+	    <para>Aplikantem jest <literal>alice</literal>.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>Kontem jest <literal>root</literal>.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>Proces &man.su.1; jest jenocze¶nie klientem i serwerem.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>Tokenem autentykacji jest 
+	    <literal>xi3kiune</literal>.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>Arbitrem jest <literal>root</literal>, dlatego 
+		 &man.su.1; dzia³a jako setuid <literal>root</literal>.</para>
+	  </listitem>
+	</itemizedlist>
+      </sect3>
+
+      <sect3 id="pam-usage-examples-cs-seperate">
+	<title>Klient i serwer s± oddzielne</title>
+
+	<para>Poni¿szy przyk³ad pokazuje <literal>eve</literal> inicjuj±c±  
+	po³±czenie &man.ssh.1; do <literal>login.example.com</literal> 
+	i próbuj±c± z powodzeniem zalogowaæ siê jako <literal>bob</literal>. 
+	Bob powinien by³ wybraæ lepsze has³o!</para>
+
+	<screen>&prompt.user; <userinput>whoami</userinput>
+eve
+&prompt.user; <userinput>ssh bob@login.example.com</userinput>
+bob@login.example.com's password: <userinput>god</userinput>
+Last login: Thu Oct 11 09:52:57 2001 from 192.168.0.1
+NetBSD 3.0 (LOGIN) #1: Thu Mar 10 18:22:36 WET 2005
+
+Welcome to NetBSD!
+&prompt.user;</screen>
+
+	<itemizedlist>
+	  <listitem>
+	    <para>Aplikantem jest <literal>eve</literal>.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>Klientem jest nale¿±cy do Eve proces &man.ssh.1;.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>Serwerem jest proces &man.sshd.8; na 
+	      <literal>login.example.com</literal></para>
+	  </listitem>
+
+	  <listitem>
+	    <para>Kontem jest <literal>bob</literal>.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>¯etonem uwierzytelniaj±cym jest 
+	    <literal>god</literal>.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>Chocia¿ nie jest to w tym przyk³adzie podkre¶lone, 
+		 arbitrem jest <literal>root</literal>.</para>
+	  </listitem>
+	</itemizedlist>
+      </sect3>
+
+      <sect3 id="pam-usage-examples-policy">
+	<title>Przyk³adowa polityka</title>
+
+	<para>Oto domy¶lna polityka FreeBSD dla 
+	  <literal>sshd</literal>:</para>
+
+	<programlisting>sshd	auth		required	pam_nologin.so	no_warn
+sshd	auth		required	pam_unix.so	no_warn try_first_pass
+sshd	account		required	pam_login_access.so
+sshd	account		required	pam_unix.so
+sshd	session		required	pam_lastlog.so	no_fail
+sshd	password	required	pam_permit.so</programlisting>
+
+	<itemizedlist>
+	  <listitem>
+	    <para>Polityka ta stosowana jest dla us³ugi <literal>sshd</literal>
+	      (co niekoniecznie ogranicza siê do sewera 
+	      &man.sshd.8;.)</para>
+	  </listitem>
+
+	  <listitem>
+	    <para><literal>auth</literal>, <literal>account</literal>,
+	      <literal>session</literal> i 
+	      <literal>password</literal> to funkcje PAM.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para><filename>pam_nologin.so</filename>,
+	      <filename>pam_unix.so</filename>,
+	      <filename>pam_login_access.so</filename>,
+	      <filename>pam_lastlog.so</filename> i
+	      <filename>pam_permit.so</filename> to modu³y. Z przyk³adu 
+			jasno wynika, ¿e 
+	      <filename>pam_unix.so</filename> dostarcza przynajmniej 
+			dwu funkcji (uwierzytelniania i zarz±dzania kontem.)</para>
+	  </listitem>
+        </itemizedlist>
+
+        <para>Miêdzy politykami PAM FreeBSD i NetBSD s± pewne ró¿nice:</para>
+
+        <itemizedlist>
+	  <listitem>
+	    <para>Domy¶lnie, konfiguracja jest przechowywana w  <filename>/etc/pam.d/</filename>.</para>
+            <para>Je¶li konfiguracja na NetBSD nie istnieje, nie bêdzie dostêpu do systemu - w przeciwieñstwie do FreeBSD, którego domy¶ln± polityk± jest
+			uwierzytelnienie.</para>
+          </listitem>
+
+	  <listitem>
+	    <para>Dla uwierzytelnienia, NetBSD wymaga obecno¶ci 
+		 przynajmniej jednego z modu³ów <literal>required</literal>, 
+		 <literal>requisite</literal> lub <literal>binding</literal>.</para>
+	  </listitem>
+	</itemizedlist>
+      </sect3>
+    </sect2>
+
+<!--
+    <section id="pam-conventions">
+      <title id="pam-conventions.title">Conventions</title>
+
+      <para>This section has not yet been written.</para>
+    </section>
+-->
+  </sect1>
+
+  <sect1 id="pam-essentials">
+    <title id="pam-essentials.title">Istota PAM</title>
+
+    <sect2 id="pam-facilities-primitives">
+		<title id="pam-facilities-primitives.title">Funkcje PAM a funkcje elementarne (primitives)</title>
+
+		<para>API PAM opiera siê na sze¶ciu ró¿nych funkcjach elementarnych, 
+			podzielonych na cztery grupy (funkcje PAM) opisane ni¿ej.</para>
+
+      <variablelist>
+	<varlistentry>
+	  <term><literal>auth</literal></term>
+
+	  <listitem>
+		  <para><emphasis>Uwierzytelnianie.</emphasis> Ta funkcja PAM zajmuje siê uwierzytelnieniem aplikanta i ustawieniem danych konta. Pos³uguje siê w tym celu dwiema funkcjami elementarnymi:</para>
+
+	    <itemizedlist>
+	      <listitem>
+		<para>&man.pam.authenticate.3; uwierzytelnia aplikanta, zazwyczaj ¿±daj±c ¿etonu i porównuj±c go z warto¶ci± przechowywan± w bazie danych lub otrzyman± z serwera uwierzytelniaj±cego.</para>
+	      </listitem>
+
+	      <listitem>
+		<para>&man.pam.setcred.3; ustawia dane konta w rodzaju ID u¿ytkownika, przynale¿no¶ci do grup i przydzielonych zasobów.</para>
+	      </listitem>
+	    </itemizedlist>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+		<term><literal>account</literal></term>
+
+	  <listitem>
+		  <para><emphasis>Zarz±dzanie kontem.</emphasis> Ta funkcja PAM 
+		zajmuje siê nie zwi±zanymi z uwierzytelnianiem aspektami dostêpno¶ci konta, 
+		w rodzaju ograniczeñ zale¿nych od pory dnia lub obci±¿enia serwera.
+		Opiera siê na pojedynczej funkcji elementarnej:</para>
+		
+	    <itemizedlist>
+	      <listitem>
+		<para>&man.pam.acct.mgmt.3; weryfikuje, czy ¿±dane konto jest dostêpne.</para>
+	      </listitem>
+	    </itemizedlist>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>session</literal></term>
+
+	  <listitem>
+	    <para><emphasis>Zarz±dzanie sesj±.</emphasis> Ta funkcja PAM
+		spe³nia zadania zwi±zane z ustawianiem i usuwaniem sesji, w tym 
+		np. ksiêgowaniem dostêpu. 
+		Korzysta z dwu funkcji elementarnych:</para>
+
+	    <itemizedlist>
+	      <listitem>
+		<para>&man.pam.open.session.3; wykonuje czynno¶ci zwi±zane 
+		z ustawianiem sesji: dodaje wpis w bazach <filename>utmp</filename> i 
+		  <filename>wtmp</filename>, uruchamia agenta SSH itd.</para>
+	      </listitem>
+
+	      <listitem>
+		<para>&man.pam.close.session.3; wykonuje czynno¶ci zwi±zane z 
+		usuwaniem sesji: dodaje wpis w bazach <filename>utmp</filename> i <filename>wtmp</filename>, zatrzymuje agenta SSH itd.</para>
+	      </listitem>
+	    </itemizedlist>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>password</literal></term>
+
+	  <listitem>
+	    <para><emphasis>Zarz±dzanie has³em.</emphasis> Ta funkcja 
+			odpowiada za zmianê ¿etonu uwierzytelniaj±cego zwi±zanego 
+			z kontem, ze wzglêdu na jego wyga¶niêcie albo na ¿yczenie 
+			u¿ytkownika. Korzysta z jednej funkcji elementarnej:</para>
+
+	    <itemizedlist>
+	      <listitem>
+		<para>&man.pam.chauthtok.3; zmienia ¿eton, opcjonalnie weryfikuj±c czy jest on wystarczaj±co trudny do odgadniêcia, nie by³ wcze¶niej u¿ywany, itp.</para>
+	      </listitem>
+	    </itemizedlist>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+    </sect2>
+
+    <sect2 id="pam-modules">
+      <title id="pam-modules.title">Modu³y</title>
+
+	  <para>Modu³y s± centralnym pojêciem koncepcji PAM; w koñcu 
+		  to one kryj± siê za liter±
+		  <quote>M</quote> w <quote>PAM</quote>.  
+		  Modu³ PAM jest samodzielnym programem, implementuj±cym
+		  funkcje elementarne jednej lub wiêcej funkcji PAM dla jednego konkretnego mechanizmu (dla funkcji uwierzytelniania mog± to byæ na przyk³ad 
+		  uniksowa baza hase³, NIS, LDAP i Radius).</para>
+
+      <sect3 id="pam-module-naming">
+	<title id="pam-module-naming.title">Nazwy modu³ów.</title>
+
+	<para>FreeBSD i NetBSD implementuj± ka¿dy mechanizm 
+		w oddzielnym module o nazwie 
+	  <literal>pam_<replaceable>mechanizm</replaceable>.so</literal>
+	  (np. <literal>pam_unix.so</literal> dla mechanizmu &unix;.)
+	  Inne implementacje czasem dostarczaj± oddzielnych modu³ów dla ró¿nych 
+	  funkcji, do³±czaj±c wtedy nazwê funkcji i mechanizmu
+	  do nazwy modu³u. Przyk³adowo, &solaris; ma 
+	  modu³ <literal>pam_dial_auth.so.1</literal>, który jest 
+	  powszechnie u¿ywany do uwierzytelniania u¿ytkowników 
+	  korzystaj±cych z modemów. Podobnie, prawie ka¿dy modu³ 
+	  ma stronê podrêcznika systemowego man o odpowiedniej
+	  nazwie, np. &man.pam.unix.8; wyja¶nia, w jaki sposób dzia³a modu³ 
+	  <literal>pam_unix.so</literal>.</para>
+      </sect3>
+
+      <sect3 id="pam-module-versioning">
+	<title id="pam-module-versioning.title">Wersjonowanie modu³ów</title>
+
+	<para>FreeBSD w swojej implementacji opartej o Linux-PAM
+		nie uwzglêdnia wersji modu³ów.
+		Mo¿e to powodowaæ k³opoty z aplikacjami linkowanymi 
+		ze starszymi wersjami bibliotek systemowych, poniewa¿ 
+		nie ma sposobu na za³adowanie 
+		odpowiednich dla nich wersji wymaganych modu³ów.</para>
+
+	<para>Z drugiej strony, OpenPAM szuka modu³ów maj±cych
+		ten sam numer wersji co biblioteka PAM (obecnie 2 dla 
+		FreeBSD i 0 dla NetBSD) i siêga do nie-wersjonowanego modu³u, 
+		je¶li nie mo¿e za³adowaæ modu³u w odpowiedniej wersji.
+		Zatem starsze modu³y mog± byæ dostarczane dla starszych aplikacji,
+		podczas gdy nowe (lub nowo zbudowane) aplikacje korzystaj± z
+		modu³ów najnowszych.</para>
+
+	<para>Chocia¿ modu³y PAM Solarisa zwykle maj± numer wersji, to w
+		rzeczywisto¶ci nie s± wersjonowane. Poniewa¿ numer ten jest
+		czê¶ci± nazwy modu³u, musi znale¼æ siê w konfiguracji.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-path">
+	<title id="pam-module-path.title">¦cie¿ki do modu³ów</title>
+
+	<para>Nie ma ogólnie przyjêtego katalogu przeznaczonego do 
+		sk³adowania modu³ów PAM. Na FreeBSD przchowywane s± one 
+	w <filename>/usr/lib/</filename>, a na NetBSD mo¿na je znale¼æ
+	w <filename>/usr/lib/security/</filename>.	</para>
+      </sect3>
+    </sect2>
+
+    <sect2 id="pam-chains-policies">
+      <title id="pam-chains-policies.title">£añcuchy i polityki</title>
+
+	 <para>Kiedy serwer inicjuje transakcjê PAM, biblioteka
+		próbuje za³adowaæ politykê dla us³ugi okre¶lonej w wywo³aniu 
+		&man.pam.start.3;. Polityka okre¶la, w jaki sposób ¿±danie uwierzytelnienia
+		ma byæ obs³u¿one, i jest opisana w pliku konfiguracyjnym.
+		Jest to kolejne istotne za³o¿enie PAM: umo¿liwienie administratorowi
+		dostrajania polityki bezpieczeñstwa systemu 
+		(polityki w szerszym znaczeniu tego s³owa) 
+		poprzez edytowanie prostego pliku tekstowego.</para>
+
+      <para>Polityka sk³ada siê z czterech ³añcuchów, po jednym dla
+		ka¿dej z czterech funkcji PAM. £añcuch z kolei jest sekwencj±
+		deklaracji konfiguracyjnych, z których ka¿da specyfikuje
+		modu³ do wywo³ania, opcjonalne parametry przekazywane do
+		modu³u i flagi kontrolne opisuj±ce sposób interpretacji 
+		zwracanego przez modu³ kodu powrotu.</para>
+
+      <para>Zrozumienie znaczenia poszczególnych flag kontrolnych 
+		  jest kluczowe dla zrozumienia plików konfiguracyjnych PAM. 
+		  Jest kilka ró¿nych flag kontrolnych:</para>
+
+      <variablelist>
+	<varlistentry>
+	  <term><literal>binding</literal></term>
+
+	  <listitem>
+	    <para>Je¶li modu³ zwróci powodzenie i ¿aden z wcze¶niejszych 
+		 modu³ów w ³añcuchu nie odpowiedzia³ niepowodzeniem, 
+		 ³añcuch jest niezw³ocznie koñczony i ¿±danie zostaje spe³nione 
+		 (dostêp zostaje przyznany). 
+		 Je¶li  modu³ zwróci niepowodzenie, wykonywana jest reszta ³añcucha, 
+		 ale w koñcu ¿±danie nie zostaje spe³nione.</para>
+
+	    <para>Ta flaga kontrolna zosta³a wprowadzona w Solarisie 9
+	      (&sunos; 5.9) i jest obs³ugiwana tak¿e przez OpenPAM.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>required</literal></term>
+
+	  <listitem>
+	    <para>Je¶li modu³ zwróci powodzenie, reszta ³añcucha jest 
+		 wykonywana i ¿±danie zostaje spe³nione (dostêp przyznany),
+		 o ile inny modu³ nie odpowiedzia³ niepowodzeniem. 
+		 Je¶li modu³ odpowie negatywnie, reszta ³añcucha jest tak¿e
+		 wykonywana, ale ¿±danie spotyka siê z odmow±.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>requisite</literal></term>
+
+	  <listitem>
+	    <para>Je¶li modu³ pozytywnie obs³u¿y ¿±danie, reszta ³añcucha jest
+		 wykonywana i ¿±danie zostanie spe³nione - o ile ¿aden inny
+		 modu³ nie odmówi³. Je¶li modu³ nie spe³ni ¿±dania, 
+		 ³añcuch jest koñczony niezw³ocznie i ¿±danie spotyka 
+		 siê z odmow±.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>sufficient</literal></term>
+
+	  <listitem>
+	    <para>Je¶li modu³ zwróci powodzenie i ¿aden z wcze¶niejszych
+		 modu³ów w tym ³añcuchu nie odpowiedzia³ negatywnie, ³añcuch 
+		 jest niezw³ocznie koñczony i ¿±danie spe³nione. Je¶li modu³ zwróci
+		 niepowodzenie, zostanie zignorowany i wykonywana jest reszta 
+		 ³añcucha.</para>
+
+	    <para>Poniewa¿ semantyka tej flagi mo¿e byæ myl±ca,
+		 szczególnie dla ostatniego modu³u w ³añcuchu, 
+		 zaleca siê stosowanie zamiast niej flagi 
+		 <literal>binding</literal> - o ile dana implementacja
+		 j± obs³uguje.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>optional</literal></term>
+
+	  <listitem>
+	    <para>Modu³ jest wykonywany, ale rezultat jest
+		 ignorowany. Je¶li wszystkie modu³y w ³añcuchu s±
+		 zdefiniowane jako <literal>optional</literal>, 
+		 wszystkie ¿±dania bêd± zawsze spe³nione.</para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+
+      <para>Kiedy serwer wywo³uje jedn± z sze¶ciu funkcji elementarnych 
+		  (prymitywów), PAM siêga do ³añcucha dla funkcji PAM, do którego 
+		  nale¿y ta funkcja elementarna i wywo³uje ka¿dy z modu³ów w kolejno¶ci, 
+		  w jakiej s± wymienione w ³añcuchu - do momentu, w którym osi±gnie koniec
+		³añcucha lub zdecyduje, ¿e dalsze przetwarzanie jest zbêdne 
+		(poniewa¿ powiod³o siê wykonanie modu³u <literal>binding</literal> 
+		lub <literal>sufficient</literal>, albo nie powiod³o modu³u <literal>requisite</literal>). ¯±danie bêdzie zaakceptowane wtedy i tylko
+		wtedy, gdy przynajmniej jeden modu³ zosta³ wywo³any, i
+		wszystkie nie-opcjonalne modu³y odpowiedzia³y pozytywnie.</para>
+
+      <para>Nale¿y zauwa¿yæ, ¿e jest mo¿liwe (chocia¿ rzadkie)
+		wymienienie tych samych modu³ów kilkakrotnie w tym samym ³añcuchu.
+		Na przyk³ad modu³ wyszukuj±cy nazwê i has³o u¿ytkownika w us³udze katalogowej 
+		mo¿e byæ wywo³ywany wielokrotnie z ró¿nymi parametrami okre¶laj±cymi
+		kolejne serwery. PAM traktuje kolejne wyst±pienia
+		tego samego modu³u w danym ³añcu jakby by³y osobnymi modu³ami.</para>
+    </sect2>
+
+    <sect2 id="pam-transactions">
+      <title id="pam-transactions.title">Transakcje</title>
+
+      <para>Cykl ¿ycia typowej transakcji PAM opisany jest poni¿ej.
+		Nale¿y zauwa¿yæ, ¿e je¶li którykolwiek z tych kroków siê 
+		nie powiedzie, serwer powinien zwróciæ do klienta odpowiedni
+		komunikat b³êdu i przerwaæ transakcjê.</para>
+		
+      <orderedlist>
+	<listitem>
+	  <para>Je¶li to konieczne, serwer uzyskuje uprawnienia arbitra
+		  poprzez mechanizm niezale¿ny od PAM - najczê¶ciej z tytu³u uruchomienia 
+		  jako <literal>root</literal>, albo korzystanie z setuid
+	    <literal>root</literal>.</para>
+	</listitem>
+
+	<listitem>
+	  <para>Serwer wywo³uje &man.pam.start.3; inicjalizuj±c bibliotekê
+	    PAM, podaje nazwê us³ugi i konto i rejestruje odpowiedni± funkcjê
+		konwersacyjn±.</para>
+	</listitem>
+
+	<listitem>
+	  <para>Serwer uzyskuje ró¿ne informacje odnosz±ce siê
+		  do danej transakcji (w rodzaju nazwy u¿ytkownika aplikanta
+		  i nazwy hosta, na którym dzia³a klient) i wysy³a je do PAM
+		  u¿ywaj±c &man.pam.set.item.3;.</para>
+	</listitem>
+
+	<listitem>
+	  <para>Serwer wywo³uje &man.pam.authenticate.3; by
+	    uwierzytelniæ aplikanta.</para>
+	</listitem>
+
+	<listitem>
+	  <para>Serwer wywo³uje &man.pam.acct.mgmt.3; w celu
+		  weryfikacji, czy ¿±dane konto jest dostêpne i wa¿ne.
+		  Je¶li has³o jest poprawne ale wygas³o, &man.pam.acct.mgmt.3; 
+		  zwróci <literal>PAM_NEW_AUTHTOK_REQD</literal> zamiast 
+	    <literal>PAM_SUCCESS</literal>.</para>
+	</listitem>
+
+	<listitem>
+	  <para>Je¶li poprzedni krok zwróci³ 
+	    <literal>PAM_NEW_AUTHTOK_REQD</literal>, serwer wywo³uje
+		&man.pam.chauthtok.3; by wymusiæ na kliencie zmienê ¿etonu
+		uwierzytelniaj±cego dla danego konta.</para>
+	</listitem>
+
+	<listitem>
+	  <para>Teraz, gdy aplikant zosta³ ju¿ poprawnie uwierzytelniony,
+		  serwer wywo³uje &man.pam.setcred.3; by ustawiæ 
+		  uprawnienia danego konta. Jest w stanie to zrobiæ
+		  poniewa¿ dzia³a w imieniu arbitra, z jego uprawnieniami.</para>
+	</listitem>
+
+	<listitem>
+	  <para>Po ustawieniu poprawnych uprawnieñ serwer wywo³uje
+		  &man.pam.open.session.3;, by utworzyæ sesjê.</para>
+	</listitem>
+
+	<listitem>
+	  <para>Nastêpnie serwer wykonuje us³ugê, jakiej za¿±da³
+		  klient - na przyk³ad udostêpnia aplikantowi shell.</para>
+	</listitem>
+
+	<listitem>
+	  <para>Gdy serwer zakoñczy³ dzia³anie dla danego klienta, 
+		  wywo³uje &man.pam.close.session.3; by usun±æ sesjê.</para>
+	</listitem>
+
+	<listitem>
+	  <para>Wreszcie, serwer wywo³uje &man.pam.end.3;, aby
+		  powiadomiæ bibliotekê PAM o zakoñczeniu swojego cyklu 
+		  pracy, a zatem ¿e mo¿e ona zwolniæ zasoby przydzielone
+		  w toku transakcji.</para>
+	</listitem>
+      </orderedlist>
+    </sect2>
+  </sect1>
+
+  <sect1 id="pam-config">
+    <title id="pam-config.title">Konfiguracja PAM</title>
+
+    <sect2 id="pam-config-file">
+      <title id="pam-config-file.title">Pliki polityk</title>
+
+      <sect3 id="pam-config-pam.conf">
+	<title id="pam-config-pam.conf.title">Plik 
+	  <filename>/etc/pam.conf</filename></title>
+
+	<para>Tradycyjnie, plikiem konfiguruj±cym polityki PAM jest
+	  <filename>/etc/pam.conf</filename>.  Plik ten zawiera deklaracje 
+	  wszystkich polityk PAM dla danego systemi. Ka¿da linia
+	  opisuje jeden krok w ³añcuchu, jak ni¿ej:</para>
+
+	<programlisting>login   auth    required        pam_nologin.so  no_warn</programlisting>
+
+	<para>Pola zawieraj± kolejno: nazwê us³ugi, nazwê funkcji, flagê
+		kontroln±, nazwê modu³u i argumenty modu³u. Jakiekolwiek
+		dodatkowe pola interpretowane s± jako dodatkowe parametry 
+		przekazywane do modu³u.</para>
+
+	<para>Dla ka¿dej pary us³uga/funkcja tworzony jest
+		oddzielny ³añcuch, zatem chocia¿ kolejno¶æ w jakiej
+		pojawiaj± siê linie dla tej samej us³ugi i funkcji jest
+		istotna, to kolejno¶æ w jakiej pojawiaj± siê poszczególne
+		us³ugi i funkcje nie ma znaczenia. Przyk³ady z oryginalnej
+		dokumentacji PAM grupowa³y je w odniesieniu do funkcji i 
+		<filename>pam.conf</filename> w Solarisie nadal 
+		tak robi, ale konfiguracja FreeBSD grupuje linie konfiguracji 
+		wg us³ugi. Oba sposoby s± do przyjêcia; oba s± równie 
+		sensowne.</para>
+      </sect3>
+
+      <sect3 id="pam-config-pam.d">
+	<title id="pam-config-pam.d.title">Katalog 
+	  <filename>/etc/pam.d</filename></title>
+
+	<para>OpenPAM i Linux-PAM wspieraj± alternatywny sposób
+		konfiguracji, zalecany w przypadku FreeBSD i NetBSD.
+		Konwencja ta polega na umieszczaniu ka¿dej polityki
+		w oddzielnym pliku o nazwie odpowiadaj±cej nazwie us³ugi,
+		której dotyczy. Pliki te s± sk³adowane w 
+		<filename>/etc/pam.d/</filename>.</para>
+
+	<para>Takie odnosz±ce siê do poszczególnych polityk
+		pliki maj± tylko cztery pola, zamiast piêciu jak w przypadku
+		<filename>pam.conf</filename>; pole z nazw± us³ugi
+		jest pominiête. Zatem, zamiast podanej w poprzedniej sekcji 
+		przyk³adowej linii pochodz±cej z
+		<filename>pam.conf</filename>, w pliku 
+	  <filename>/etc/pam.d/login</filename> mog³aby siê znale¼æ 
+	  nastêpuj±ca:</para>
+
+	<programlisting>auth    required        pam_nologin.so  no_warn</programlisting>
+
+	<para>Konsekwencj± takiego uproszczenia sk³adni jest 
+		mo¿no¶æ u¿ywania tej samej polityki dla wielu us³ug
+		poprzez tworzenie linków od nazw us³ug do tego
+		samego pliku polityki. Na przyk³ad by zastosowaæ tê sam± politykê
+		dla us³ug <literal>su</literal> i <literal>sudo</literal>, mo¿na 
+		post±piæ nastêpuj±co:</para>
+
+	<screen>&prompt.root; <userinput>cd /etc/pam.d</userinput>
+&prompt.root; <userinput>ln -s su sudo</userinput></screen>
+
+	<para>Bêdzie to dzia³aæ, poniewa¿ nazwa us³ugi okre¶lana
+		jest na podstawie nazwy pliku a nie zawarta w jego 
+		tre¶ci. Zatem ten sam plik mo¿e byæ wykorzystywany dla
+		wielu ró¿nie nazwanych us³ug.</para>
+
+	<para>Poniewa¿ polityka ka¿dej us³ugi przechowywana jest 
+		w oddzielnym pliku, konwencja <filename>pam.d</filename> 
+		u³atwia tak¿e instalowanie dodatkowych polityk dla 
+		pochodz±cego z zewn±trz oprogramowania.</para>
+      </sect3>
+
+      <sect3 id="pam-config-file-order">
+	<title id="pam-config-file-order.title">Kolejno¶æ wyszukiwania polityk</title>
+	
+	<para>Jak wykazano wy¿ej, polityki PAM mog± byæ sk³adowane w kilku
+		lokalizacjach. Je¶li dla konkretnej us³ugi nie znaleziono pliku
+		konfiguracyjnego, zostanie u¿yty <filename>/etc/pam.d/other</filename>.
+	  Je¶li i ten plik nie istnieje, przeszukiwny jest <filename>/etc/pam.conf</filename> 
+	  pod k±tem wpisów odpowiadaj±cych danej us³udze, i je¶li i to siê
+	  nie powiedzie, pod k±tem us³ugi "other".</para>
+
+	<para>Kluczow± spraw± jest rozumienie, ¿e konfiguracja PAM zorientowana jest na ³añcuchy.<!-- XXX --></para>
+      </sect3>
+    </sect2>
+
+    <sect2 id="pam-config-breakdown">
+      <title id="pam-config-breakdown.title">Analiza pojedynczej linii konfiguracji</title>
+
+      <para>Jak wyja¶niono w czê¶ci <link linkend="pam-config-file"
+	endterm="pam-config-file.title"></link>, ka¿da linia w pliku
+	<filename>/etc/pam.conf</filename> sk³ada siê z czterech
+	lub wiêcej pól: nazwy us³ugi, nazwy funkcji PAM, flagi kontrolnej, nazwy modu³u i - opcjonalnie - argumentów modu³u.</para>
+
+      <para>Nazwa us³ugi jest na ogó³ nazw± aplikacji, do której odnosi 
+		  siê dana deklaracja. W razie w±tpliwo¶ci nale¿y siêgn±æ do
+		  dokumentacji i okre¶liæ, jakiej nazwy us³ugi u¿ywa dana aplikacja.</para>
+
+      <para>Nale¿y pamiêtaæ, ¿e w wypadku korzystania z
+		  <filename>/etc/pam.d/</filename> zamiast 
+		  <filename>/etc/pam.conf</filename> nazwa us³ugi okre¶lana
+		  jest poprzez nazwê pliku z polityk±, a pomijana w jego wierszach; zatem
+		  rozpoczynaj± siê one od nazwy funkcji.</para>
+
+      <para>Funkcja jest jednym z czterech mo¿liwych s³ów 
+		  kluczowych opisanych w czê¶ci <link linkend="pam-facilities-primitives"
+	endterm="pam-facilities-primitives.title"></link>.</para>
+
+	  <para>Podobnie, flaga kontrolna to jedno ze s³ów kluczowych
+	obja¶nionych w czê¶ci <link linkend="pam-chains-policies"
+	endterm="pam-chains-policies.title"></link>. Flaga ta okre¶la
+	sposób interpretacji zwróconego przez modu³ kodu powrotu.
+	Linux-PAM obs³uguje alternatywn± sk³adniê pozwalaj±c±
+	na skojarzenie jakiej¶ akcji z ka¿dym mo¿liwym kodem powrotu,
+	ale nale¿y jej unikaæ jako podej¶cia niestandardowego i 
+	¶ci¶le zwi±zanego ze sposobem rozprowadzania (dispatch) 
+	wywo³añ us³ug diametralnie ró¿nym od sposobu, 
+	w jaki robi to &solaris; i OpenPAM.
+	Nie powinna byæ niespodziank± informacja, ¿e OpenPAM 
+	nie obs³uguje tej sk³adni.</para>
+    </sect2>
+
+    <sect2 id="pam-policies">
+      <title id="pam-policies.title">Polityki</title>
+
+      <para>Aby poprawnie skonfigurowaæ PAM przede wszystkim nale¿y rozumieæ
+		  sposób, w jaki polityki s± interpretowane.</para>
+
+      <para>Gdy aplikacja wywo³uje &man.pam.start.3;, biblioteka
+	PAM ³aduje politykê dla wyspecyfikowanej us³ugi i tworzy
+	cztery ³añcuchy modu³ów, po jednym dla ka¿dej funkcji PAM.
+	Je¶li jeden lub wiêcej ³añcuchów jest pustych, podstawiany jest
+	za niego ³añcuch dla us³ugi <literal>other</literal>.</para>
+
+      <para>Kiedy nastêpnie aplikacja wywo³uje jedn± z 
+		  sze¶ciu funkcji elementarnych, biblioteka pobiera
+		  ³añcuch dla odpowiadaj±cej jej funkcji PAM i wywo³uje 
+		  odpowiadaj±ce danej us³udze funkcje ka¿dego z 
+		  wymienionych w ³añcuchu modu³ów, w kolejno¶ci
+		  w jakiej modu³y te zosta³y wymienione w konfiguracji. 
+		  Po ka¿dym wywo³aniu funkcji, zwracany przez
+		  ni± typ modu³u i kod b³êdu s± u¿ywane do podjêcia
+		  decyzji, co ma nast±piæ. Poza kilkoma opisanymi ni¿ej
+		  wyj±tkami, obowi±zuj± zasady zebrane w tabeli:</para>
+
+	  
+      <table id="tab-pam-chain">
+	<title>Wykonanie ³añcucha PAM</title>
+
+	<tgroup cols="4">
+	  <colspec colwidth="1*" colname="type" />
+	  <colspec colwidth="1*" colname="success" />
+	  <colspec colwidth="1*" colname="ignore" />
+	  <colspec colwidth="1*" colname="other" />
+
+	  <thead>
+	    <row>
+	      <entry colname="type"></entry>
+	      <entry colname="success"><literal>PAM_SUCCESS</literal></entry>
+	      <entry colname="ignore"><literal>PAM_IGNORE</literal></entry>
+	      <entry colname="other"><literal>other</literal></entry>
+	   </row>
+	  </thead>
+
+	  <tbody>
+	    <row>
+	      <entry colname="type">binding</entry>
+	      <entry colname="success">if (!fail) break;</entry>
+	      <entry colname="ignore">-</entry>
+	      <entry colname="other">fail = true;</entry>
+	    </row>
+	    <row>
+	      <entry colname="type">required</entry>
+	      <entry colname="success">-</entry>
+	      <entry colname="ignore">-</entry>
+	      <entry colname="other">fail = true;</entry>
+	    </row>
+	    <row>
+	      <entry colname="type">requisite</entry>
+	      <entry colname="success">-</entry>
+	      <entry colname="ignore">-</entry>
+	      <entry colname="other">fail = true; break;</entry>
+	    </row>
+	    <row>
+	      <entry colname="type">sufficient</entry>
+	      <entry colname="success">if (!fail) break;</entry>
+	      <entry colname="ignore">-</entry>
+	      <entry colname="other">-</entry>
+	    </row>
+	    <row>
+	      <entry colname="type">optional</entry>
+	      <entry colname="success">-</entry>
+	      <entry colname="ignore">-</entry>
+	      <entry colname="other">-</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+
+      <para>Je¶li <varname>fail</varname> ma warto¶æ true na koñcu ³añcucha,
+	lub osi±gniêty jest <quote>break</quote>, dispatcher 
+	zwraca kod b³êdu z pierwszego modu³u, którego wykonanie 
+	zakoñczy³o siê odpowiedzi± negatywn± (failed).
+	W przeciwnym wypadku zwraca <literal>PAM_SUCCESS</literal>.</para>
+
+      <para>Pierwszym istotnym wyj±tkiem jest traktowanie kodu b³êdu 
+	<literal>PAM_NEW_AUTHTOK_REQD</literal> jako powodzenia, 
+	z wyj±tkiem: je¶li ¿aden modu³ nie zwróci³ niepowodzenia (failed) 
+	i przynajmniej jeden modu³ zwróci³
+	<literal>PAM_NEW_AUTHTOK_REQD</literal>, dispatcher zwróci 
+	<literal>PAM_NEW_AUTHTOK_REQD</literal>.</para>
+
+      <para>Drugim wyj±tkiem jest traktowanie modu³ów
+	<literal>binding</literal> i 
+	<literal>sufficient</literal> przez &man.pam.setcred.3;
+	jakby by³y <literal>required</literal>.</para>
+
+      <para>Trzecim i ostatnim wyj±tkiem jest uruchamianie przez 
+	&man.pam.chauthtok.3; ka¿dego ³añcucha dwukrotnie, pierwszy raz
+	w celu wstêpnego sprawdzenia, i drugi raz by rzeczywi¶cie ustawiæ
+	has³o. Przy pierwszym przebiegu modu³y 
+	<literal>binding</literal> i 
+	<literal>sufficient</literal> traktowane s± jako 
+	<literal>required</literal>.</para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="pam-modules-desc">
+    <title>Modu³y PAM</title>
+
+    <sect2 id="pam-modules-common">
+      <title>Popularne modu³y</title>
+
+      <sect3 id="pam-modules-deny">
+        <title id="pam-modules-deny.title">&man.pam.deny.8;</title>
+
+        <para>Modu³ &man.pam.deny.8; jest jednym z najprostszych dostêpnych
+			modu³ów; odpowiada na ka¿de ¿±danie 
+	  <literal>PAM_AUTH_ERR</literal> i przydaje siê do szybkiego
+	  wy³±czenia us³ugi (nale¿y go dodaæ na pocz±tku ka¿dego ³añcucha), 
+	  lub do koñczenia ³añcuchów zawieraj±cych modu³y <literal>sufficient</literal>.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-echo">
+        <title id="pam-modules-echo.title">&man.pam.echo.8;</title>
+
+        <para>Modu³ &man.pam.echo.8; po prostu przekazuje swoje argumenty
+			do funkcji konwersacyjnej jako <literal>PAM_TEXT_INFO</literal>. 
+			Najczê¶ciej u¿ywany jest do debugowania, ale mo¿e tak¿e znale¼æ
+			zastosowanie przy wy¶wietlaniu wiadomo¶ci w rodzaju 
+	  <quote>Unauthorized access will be prosecuted (Nieatoryzowany dostêp 
+		  poci±gnie za sob± konsekwencje przewidziane prawem)</quote> zanim
+	  rozpocznie siê procedura uwierzytelniania.</para>
+       </sect3>
+
+      <sect3 id="pam-modules-exec">
+        <title id="pam-modules-exec.title">&man.pam.exec.8;</title>
+
+        <para>Modu³ &man.pam.exec.8; traktuje swój pierwszy argument
+			jako nazwê programu do wykonania, a pozosta³e argumenty s± 
+			do tego¿ programu przekazywane jako argumenty linii komend.
+			Jednym z mo¿liwych zastosowañ jest uruchamianie programu
+			mountuj±cego w momencie logowania siê katalogu domowego u¿ytkownika.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-ftpusers">
+        <title id="pam-modules-ftpusers.title">&man.pam.ftpusers.8;</title>
+
+        <para>Modu³ &man.pam.ftpusers.8; przyznaje dostêp wtedy i tylko wtedy,
+			gdy u¿ytkownik jest wymieniony w <filename>/etc/ftpusers</filename>.
+			Obecnie w NetBSD modu³ ten nie akceptuje rozszerzonej sk³adni
+	&man.ftpd.8;, ale bêdzie to w przysz³o¶ci poprawione.
+	</para>
+      </sect3>
+
+      <sect3 id="pam-modules-group">
+        <title id="pam-modules-group.title">&man.pam.group.8;</title>
+
+        <para>Modu³ &man.pam.group.8; akceptuje lub odrzuca aplikanta 
+			na podstawie jego przynale¿no¶ci do konkretnej 
+			grupy (zwykle <literal>wheel</literal> dla &man.su.1;). 
+			Pierwotnie pomy¶lany by³ jako sposób na utrzymanie
+			tradycyjnego w BSD zachowania &man.su.1;, ale ma wiele
+			innych zastosowañ, jak na przyk³ad wy³±czenie pewnych grup 
+			u¿ytkowników z u¿ycia konkretnej us³ugi.</para>
+
+	  <para>W NetBSD istnieje argument o nazwie 
+	  <literal>authenticate</literal>, dziêki któremu u¿ytkownik 
+	  proszony jest o uwierzytelnienie siê przy u¿yciu swojego w³asnego 
+	  has³a.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-guest">
+        <title id="pam-modules-guest.title">&man.pam.guest.8;</title>
+
+        <para>Modu³ &man.pam.guest.8; pozwala na logowanie siê
+			na ogólnodostêpne konta przy u¿yciu okre¶lonych nazw u¿ytkownika.
+			Na has³o mog± byæ nak³adane ró¿norodne ograniczenia, 
+			ale domy¶lnym zachowaniem jest akceptacja dowolnego
+			has³a o ile nazwa u¿ytkownika odpowiada ogólnodostêpnemu kontu.
+			Modu³ &man.pam.guest.8; mo¿e byæ ³atwo zastosowany do
+			zaimplementowania anonimowego FTP.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-krb5">
+        <title id="pam-modules-krb5.title">&man.pam.krb5.8;</title>
+
+        <para>Modu³ &man.pam.krb5.8; dostarcza funkcji weryfikuj±cych
+			to¿samo¶æ u¿ytkownika i ustawiaj±cych specyficzne uprawnienia
+			przy u¿yciu Kerberos 5. Pyta u¿ytkownika o has³o i uzyskuje 
+			nowy TGT. TGT jest weryfikowany poprzez uzyskanie ticketu 
+			us³ugi dla lokalnego hosta. Nowo uzyskane
+			uprawnienia przechowywane s± w cache uprawnieñ i zmienna
+			¶rodowiska KRB5CCNAME jest odpowiednio ustawiana.
+			Cache uprawnieñ powinno byæ opró¿nione przez u¿ytkownika
+			na koñcu sesji poprzez &man.kdestroy.1;.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-ksu">
+        <title id="pam-modules-ksu.title">&man.pam.ksu.8;</title>
+
+        <para>Modu³ &man.pam.ksu.8; dostarcza jedynie us³ugi 
+			uwierzytelniaj±cej dla Kerberos 5 by okre¶liæ, czy aplikant 
+			jest autoryzowany do uzyskania uprawnieñ do 
+			docelowego konta.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-lastlog">
+        <title id="pam-modules-lastlog.title">&man.pam.lastlog.8;</title>
+
+        <para>Modu³ &man.pam.lastlog.8; dostarcza jedynie us³ug
+		zwi±zanych z zarz±dzaniem sesj±. Zapisuje informacje w bazach
+		&man.utmp.5;, &man.utmpx.5;, &man.wtmp.5;, &man.wtmpx.5;, &man.lastlog.5;
+	  i &man.lastlogx.5;.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-login-access">
+        <title id="pam-modules-login-access.title">&man.pam.login.access.8;</title>
+
+        <para>Modu³ &man.pam.login.access.8; implementuje elementarne
+			funkcje zarz±dzania kontem, wymuszaj±ce ograniczenia narzucone 
+			w tablicy &man.login.access.5;.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-nologin">
+        <title id="pam-modules-nologin.title">&man.pam.nologin.8;</title>
+
+        <para>Modu³ &man.pam.nologin.8; uniemo¿liwia logowanie siê
+			na konta inne ni¿ root gdy istnieje 
+			<filename>/var/run/nologin</filename>. Ten plik jest zwykle 
+			tworzony przez &man.shutdown.8; gdy do zamkniêcia systemu
+			pozosta³o mniej ni¿ piêæ minut.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-permit">
+        <title id="pam-modules-permit.title">&man.pam.permit.8;</title>
+
+        <para>Modu³ &man.pam.permit.8; jest jednym z najprostszych dostêpnych
+			modu³ów; na ka¿de zapytanie odpowiada <literal>PAM_SUCCESS</literal>.
+			Jest u¿yteczny dla us³ug, dla których w przeciwnym wypadku
+			jeden lub wiêcej ³añcuchów by³oby pustych.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-radius">
+        <title id="pam-modules-radius.title">&man.pam.radius.8;</title>
+
+        <para>Modu³ &man.pam.radius.8; dostarcza us³ug uwierzytelniaj±cych
+			opartych o protokó³ RADIUS (Remote Authentication Dial In
+	  User Service).</para>
+      </sect3>
+
+      <sect3 id="pam-modules-rhosts">
+        <title id="pam-modules-rhosts.title">&man.pam.rhosts.8;</title>
+
+        <para>Modu³ &man.pam.rhosts.8; dostarcza jedynie us³ug
+			uwierzytelniaj±cych. Jego wywo³anie zakoñczy siê
+			powodzeniem (success) wtedy i tylko wtedy,
+			gdy docelowy identyfikator u¿ytkownika nie jest równy 0
+			i zdalny host i u¿ytkownik jest wymieniony w 
+			<filename>/etc/hosts.equiv</filename> lub w
+			<filename>~/.rhosts</filename> docelowego u¿ytkownika.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-rootok">
+        <title id="pam-modules-rootok.title">&man.pam.rootok.8;</title>
+
+	<para>Modu³ &man.pam.rootok.8; raportuje powodzenie wtedy i
+		tylko wtedy, gdy rzeczywisty identyfikator u¿ytkownika wywo³uj±cego
+		go procesu (zak³ada siê, ¿e jest on uruchamiany przez aplikanta) jest
+		równy 0. Jest to przydatne dla nie-sieciowych us³ug w rodzaju
+		&man.su.1; lub &man.passwd.1;, do których <literal>root</literal>
+		powinien mieæ z za³o¿enia dostêp.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-securetty">
+        <title id="pam-modules-securetty.title">&man.pam.securetty.8;</title>
+
+        <para>Modu³ &man.pam.securetty.8; dostarcza jedynie us³ug
+			zwi±zanych z kontem. Stosowany jest gdy aplikant próbuje 
+			uwierzytelniæ siê jako superuser, a proces przypisany jest
+			do insecure TTY.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-self">
+        <title id="pam-modules-self.title">&man.pam.self.8;</title>
+
+        <para>Modu³ &man.pam.self.8; raportuje powodzenie wtedy
+			i tylko wtedy, gdy nazwa aplikanta odpowiada nazwie 
+			docelowego konta. Najbardziej u¿yteczny jest w przypadku
+			nie-sieciowych us³ug w rodzaju &man.su.1;, gdy to¿samo¶æ
+			aplikanta mo¿e byæ ³atwo zweryfikowana.</para>
+      </sect3>
+
+      <sect3 id="pam-modules-ssh">
+        <title id="pam-modules-ssh.title">&man.pam.ssh.8;</title>
+
+        <para>Modu³ &man.pam.ssh.8; dostarcza dwóch rodzajów us³ug:
+			uwierzytelniania i sesji. Us³uga uwierzytelniania pozwala 
+			u¿ytkownikom korzystaj±cym z zabezpieczonych fraz± 
+			kluczy SSH przechowywanych w katalogu 
+			<filename>~/.ssh</filename> na uwierzytelnienie 
+			poprzez podanie frazy (passphrase).  Us³uga zwi±zana z sesj±
+			uruchamia &man.ssh-agent.1; i dostarcza mu odkodowanych 
+			w fazie uwierzytelniania kluczy. W³a¶ciwo¶æ ta jest
+			szczególnie przydatna w wypadku lokalnego logowania siê
+			w przypadku X (przy u¿yciu &man.xdm.1; lub innego wspieraj±cego
+			PAM login managera X) lub na konsoli.</para>
+
+	<para>Modu³ ten implementuje zasadniczo schemat
+		uwierzytelniania przy u¿yciu has³a. Nale¿y zwróciæ
+		uwagê na u¿ywanie tego modu³u jedynie dla bezpiecznych 
+		sesji (secure TTY, kodowane po³±czenie, itd.) - w przeciwnym
+		wypadku fraza zabezpieczaj±ca klucze SSH u¿ytkownika 
+		mo¿e zostaæ ujawniona.</para>
+
+	<para>Nale¿y zachowaæ czujno¶æ w przypadku u¿ywania
+		&man.pam.ssh.8;. U¿ytkownicy czêsto zak³adaj±, ¿e ustawienie 
+		restrykcyjnych uprawnieñ do pliku wystarcza do chronienia 
+		kluczy SSH, i u¿ywaj± s³abych fraz (lub nie u¿ywaj± ich w ogóle). 
+		Poniewa¿ administrator nie ma skutecznych ¶rodków wymuszenia 
+		odpowiedniej jako¶ci stosowanych fraz, potencjalnie
+		wystawiaj± system na ryzyko.</para>
+       </sect3>
+
+      <sect3 id="pam-modules-unix">
+        <title id="pam-modules-unix.title">&man.pam.unix.8;</title>
+
+        <para>Modu³ &man.pam.unix.8; implmentuje tradycyjne &unix;owe
+			uwierzytelnianie has³em, wykorzystuj±c &man.getpwnam.3; na 
+			FreeBSD lub &man.getpwnam.r.3; na NetBSD w celu uzyskania
+			has³a docelowego konta i porównania go z dostarczonym przez
+			aplikanta. Modu³ ten dostarcza równie¿ us³ug zarz±dzania kontem
+			(wymusza czas wyga¶niêcia konta i has³a) i us³ugi zmiany has³a. 
+			Jest to prawdopodobnie najbardziej u¿yteczny pojedynczy modu³,
+			jako ¿e wiêkszo¶æ administratorów bêdzie chcia³o utrzymaæ
+			tradycyjne zachowanie przynajmniej dla niektórych us³ug.</para>
+      </sect3>
+    </sect2>
+
+    <sect2 id="pam-freebsd-modules">
+      <title id="pam-freebsd-modules.title">Modu³y PAM charakterystyczne dla FreeBSD</title>
+      <sect3 id="pam-freebsd-modules-opie">
+        <title id="pam-modules-opie.title">&man.pam.opie.8;</title>
+
+        <para>Modu³ &man.pam.opie.8; implementuje system
+			uwierzytelniania &man.opie.4;. System &man.opie.4; 
+			jest mechanizmem wyzwanie-odpowied¼ (challenge-response), w którym
+			odpowiedzi± na ka¿de wyzwanie jest wynik funkcji wyzwania i frazy,
+			zatem odpowied¼ mo¿e byæ natychmiast obliczona je¶li fraza jest znana;
+			eliminuje to potrzebê posiadania listy hase³. Ponadto &man.opie.4; 
+		  nigdy nie u¿ywa powtórnie wyzwania, na które udzielona ju¿ 
+		  zosta³a poprawna odpowied¼, zatem nie jest podatne na ataki typu 
+		  odtwarzania (replay attacks).</para>
+      </sect3>
+
+      <sect3 id="pam-freebsd-opieaccess">
+        <title id="pam-modules-opieaccess.title">&man.pam.opieaccess.8;</title>
+
+        <para>Modu³ &man.pam.opieaccess.8; jest stowarzyszony z 
+          &man.pam.opie.8;.  Jego przeznaczeniem jest wymuszenie
+		  przestrzegania ograniczeñ skodyfikowanych w 
+		  &man.opieaccess.5;. Okre¶laj± one warunki, w jakich u¿ytkownik
+		  który normalnie uwierzytelnia³by siê przez &man.opie.4; mo¿e
+		  u¿yæ metod alternatywnych. Najczê¶ciej jest to u¿ywane by unikn±æ
+		  stosowania uwierzytelniania has³em w wypadku nie zaufanymi 
+		  hostami (untrusted hosts).</para>
+
+        <para>Aby zapewniæ efektywno¶æ, modu³ &man.pam.opieaccess.8;
+			musi byæ wymieniony jako <literal>requisite</literal>
+			bezpo¶rednio po wpisie <literal>sufficient</literal> dla 
+          &man.pam.opie.8; i przed jakimkolwiek innym modu³em, 
+		  w ³añcuchu <literal>auth</literal>.</para>
+      </sect3>
+
+      <sect3 id="pam-freebsd-passwdqc">
+        <title id="pam-modules-passwdqc.title">&man.pam.passwdqc.8;</title>
+
+        <para>&man.pam.passwdqc.8; jest po prostu modu³em sprawdzaj±cym 
+			si³ê has³a. Dodatkowo oferuje wsparcie dla fraz, mo¿e te¿ generowaæ
+			przypadkowe has³a.</para>
+      </sect3>
+
+      <sect3 id="pam-freebsd-tacplus">
+        <title id="pam-modules-tacplus.title">&man.pam.tacplus.8;</title>
+
+        <para>Modu³ &man.pam.tacplus.8; dostarcza us³ug uwierzytelniaj±cych
+			opartych na protokole TACACS+.</para>
+      </sect3>
+    </sect2>
+
+    <sect2 id="pam-netbsd-modules">
+      <title>Modu³y PAM charakterystyczne dla NetBSD</title>
+
+      <sect3 id="pam-modules-skey">
+        <title id="pam-modules-skey.title">&man.pam.skey.8;</title>
+
+	<para>Modu³ &man.pam.skey.8; implementuje metody uwierzytelniania przy u¿yciu jednorazowych hase³ (S/Key One Time Password - OTP), wykorzystuj±c bazê 
+	  <filename>/etc/skeykeys</filename>.</para>
+      </sect3>
+    </sect2>
+  </sect1>
+
+  <sect1 id="pam-appl-prog">
+    <title id="pam-appl-prog.title">Programowanie aplikacji PAM</title>
+
+    <para><!--XXX-->Ten rozdzia³ nie zosta³ jeszcze napisany.</para>
+
+    <!--
+
+      Note that while the original PAM paper includes a sample PAM
+      application that calls pam_open_session() before pam_setcred(),
+      the Linux-PAM documentation states that pam_setcred() must be
+      called first, which makes more sense.
+
+      Also note that the example in the paper calls setgid(),
+      initgroups() and setuid() itself rather than rely on
+      pam_setcred() to do it.
+
+      -->
+
+  </sect1>
+
+  <sect1 id="pam-module-prog">
+    <title id="pam-module-prog.title">Programowanie modu³u PAM</title>
+
+	<para><!--XXX-->Ten rozdzia³ nie zosta³ jeszcze napisany.</para>
+  </sect1>
+
+  <sect1 id="pam-sample-appl">
+    <title id="pam-sample-appl.title">Przyk³ad aplikacji PAM</title>
+
+    <para>Poni¿ej przedstawiono minimalistyczn± implementacjê
+	&man.su.1; przy u¿yciu PAM. Warte odnotowania jest, ¿e 
+	u¿ywa ona specyficznej dla OpenPAM funkcji konwersacyjnej
+      &man.openpam.ttyconv.3; prototypowanej w 
+      <filename class="headerfile">security/openpam.h</filename>.
+	  Chc±c zbudowaæ tê aplikacjê na systemie z inn± bibliotek± PAM
+	  nale¿y dostarczyæ w³asn± funkcjê konwersacyjn±. Jednak 
+	  wydajna funkcja tego rodzaju jest niespodziewanie trudna w 
+	  implementacji; ta zaprezentowana w podrozdziale 
+      <link linkend="pam-sample-conv"
+	endterm="pam-sample-conv.title"></link> jest dobrym punktem 
+	  wyj¶ciowym, ale nie powinna byæ u¿ywana w rzeczywistych 
+	  aplikacjach.</para>
+
+<![ %sgml.includes; [
+    <programlisting><inlinemediaobject><imageobject><imagedata
+	    fileref="pam_app.c"
+	    format="linespecific"></imagedata></imageobject></inlinemediaobject></programlisting>
+]]>
+<![ %xml.includes; [
+    <programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+	href="pam_app.c" parse="text" /></programlisting>
+]]>
+  </sect1>
+
+  <sect1 id="pam-sample-module">
+    <title id="pam-sample-module.title">Przyk³ad modu³u PAM</title>
+
+    <para>Poni¿ej przedstawiono minimalistyczn± implementacjê
+      &man.pam.unix.8;, dostarczaj±c± jedynie us³ug uwierzytelniaj±cych.
+	  Powinna siê budowaæ i dzia³aæ z wiêkszo¶ci± implementacji PAM, ale
+	  korzysta tak¿e z rozszerzeñ OpenPAM je¶li s± dostêpne. Warto zwróciæ
+	  uwagê na zastosowanie &man.pam.get.authtok.3;, znakomicie upraszczaj±ce
+	  pobieranie has³a od u¿ytkownika.</para>
+
+<![ %sgml.includes; [
+    <programlisting><inlinemediaobject><imageobject><imagedata
+	    fileref="pam_module.c"
+	    format="linespecific"></imagedata></imageobject></inlinemediaobject></programlisting>
+]]>
+<![ %xml.includes; [
+    <programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+	href="pam_module.c" parse="text" /></programlisting>
+]]>
+  </sect1>
+
+  <sect1 id="pam-sample-conv">
+    <title id="pam-sample-conv.title">Przyk³adowa funkcja konwersacyjna PAM</title>
+
+    <para>Funkcja konwersacyjna prezentowana poni¿ej
+		jest znacznie uproszczon± wersj± &man.openpam.ttyconv.3;
+		pochodz±cej z OpenPAM. Jest w pe³ni funkcjonalna i powinna
+		daæ czytelnikowi dobre pojêcie o tym, jak powinna zachowywaæ siê
+		funkcja tego rodzaju; niemniej jednak jest zbyt uproszczona
+		by stosowaæ j± w rzeczywistych aplikacjach. Nawet w wypadku
+		niestosowania OpenPAM, warto zdobyæ kod ¼ród³owy i dostosowaæ
+		&man.openpam.ttyconv.3; do swoich potrzeb; mamy nadziejê ¿e
+		jest tak wydajna, jak to mo¿liwe w przypadku zorientowanej na terminal
+		(tty-oriented) funkcji konwersacyjnej.</para>
+
+<![ %sgml.includes; [
+    <programlisting><inlinemediaobject><imageobject><imagedata
+	    fileref="pam_conv.c"
+	    format="linespecific"></imagedata></imageobject></inlinemediaobject></programlisting>
+]]>
+<![ %xml.includes; [
+    <programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+	href="pam_conv.c" parse="text" /></programlisting>
+]]>
+  </sect1>
+
+<!-- This should NOT be moved anywhere else to keep the document in
+     sync with FreeBSD -->
+  <sect1 id="pam-further">
+    <title id="pam-further.title">Dalsze lektury</title>
+
+    <!-- This empty paragraph is an hack to allow compatibility
+    with FreeBSD documentation. <sect1> doesn't accept only the
+    <bibliography> sub-element, so we need to add <para>. -->
+    <para></para>
+    <bibliography>
+
+<!--
+    <abstract>
+      <para>This is a list of documents relevant to PAM and related
+	issues.  It is by no means complete.</para>
+    </abstract>
+-->
+      <bibliodiv>
+	<title>Dokumentacja</title>
+
+	<biblioentry>
+	  <title><ulink
+	      url="http://www.sun.com/software/solaris/pam/pam.external.pdf">
+	      Making Login Services Independent of Authentication
+	      Technologies</ulink></title>
+	  <authorgroup>
+	    <author>
+	      <surname>Samar</surname>
+	      <firstname>Vipin</firstname>
+	    </author>
+
+	    <author>
+	      <surname>Lai</surname>
+	      <firstname>Charlie</firstname>
+	    </author>
+	  </authorgroup>
+	  <orgname>Sun Microsystems</orgname>
+	</biblioentry>
+
+	<biblioentry>
+	  <title><ulink
+	      url="http://www.opengroup.org/pubs/catalog/p702.htm">X/Open
+	      Single Sign-on Preliminary Specification</ulink></title>
+	  <orgname>The Open Group</orgname>
+	  <isbn>1-85912-144-6</isbn>
+	  <pubdate>June 1997</pubdate>
+	</biblioentry>
+
+	<biblioentry>
+	  <title><ulink
+	      url="http://www.kernel.org/pub/linux/libs/pam/pre/doc/current-draft.txt">
+	      Pluggable Authentication Modules</ulink></title>
+	  <author>
+	    <surname>Morgan</surname>
+	    <firstname>Andrew</firstname>
+	    <othername role="mi">G.</othername>
+	  </author>
+	  <pubdate>October 6, 1999</pubdate>
+	</biblioentry>
+      </bibliodiv>
+
+      <bibliodiv>
+	<title>Podrêczniki u¿ytkownika</title>
+
+	<biblioentry>
+	  <title><ulink
+	      url="http://www.sun.com/software/solaris/pam/pam.admin.pdf">PAM
+	      Administration</ulink></title>
+	  <orgname>Sun Microsystems</orgname>
+	</biblioentry>
+      </bibliodiv>
+
+      <bibliodiv>
+	<title>Strony www</title>
+
+	<biblioentry>
+	  <title><ulink url="http://openpam.sourceforge.net/">OpenPAM homepage</ulink></title>
+
+	  <author>
+	    <surname>Sm&oslash;rgrav</surname>
+	    <firstname>Dag-Erling</firstname>
+	  </author>
+	  <orgname>ThinkSec AS</orgname>
+	</biblioentry>
+
+	<biblioentry>
+	  <title><ulink url="http://www.kernel.org/pub/linux/libs/pam/">Linux-PAM homepage</ulink></title>
+
+	  <author>
+	    <surname>Morgan</surname>
+	    <firstname>Andrew</firstname>
+	    <othername role="mi">G.</othername>
+	  </author>
+	</biblioentry>
+
+	<biblioentry>
+	  <title><ulink url="http://wwws.sun.com/software/solaris/pam/">Solaris PAM homepage</ulink></title>
+
+	  <orgname>Sun Microsystems</orgname>
+	</biblioentry>
+      </bibliodiv>
+    </bibliography>
+  </sect1>
+</chapter>
+
+<!--
+	TODO:
+		* An example should be written for session management
+		that shows that in order to restore the previous credentials one
+		needs to fork and wait.
+-->

@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//NetBSD//DTD DocBook XML V4.2-Based DocBook Extension//EN" [
+<!ENTITY % man-refs.ent PUBLIC "-//NetBSD//ENTITIES NetBSD Manual Page Entities//EN">
+%man-refs.ent;
+<!ENTITY % misc.ent PUBLIC "-//NetBSD//ENTITIES NetBSD Miscellaneous Entities//EN">
+%misc.ent;
+<!ENTITY % chapters.ent SYSTEM "chapters.ent">
+%chapters.ent;
+
+<!ENTITY imagesdir "../images">
+
+<!ENTITY % sgml.includes "IGNORE">
+<!ENTITY % xml.includes "IGNORE">
+]>
+
+<book id="book-netbsd-guide">
+  <bookinfo>
+    <title>The NetBSD Guide</title>
+
+    <authorgroup>
+      <corpauthor>
+        The NetBSD Developers
+      </corpauthor>
+    </authorgroup>
+
+    <pubdate role="cvstag">$NetBSD: netbsd.xml,v 1.33 2005/08/07 17:13:47 rpaulo Exp $</pubdate>
+
+    <copyright>
+      <year>1999</year>
+      <year>2000</year>
+      <year>2001</year>
+      <year>2002</year>
+      <holder>Federico Lupi</holder>
+    </copyright>
+    <copyright>
+      <year>2003</year>
+      <year>2004</year>
+      <year>2005</year>
+      <holder>The NetBSD Foundation</holder>
+    </copyright>
+  </bookinfo>
+
+  <toc></toc>
+  
+  &preface;
+
+  <part id="part-about">
+    <title>About NetBSD</title>
+    
+    &chap-intro;
+    &chap-whatsnew;
+  </part>
+
+  <part id="part-install">
+    <title>System installation and related issues</title>
+    
+    &chap-inst;
+    &chap-exinst;
+    &chap-boot;
+    &chap-2boot;
+    &chap-rc;
+  </part>
+
+  <part id="part-config">
+    <title>System configuration, administration and tuning</title>
+    &chap-edit;
+    &chap-x;
+    &chap-linux;
+    &chap-audio;
+    &chap-print;
+    &chap-rmmedia;
+    &chap-cgd;
+    &chap-ccd;
+    &chap-rf;
+    &chap-pam;
+    &chap-tuning;
+    &chap-veriexec;
+    &chap-misc;
+  </part>
+
+  <part id="part-net">
+    <title>Networking and related issues</title>
+    
+    &chap-net-intro;
+    &chap-net-practice;
+    &chap-inetd;
+    &chap-dns;
+    &chap-mail;
+    &chap-net-misc;
+  </part>
+
+  <part id="part-compile">
+    <title>Building the system</title>
+
+    &chap-fetch;
+    &chap-build;
+    &chap-kernel;
+    &chap-cons;
+    &chap-pack;	<!-- pkgsrc.xml in its own part! -->
+  </part>
+  
+
+  <!-- Appendix -->  
+  &appendix;
+  &ap-contrib;
+  &ap-xml;
+  &ap-ack;
+  &ap-biblio;
+</book>

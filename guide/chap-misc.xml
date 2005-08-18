@@ -1,0 +1,582 @@
+<!-- $NetBSD: chap-misc.xml,v 1.16 2005/05/05 12:21:22 hrs Exp $ -->
+
+<chapter id="chap-misc">
+  <title>Miscellaneous operations</title>
+
+  <para>This chapter collects various topics, in sparse order, which
+    didn't find a place in the previous chapters.</para>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-misc-creating-bootfloppies">
+    <title>Creating a custom install/boot floppies for i386</title>
+
+    <para>Sometimes you may want to create your own boot/install floppies
+      for i386 instead use the precompiled ones, or tailor the ones
+      built by the &os; build system. This section outlines the steps
+      to do so.</para>
+
+    <para>The overall idea is to have a filesystem with some tools
+      (sysinst, ls, whatever), and embed this filesystem as some sort
+      of ramdisk into a &os; kernel. The kernel needs to include the
+      "md" pseudo device to be able to hold a ramdisk. The kernel with
+      the ramdisk can then be put on</para>
+
+    <para>To perform the following steps, you need to be running a kernel
+      with the <emphasis>vnd</emphasis> pseudo device enabled (this is
+      the default for a GENERIC kernel).</para>
+
+    <procedure>
+      <step>
+        <para>First, you must create a valid kernel to put on your floppies,
+          e.g. INSTALL. This kernel must include the "md" pseudo
+          device, which allows embedding a ramdisk later.
+          See <xref linkend="chap-kernel" /> for kernel building
+          instructions.</para>
+      </step>
+
+      <step>
+        <para>The next step is to create the ramdisk that gets embedded
+          into the kernel. The ramdisk contains a filesystem with
+          whatever tools are needed, usually &man.init.8; and some
+          tools like sysinst, &man.ls.1;, etc. To create the standard
+          ramdisk, go to
+          <filename>/usr/src/distrib/i386/floppies/ramdisk-big</filename>
+          and run <command>make</command>.</para>
+
+        <para>This will create the
+          <filename>ramdisk.fs</filename> file in the directory. If
+          you want to customize the contents of the filesystem,
+          customize the <filename>list</filename> file.</para>
+      </step>
+
+      <step>
+        <para>Now, the ramdisk gets inserted into the kernel, producing a
+          new kernel which includes the ramdisk, all in one file. To
+          do so, change into the
+          <filename>/usr/src/distrib/i386/floppies/instkernel</filename>
+          directory and run <command>make</command>.</para>
+      </step>
+
+      <step>
+        <para>The next step is to make one or more floppy images,
+	  depending on the size of the kernel (including the ramdisk).
+	  This is done by changing into
+	  <filename>/usr/src/distrib/i386/floppies/bootfloppy-big</filename>,
+	  and running <command>make</command> again.</para>
+
+        <para>This will create one or two (depending on the size of kernel)
+          files named <filename>boot1.fs</filename> and
+          <filename>boot2.fs</filename></para>
+      </step>
+
+      <step>
+        <para>Last, transfer these files to the floppies with the commands</para>
+
+	<screen>&rprompt; <userinput>dd if=boot1.fs of=/dev/fd0a bs=36b</userinput>
+&rprompt; <userinput>dd if=boot2.fs of=/dev/fd0a bs=36b</userinput></screen>
+      </step>
+
+      <step>
+        <para>Put the first floppy in the drive and power on!</para>
+      </step>
+    </procedure>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-misc-sync-systemclock">
+    <title>Synchronizing the system clock with NTP</title>
+
+    <para>It is not unusual to find that the system clock is wrong,
+      often by several minutes: for some strange reason it seems
+      that computer clocks are not very accurate.
+      The problem gets worse if you administer many networked hosts:
+      keeping the clocks in sync can easily become a nightmare.
+      To solve this problem, the <acronym>NTP</acronym> protocol
+      (version 3) comes to our aid: this protocol can be used to
+      synchronize the clocks of a network of workstations using one
+      or more NTP servers.</para>
+
+    <para>Thanks to the NTP protocol it is possible to adjust the clock
+      of a single workstation but also to synchronize an entire
+      network.
+      The NTP protocol is quite complex, defining a hierarchical
+      master-slave structure of servers divided in strata: the top
+      of the hierarchy is occupied by stratum 1 servers, connected
+      to an external clock (ex. a radio clock) to guarantee a high
+      level of accuracy.
+      Underneath, stratum 2 servers synchronize their clocks with
+      stratum 1, and so on.
+      The accuracy decreases as we proceed towards lower levels.
+      This hierarchical structure avoids the congestion which could
+      be caused by having all hosts refer to the same (few) stratum
+      1 servers.
+      If, for example, you want to synchronize a network, you don't
+      connect all the hosts to the same public stratum 1 server.
+      Instead, you create a local server which connects to the main
+      server and the remaining hosts synchronize their clocks with
+      the local server.</para>
+
+    <para>Fortunately, to use the NTP tools you don't need to
+      understand the details of the protocol and of its implementation
+      (if you are interested, refer to RFC 1305) and you only need
+      to know how to configure and start some programs.
+      The base system of &os; already contains the necessary
+      tools to utilize this protocol (and other time related
+      protocols, as we'll see), derived from the
+      <application>xntp</application> implementation.
+      This section describes a simple method to always have a correct
+      system time.</para>
+
+    <para>First, it is necessary to find the address of the public NTP
+      servers to use as a reference; a detailed listing can be found
+      at <ulink url="http://ntp.isc.org/bin/view/Servers/WebHome"></ulink>.
+      As an example, for Italy the two stratum 1 servers
+      ntp1.ien.it and ntp2.ien.it can be used.</para>
+
+    <para>Next, to adjust the system clock give the following
+      command as root:</para>
+
+    <screen>&rprompt; <userinput>ntpdate -b <replaceable>ntp1.ien.it</replaceable> <replaceable>ntp2.ien.it</replaceable></userinput></screen>
+
+    <para>(substitute the names of the servers in the example with the
+      ones that you are actually using.
+      Option <option>-b</option> tells <command>ntpdate</command>
+      to set the system time with the settimeofday system call,
+      instead of slewing it with adjtime (the default).
+      This option is suggested when the difference between the local
+      time and the correct time can be considerable.</para>
+
+    <para>As you've seen, ntpdate is not difficult to use.
+      The next step is to start it automatically, in order to always
+      have the correct system time.
+      If you have a permanent connection to the Internet, you can start
+      the program at boot with the following line of
+      <filename>/etc/rc.conf</filename>:</para>
+
+    <programlisting>ntpdate=YES      ntpdate_hosts="<replaceable>ntp1.ien.it</replaceable>"</programlisting>
+
+    <para>The name of the NTP server to use is specified in the
+      <varname>ntpdate_hosts</varname> variable; if you leave this
+      field empty, the boot script will try to extract the name from
+      the <filename>/etc/ntp.conf</filename> file.</para>
+
+    <para>If you don't have a permanent Internet connection (ex. you
+      have a dial-up modem connection through an ISP) you can start
+      ntpdate from the <filename>ip-up</filename> script, as
+      explained in <xref linkend="chap-net-practice" />.
+      In this case add the following line to the
+      <filename>ip-up</filename> script:</para>
+
+    <programlisting>/usr/sbin/ntpdate -s -b <replaceable>ntp1.ien.it</replaceable></programlisting>
+
+    <para>(the path is mandatory or the script will probably not find
+      the executable).
+      Option <option>-s</option> diverts  logging output from the
+      standard output (this is the default) to the system &man.syslog.3;
+      facility, which means that the messages from ntpdate will
+      usually end up in <filename>/var/log/messages</filename>.</para>
+
+    <para>Besides ntpdate there are other useful NTP commands.
+      It is also possible to turn one of the local hosts into an
+      NTP server for the remaining hosts of the network.
+      The local server will synchronize its clock with a public
+      server.
+      For this type of configuration you must use the
+      <command>ntpd</command> daemon and create the
+      <filename>/etc/ntp.conf</filename> configuration file.
+      For example:</para>
+
+    <programlisting>server <replaceable>ntp1.ien.it</replaceable>
+server <replaceable>ntp2.ien.it</replaceable></programlisting>
+
+    <para>ntpd can be started too from <filename>rc.conf</filename>,
+      using the relevant option:</para>
+
+    <programlisting>ntpd=YES</programlisting>
+
+    <para>NTP is not your only option if you want to synchronize your
+      network: you can also use the <application>timed</application>
+      daemon or the &man.rdate.8; command as well.
+      <application>timed</application> was developed for 4.3BSD.</para>
+
+    <para>Timed too uses a master-slave hierarchy: when started on a
+      host, timed asks the network time to a master and adjusts the
+      local clock accordingly.  A mixed structure, using both timed
+      and ntpd can be used.  One of the local hosts gets the correct
+      time from a public NTP server and is the timed master for the
+      remaining hosts of network, which become its clients and
+      synchronize their clocks using timed.  This means that the local
+      server must run both NTP and timed; care must be taken that they
+      don't interfere with each other (timed must be started with the
+      <option>-F hostname</option> option so that it doesn't try to
+      adjust the local clock).</para>
+
+    <para>Finally, &man.rdate.8; can be used to
+      synchronize once against a given host, much like
+      &man.ntpdate.8;. The host in question must have the "time"
+      service (port 37) enabled in
+      <filename>/etc/inetd.conf</filename>.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-misc-bootmanager">
+    <title>Installing the boot manager</title>
+
+    <para>Sysinst, the &os; installation program usually installs the &os;
+      boot manager on the hard disk.
+      The boot manager can also be installed or reconfigured at a later
+      time, if needed, with the <command>fdisk</command> command.
+      For example:</para>
+
+    <screen>&rprompt; <userinput>fdisk -B wd0</userinput></screen>
+
+    <para>If &os; doesn't boot from the hard disk, you can boot it from
+      the installation floppy and start the kernel on the hard disk.
+      Insert the installation disk and, at the boot prompt, give the
+      following command:</para>
+
+    <screen><prompt>&gt;</prompt> <userinput>boot wd0a:netbsd</userinput></screen>
+
+    <para>This boots the kernel on the hard disk (use the correct device,
+      for example sd0a for a SCSI disk).</para>
+
+    <note>
+      <para>Sometimes <command>fdisk -B</command> doesn't give the expected
+        result (at least it happened to me), probably if you
+        install/remove other operating systems like Windows 95 or
+        Linux with LILO.
+        In this case, try running <command>fdisk -i</command> (which
+        is known as <command>fdisk /mbr</command> from DOS) and
+        then run again <command>fdisk</command> from &os;.</para>
+    </note>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-misc-delete-disklabel">
+    <title>Deleting the disklabel</title>
+
+    <para>Though this is not an operation that you need to perform
+      frequently, it can be useful to know how to do it in case of
+      need.
+      Please be sure to know exactly what you are doing before
+      performing this kind of operation.
+      For example:</para>
+
+    <screen>&rprompt; <userinput>dd if=/dev/zero of=/dev/rwd0c bs=8k count=1</userinput></screen>
+
+    <para>The previous command deletes the disklabel (not the MBR partition
+      table).
+      To completely delete the disk, the <filename>wd0d</filename>
+      device must be used.
+      For example:</para>
+
+    <screen>&rprompt; <userinput>dd if=/dev/zero of=/dev/rwd0d bs=8k</userinput></screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-misc-speaker">
+    <title>Speaker</title>
+
+    <para>I found this tip on a mailing list (I don't remember the author).
+      To output a sound from the speaker (for example at the end of a
+      long script) the <emphasis>spkr</emphasis> driver can be used in
+      the kernel config, which is mapped on
+      <filename>/dev/speaker</filename>. For example:</para>
+
+    <screen>echo 'BPBPBPBPBP' &gt; /dev/speaker</screen>
+
+    <note>
+      <para>The <emphasis>spkr</emphasis> device is not enabled in the
+        generic kernel; a customized kernel is needed.</para>
+    </note>
+
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-misc-forgot-root-password">
+    <title>Forgot root password?</title>
+
+    <para>If you forget root's password, not all is lost and you can still
+      <quote>recover</quote> the system with the following steps: boot
+      single user, mount / and change root's password.
+      In detail:</para>
+
+    <orderedlist>
+      <listitem>
+	<para>Boot single user: when the boot prompt appears and the five
+	  seconds countdown starts, give the following command:</para>
+
+        <screen><prompt>&gt;</prompt> <userinput>boot -s</userinput></screen>
+      </listitem>
+
+      <listitem>
+	<para>At the following prompt</para>
+
+        <screen>Enter pathname of shell or RETURN for sh:</screen>
+
+        <para>press Enter.</para>
+      </listitem>
+
+      <listitem>
+	<para>Write the following commands:</para>
+
+        <screen>&rprompt; <userinput>fsck -y /</userinput>
+&rprompt; <userinput>mount -u /</userinput>
+&rprompt; <userinput>fsck -y /usr</userinput>
+&rprompt; <userinput>mount /usr</userinput></screen>
+      </listitem>
+
+      <listitem>
+	<para>Change root's password:</para>
+
+	<screen>&rprompt; <userinput>passwd root</userinput>
+Changing local password for root.
+New password: <userinput>(not echoed)</userinput>
+Retype new password: <userinput>(not echoed)</userinput>
+&rprompt; </screen>
+      </listitem>
+
+      <listitem>
+	<para>Exit the shell to go to multiuser
+	  mode.</para>
+
+	<screen>&rprompt; <userinput>exit</userinput></screen>
+      </listitem>
+    </orderedlist>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-misc-adding-new-disk">
+    <title>Adding a new hard disk</title>
+
+    <para>This section describes how to add a new hard disk to an
+      already working &os; system.  In the following example a
+      new SCSI controller and a new hard disk, connected to the
+      controller, will be added.  If you don't need to add a new
+      controller, skip the relevant part and go to the hard disk
+      configuration.  The installation of an IDE hard disk is
+      identical; only the device name will be different
+      (<filename>wd#</filename> instead of
+      <filename>sd#</filename>).</para>
+
+    <para>As always, before buying new hardware, consult the hardware
+      compatibility list of &os; and make sure that the new device
+      is supported by the system.</para>
+
+    <para>When the SCSI controller has been physically installed in the
+      system and the new hard disk has been connected, it's time to
+      restart the computer and check that the device is correctly
+      detected, using the <command>dmesg</command> command.  This
+      is the sample output for an NCR-875 controller:</para>
+
+    <screen>ncr0 at pci0 dev 15 function 0: ncr 53c875 fast20 wide scsi
+ncr0: interrupting at irq 10
+ncr0: minsync=12, maxsync=137, maxoffs=16, 128 dwords burst, large dma fifo
+ncr0: single-ended, open drain IRQ driver, using on-chip SRAM
+ncr0: restart (scsi reset).
+scsibus0 at ncr0: 16 targets, 8 luns per target
+sd0(ncr0:2:0): 20.0 MB/s (50 ns, offset 15)
+sd0: 2063MB, 8188 cyl, 3 head, 172 sec, 512 bytes/sect x 4226725 sectors</screen>
+
+    <para>If the device doesn't appear in the output, check that it is
+      supported by the kernel that you are using; if necessary,
+      compile a customized kernel (see  <xref
+      linkend="chap-kernel" />).</para>
+
+    <para>Now the partitions can be created using the <command>fdisk</command>
+      command.  First, check the current status of the disk:</para>
+
+    <screen>&rprompt; <userinput>fdisk sd0</userinput>
+NetBSD disklabel disk geometry:
+cylinders: 8188 heads: 3 sectors/track: 172 (516 sectors/cylinder)
+
+BIOS disk geometry:
+cylinders: 524 heads: 128 sectors/track: 63 (8064 sectors/cylinder)
+
+Partition table:
+0: sysid 6 (Primary 'big' DOS, 16-bit FAT (> 32MB))
+    start 63, size 4225473 (2063 MB), flag 0x0
+        beg: cylinder    0, head   1, sector  1
+        end: cylinder  523, head 127, sector 63
+1: &lt;UNUSED&gt;
+2: &lt;UNUSED&gt;
+3: &lt;UNUSED&gt;</screen>
+
+    <para>In this example the hard disk already contains a DOS
+      partition, which will be deleted and replaced with a native
+      &os; partition.  The command <command>fdisk -u sd0</command>
+      allows to modify interactively the partitions.  The modified
+      data will be written on the disk only before exiting and fdisk
+      will request a confirmation before writing, so you can work
+      relaxedly.</para>
+
+    <sidebar>
+      <title>Disk geometries</title>
+
+      <para>The geometry of the disk reported by fdisk can appear
+	confusing.  Dmesg reports 4226725 sectors with 8188/3/172
+	for C/H/S, but 8188*3*172 gives 4225008 and not 4226725.
+	What happens is that most modern disks don't have a fixed
+	geometry and the number of sectors per track changes
+	depending on the cylinder: the only interesting parameter
+	is the number of sectors.  The disk reports the C/H/S
+	values but it's a fictitious geometry: the value 172 is the
+	result of the total number of sectors (4226725) divided by
+	8188 and then by 3.</para>
+
+      <para>To make things more confusing, the BIOS uses yet another
+	<quote>fake</quote> geometry (C/H/S 524/128/63) which gives
+	a total of 4225536, a value which is a better approximation
+	to the real one than 425008.  To partition the disk we will
+	use the BIOS geometry, to maintain compatibility with other
+	operating systems, although we will loose some sectors
+	(4226725 - 4225536 = 1189 sectors = 594 KB).</para>
+    </sidebar>
+
+    <para>To create the BIOS partitions the command <command>fdisk -u</command>
+      must be used; the result is the following:</para>
+
+      <screen>Partition table:
+0: sysid 169 (NetBSD)
+    start 63, size 4225473 (2063 MB), flag 0x0
+        beg: cylinder    0, head   1, sector  1
+        end: cylinder  523, head 127, sector 63
+1: &lt;UNUSED&gt;
+2: &lt;UNUSED&gt;
+3: &lt;UNUSED&gt;</screen>
+
+    <para>Now it's time to create the disklabel for the &os;
+      partition.  The correct steps to do this are:</para>
+
+    <screen>&rprompt; <userinput>disklabel sd0 > tempfile</userinput>
+&rprompt; <userinput>vi tempfile</userinput>
+&rprompt; <userinput>disklabel -R -r sd0 tempfile</userinput></screen>
+
+    <sidebar>
+      <para>If you try to create the disklabel directly with</para>
+
+      <screen>&rprompt; <userinput>disklabel -e sd0</userinput></screen>
+
+      <para>you get the following message</para>
+
+      <screen>disklabel: ioctl DIOCWDINFO: No disk label on disk;
+use "disklabel -I" to install initial label</screen>
+
+      <para>because the disklabel does not yet exist on the disk.</para>
+    </sidebar>
+
+    <para>Now we create some disklabel partitions, editing the
+      <filename>tempfile</filename> as already explained.  The
+      result is:</para>
+
+    <programlisting>#      size   offset   fstype [fsize bsize   cpg]
+a:  2048004       63   4.2BSD   1024  8192    16 # (Cyl.  0*- 3969*)
+c:  4226662       63   unused      0     0       # (Cyl.  0*- 8191*)
+d:  4226725        0   unused      0     0       # (Cyl.  0 - 8191*)
+e:  2178658  2048067   4.2BSD   1024  8192    16 # (Cyl.  3969*- 8191*)</programlisting>
+
+    <note>
+      <para>When the disklabel has been created it is possible to
+	optimize it studying the output of the command
+	<command>newfs -N /dev/sd0a</command>, which warns about
+	the existence of unallocated sectors at the end of a
+	disklabel partition.  The values reported by newfs can be
+	used to adjust the sizes of the partitions with an
+	iterative process.</para>
+    </note>
+
+    <para>The final operation is the creation of the file systems for
+      the newly defined partitions (<emphasis>a</emphasis> and
+      <emphasis>e</emphasis>).</para>
+
+    <screen>&rprompt; <userinput>newfs /dev/sd0a</userinput>
+&rprompt; <userinput>newfs /dev/sd0e</userinput></screen>
+
+    <para>The disk is now ready for usage, and the two partitions can
+      be mounted.  For example:</para>
+
+    <screen>&rprompt; <userinput>mount /dev/sd0a /mnt</userinput></screen>
+
+    <para>If this succeeds, you may want to put an entry for the partition
+      into <filename>/etc/fstab</filename>.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-misc-password-file-busy">
+    <title>Password file is busy?</title>
+
+    <para>If you try to modify a password and you get the mysterious
+      message <quote>Password file is busy</quote>, it probably
+      means that the file <filename>/etc/ptmp</filename> has not
+      been deleted from the system.  This file is a temporary copy
+      of the <filename>/etc/master.passwd</filename> file: check
+      that you are not loosing important information and then
+      delete it:</para>
+
+    <screen> &rprompt; <userinput>rm /etc/ptmp</userinput> </screen>
+
+    <note>
+      <para>If the file <filename>/etc/ptmp</filename> exists you can
+	also receive a warning message at system startup.  For
+	example:</para>
+
+      <screen>root: password file may be incorrect - /etc/ptmp exists</screen>
+    </note>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-misc-howto-rebuild-devices">
+    <title>How to rebuild the devices in /dev</title>
+
+    <para>First shutdown to single user, partitions still mounted
+      <quote>rw</quote>
+      (read-write); You can do that by just typing <command>shutdown
+      now</command> while you are in multi user mode, or reboot with
+      the <option>-s</option> option and make <filename>/</filename>
+      and <filename>/dev</filename> read-writable by doing.</para>
+
+    <screen>&rprompt; <userinput>mount -u /</userinput>
+&rprompt; <userinput>mount -u /dev</userinput></screen>
+
+    <para>Then:</para>
+
+    <screen>&rprompt; <userinput>mkdir /newdev</userinput>
+&rprompt; <userinput>cd /newdev</userinput>
+&rprompt; <userinput>cp /dev/MAKEDEV* .</userinput>
+&rprompt; <userinput>sh ./MAKEDEV all</userinput>
+&rprompt; <userinput>cd /</userinput>
+&rprompt; <userinput>mv dev olddev</userinput>
+&rprompt; <userinput>mv newdev dev</userinput>
+&rprompt; <userinput>rm -r olddev</userinput></screen>
+
+    <para>Or if you fetched all the sources in
+      <filename>/usr/src</filename>:</para>
+
+    <screen>&rprompt; <userinput>mkdir /newdev</userinput>
+&rprompt; <userinput>cd /newdev</userinput>
+&rprompt; <userinput>cp /usr/src/etc/MAKEDEV.local .</userinput>
+&rprompt; <userinput>( cd /usr/src/etc ; make MAKEDEV )</userinput>
+&rprompt; <userinput>cp /usr/src/etc/obj*/MAKEDEV .</userinput>
+&rprompt; <userinput>sh ./MAKEDEV all</userinput>
+&rprompt; <userinput>cd /</userinput>
+&rprompt; <userinput>mv dev olddev; mv newdev dev</userinput>
+&rprompt; <userinput>rm -r olddev</userinput></screen>
+
+    <para>You can determine $arch by</para>
+
+    <screen>&rprompt; <userinput>uname -m</userinput></screen>
+
+    <para>or</para>
+
+    <screen>&rprompt; <userinput>sysctl hw.machine_arch</userinput></screen>
+  </sect1>
+</chapter>

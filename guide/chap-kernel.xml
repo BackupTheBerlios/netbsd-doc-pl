@@ -1,0 +1,354 @@
+<!-- $NetBSD: chap-kernel.xml,v 1.16 2005/08/04 03:15:54 rpaulo Exp $ -->
+
+<chapter id="chap-kernel">
+  <title>Compiling the kernel</title>
+
+  <para>Most &os; users will sooner or later want to compile a
+    customized kernel. This gives you several benefits:</para>
+
+  <itemizedlist>
+    <listitem>
+      <para>you can dramatically reduce  kernel size and, therefore, memory
+	occupation (for example, from 2.5 MB to 1.2 MB).
+	On NetBSD 2.0, compiling a custom kernel reduced
+	the size from 7.5 MB to 3.5 MB.</para>
+    </listitem>
+
+    <listitem>
+      <para>you can improve performance.</para>
+    </listitem>
+
+    <listitem>
+      <para>you can tune the system.</para>
+    </listitem>
+
+    <listitem>
+      <para>you can solve problems of detection/conflicts of peripherals.</para>
+    </listitem>
+
+    <listitem>
+      <para>you can customize some options (for example keyboard layout, BIOS
+        clock offset, ...)</para>
+    </listitem>
+
+    <listitem>
+      <para>you can get a deeper knowledge of the system.</para>
+    </listitem>
+  </itemizedlist>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-kernel-installing-kernel-sources">
+    <title>Installing the kernel sources</title>
+
+    <sidebar>
+      <para>You can get the kernel sources from AnonCVS (see
+        <xref linkend="chap-fetch" />), or from the
+	<filename>syssrc.tgz</filename>
+	tarball that is located in the <filename>source/sets/</filename>
+	directory of the release that you are using. If you use the second
+	method, you can extract the tarball as root:</para>
+    </sidebar>
+
+    <screen>&rprompt; <userinput>cd /</userinput>
+&rprompt; <userinput>tar zxf /path/to/syssrc.tgz</userinput></screen>
+
+    <para>If you chose to use AnonCVS, be patient, the operation can last
+      many minutes, because the repository contains hundreds of files.</para>
+
+    <para>Once you have the sources available, you can create a custom kernel:
+      this is not as difficult as you might think.
+      In fact, a new kernel can be created in a few steps
+      which will be described in the following sections.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-kernel-procedure">
+    <title>Requirements and procedure</title>
+
+    <para>To recompile the kernel you must have installed the compiler set
+      (<filename>comp.tgz</filename>).</para>
+
+    <para>The basic steps for kernel compilation then are:
+    </para>
+
+    <orderedlist>
+      <listitem>
+        <para>Create/modify the kernel configuration file</para>
+      </listitem>
+
+      <listitem>
+        <para>Configure the kernel</para>
+      </listitem>
+
+      <listitem>
+        <para>Generate dependencies</para>
+      </listitem>
+
+      <listitem>
+        <para>Compile the kernel</para>
+      </listitem>
+
+      <listitem>
+	<para>Install the kernel</para>
+      </listitem>
+    </orderedlist>
+
+    <para>These steps can either be performed manually, or using the new
+      <command>build.sh</command> command that was introduced
+      in section <xref linkend="chap-build" />. This section will
+      first give instructions on how to build a native kernel using
+      manual steps, and then describe how to use
+      <command>build.sh</command> to do the same.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-kernel-creating-kernel-configfile">
+    <title>Creating the kernel configuration file</title>
+
+    <para>The directories described in this section are i386
+      specific. Users of other architectures must substitute the
+      appropriate directories, see the subdirectories of
+      <filename>src/sys/arch</filename> for a list.</para>
+
+    <para>The kernel configuration file defines the type, the number and
+      the characteristics of the devices supported by the kernel as
+      well as several kernel configuration options.  For the i386
+      port, kernel configuration files are located in the
+      <filename>/usr/src/sys/arch/i386/conf</filename> directory.</para>
+
+    <para>Please note that the names of the kernel configuration files
+      are historically in all uppercase, so they are easy to
+      distinguish from other files in that directory:</para>
+
+    <screen>&uprompt; <userinput>cd /usr/src/sys/arch/i386/conf/</userinput>
+&uprompt; <userinput>ls</userinput>
+CARDBUS                 GENERIC_PS2TINY         NET4501
+CVS                     GENERIC_TINY            SWINGER
+DELPHI                  GENERIC_VERIEXEC        SWINGER.MP
+DISKLESS                INSTALL                 VIRTUALPC
+GENERIC                 INSTALL.MP              files.i386
+GENERIC.FAST_IPSEC      INSTALL_LAPTOP          kern.ldscript
+GENERIC.MP              INSTALL_PS2             kern.ldscript.4MB
+GENERIC.MPDEBUG         INSTALL_SMALL           largepages.inc
+GENERIC.local           INSTALL_TINY            majors.i386
+GENERIC_DIAGNOSTIC      IOPENER                 std.i386
+GENERIC_ISDN            LAMB
+GENERIC_LAPTOP          Makefile.i386</screen>
+
+    <para>The easiest way to create a new file is to copy an existing one
+      and modify it. Usually the best choice on most platforms is the
+      GENERIC configuration, as it contains most drivers and options.
+      In the configuration file there are comments describing the
+      options; a more detailed description is found in the
+      &man.options.4; man page. So, the usual procedure is:</para>
+
+    <screen>&uprompt; <userinput>cp GENERIC <replaceable>MYKERNEL</replaceable></userinput>
+&uprompt; <userinput>vi <replaceable>MYKERNEL</replaceable></userinput></screen>
+
+    <para>The modification of a kernel configuration file basically
+      involves three operations:</para>
+
+    <orderedlist>
+      <listitem>
+        <para>support for hardware devices is included/excluded in the kernel
+          (for example, SCSI support can be removed if it is not needed.)</para>
+      </listitem>
+
+      <listitem>
+        <para>support for kernel features is enabled/disabled (for example,
+          enable NFS client support, enable Linux compatibility, ...)</para>
+      </listitem>
+
+      <listitem>
+	<para>tuning kernel parameters.</para>
+      </listitem>
+    </orderedlist>
+
+    <para>Lines beginning with <quote>#</quote> are comments; lines are disabled by
+      commenting them and enabled by removing the comment character.
+      It is better to comment lines instead of deleting them; it is always
+      possible uncomment them later.</para>
+
+    <para>The output of the &man.dmesg.8; command can be used
+      to determine which lines can be disabled.
+      For each line of the type:</para>
+
+    <programlisting><replaceable>XXX</replaceable> at <replaceable>YYY</replaceable></programlisting>
+
+    <para>both <replaceable>XXX</replaceable> and
+      <replaceable>YYY</replaceable> must be active in the kernel
+      configuration file.
+      You'll probably have to experiment a bit before achieving a minimal
+      configuration but on a desktop system without SCSI and PCMCIA you can
+      halve the kernel size.</para>
+
+    <para>You should also examine the options in the configuration file and
+      disable the ones that you don't need.
+      Each option has a short comment describing it, which is normally
+      sufficient to understand what the option does.
+      Many options have a longer and more detailed description in the
+      &man.options.4; man page.
+      While you are at it you should set correctly the options for
+      local time on the CMOS clock.
+      For example:</para>
+
+    <programlisting>options RTC_OFFSET=-60</programlisting>
+
+    <para>The <command>adjustkernel</command> Perl script, which is
+      available through pkgsrc, analyzes the output of &man.dmesg.8; and
+      automatically generates a minimal configuration file.
+      The installation of packages is described extensively in
+      in the <xref linkend="chap-pack" />, but installing
+      <command>adjustkernel</command> basically boils down to:</para>
+
+    <screen>&uprompt; <userinput>cd /usr/pkgsrc/sysutils/adjustkernel</userinput>
+&uprompt; <userinput>make install</userinput></screen>
+
+    <para>You can now run the script with:</para>
+
+    <screen>&uprompt; <userinput>cd /usr/src/sys/arch/i386/conf</userinput>
+&uprompt; <userinput>adjustkernel GENERIC > <replaceable>MYKERNEL</replaceable></userinput></screen>
+
+    <para>This script usually works very well, saving a lot of manual
+      editing.
+      But be aware that the script only configures the available devices: you
+      must still configure the other options manually.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-kernel-configuring-kernel">
+    <title>Configuring the kernel manually</title>
+
+    <para>When you've finished modifying the kernel configuration file (which
+      we'll call <filename>MYKERNEL</filename>), you should issue the
+      following command:</para>
+
+    <screen>&uprompt; <userinput>config MYKERNEL</userinput></screen>
+
+    <para>If <filename>MYKERNEL</filename> contains no errors, the
+      &man.config.8; program will create the necessary files for
+      the compilation of the kernel, otherwise it will be necessary to correct
+      the errors before running &man.config.8; again.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-kernel-generating-dependencies-n-recompiling">
+    <title>Generating dependencies and recompiling manually</title>
+
+    <para>Dependencies generation and kernel compilation is performed by the
+      following commands:</para>
+
+    <screen>&uprompt; <userinput>cd ../compile/MYKERNEL</userinput>
+&uprompt; <userinput>make depend</userinput>
+&uprompt; <userinput>make</userinput></screen>
+
+    <para>It can happen that the compilation stops with errors; there can be
+      a variety of reasons but the most common cause is an error in the
+      configuration file which didn't get caught by &man.config.8;.
+      Sometimes the failure is caused by a hardware problem (often faulty RAM
+      chips): the compilation puts a higher stress on the system than most
+      applications do.
+      Another typical error is the following: option B, active, requires
+      option A which is not active.
+      A full compilation of the kernel can last from some minutes to several
+      hours, depending on the hardware.</para>
+
+    <para>The output of the make command is the <filename>netbsd</filename> file
+      in the compile directory: this file should be copied in the root
+      directory, after saving the previous version.</para>
+
+    <screen>&rprompt; <userinput>mv /netbsd /netbsd.old</userinput>
+&rprompt; <userinput>mv netbsd /</userinput></screen>
+
+    <para>Customization can considerably reduce the kernel's size.
+      In the following example <filename>netbsd.old</filename> is the
+      install kernel and <filename>netbsd</filename> is the new kernel.</para>
+
+    <screen>-rwxr-xr-x  3 root  wheel  3523098 Dec 10 00:13 /netbsd
+-rwxr-xr-x  3 root  wheel  7566271 Dec 10 00:13 /netbsd.old</screen>
+
+    <para>The new kernel is activated after rebooting:</para>
+
+    <screen>&rprompt; <userinput>shutdown -r now</userinput></screen>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-kernel-build.sh">
+    <title>Using <filename>build.sh</filename></title>
+
+    <para>After creating and possibly editing the kernel config file, the
+      manual steps of configuring the kernel, generating dependencies
+      and recompiling can also be done using the
+      <filename>src/build.sh</filename> script, all in one go:</para>
+
+    <screen>&uprompt; <userinput>cd /usr/src</userinput>
+&uprompt; <userinput>./build.sh kernel=MYKERNEL</userinput> </screen>
+
+    <para>This will perform the same steps as above, with one small
+      difference: before compiling, all old object files will be
+      removed, to start with a fresh build. This is usually overkill,
+      and it's fine to keep the old file and only rebuild the ones
+      whose dependencies have changed. To do this, add the
+      <option>-u</option> option to <filename>build.sh</filename>:</para>
+
+    <screen>&uprompt; <userinput>cd /usr/src</userinput>
+&uprompt; <userinput>./build.sh -u kernel=MYKERNEL</userinput> </screen>
+
+    <para>At the end of its job, <filename>build.sh</filename> will print
+      out the location where the new compiled kernel can be found. It
+      can then be installed with the steps given above in <xref
+      linkend="chap-kernel-generating-dependencies-n-recompiling" />.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-kernel-something-wrong">
+    <title>If something went wrong</title>
+
+    <para>When the computer is restarted it can happen that the new
+      kernel doesn't work as expected or even doesn't boot at all.
+      Don't worry: if this happens, just reboot with the previously
+      saved kernel and remove the new one (it is better to reboot
+      <quote>single user</quote>):</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>Reboot the machine</para>
+      </listitem>
+
+      <listitem>
+        <para>Press the space bar at the boot prompt during the 5 seconds
+	  countdown</para>
+
+	<screen><prompt>boot:</prompt></screen>
+      </listitem>
+
+      <listitem>
+        <para>Type</para>
+
+	<screen><prompt>&gt;</prompt> <userinput>boot netbsd.old -s</userinput></screen>
+      </listitem>
+
+      <listitem>
+        <para>Now issue the following commands to restore the previous version
+          of the kernel:</para>
+
+	<screen>&rprompt; <userinput>fsck /</userinput>
+&rprompt; <userinput>mount /</userinput>
+&rprompt; <userinput>mv netbsd.old netbsd</userinput>
+&rprompt; <userinput>reboot</userinput></screen>
+      </listitem>
+    </itemizedlist>
+
+    <para>This will give  you back the working system you started with,
+      and you can change the kernel config file next to make it really
+      going. In general, it's wise to start with a GENERIC kernel
+      first, and then make gradual changes.</para>
+  </sect1>
+</chapter>

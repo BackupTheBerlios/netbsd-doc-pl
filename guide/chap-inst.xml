@@ -1,0 +1,474 @@
+<!-- $NetBSD: chap-inst.xml,v 1.11 2004/11/29 16:56:33 hrs Exp $ -->
+
+<chapter id="chap-inst">
+  <title>Instalacja</title>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-inst-overview">
+    <title>Dokumentacja</title>
+
+    <para>Dokumentacja &os; ma najczê¶ciej format stron podrêcznika 
+      systemowego man i stanowi doskona³y punkt odniesienia we 
+      wszelkich technicznych kwestiach zwi±zanych z systemem.
+      Nie przeczê jednak, ¿e nie jest to odpowiednie wprowadzenie
+      do systemu (nie wspominaj±c ju¿ o tym, ¿e jest niedostêpna
+      dopóki nie zainstalujesz &os;). To w³a¶nie jest przyczyn± 
+      istnienia tego przewodnika.</para>
+
+    <note>
+      <para>W³a¶ciwie móg³by¶ czytaæ strony podrêcznika poprzez 
+        interfejs www, ale nie s±dzê, by by³ to praktyczny sposób
+        nauki systemu.</para>
+    </note>
+
+    <para>Po instalacji niektóre przewodniki po BSD znajdziesz w
+      katalogu <filename>/usr/share/doc</filename>.
+      S± one podzielone na trzy g³ówne sekcje, 
+      <emphasis>psd</emphasis> (Dodatkowa Dokumentacja Programisty 
+      Uniksa - UNIX Programmer's Supplementary Documents), 
+      <emphasis>smm</emphasis> (Podrêcznik Administratora Systemu 
+      - UNIX System Manager's Manual) i <emphasis>usd</emphasis> 
+      (Dodatkowa Dokumentacja U¿ytkownika - UNIX
+      User's Supplementary Documents).
+      Mo¿esz czytaæ te teksty na terminalu, u¿ywaj±c na przyk³ad:</para>
+
+      <screen>&uprompt; <userinput>cd /usr/share/doc/smm/09.sendmail</userinput>
+&uprompt; <userinput>nroff -me 09.sendmail/intro.me | more</userinput></screen>
+
+    <para>lub mo¿esz wygenerowaæ wersje Postscript korzystaj±c z 
+      plików <filename>Makefile</filename>.</para>
+
+    <para>Trudno zaprzeczyæ, ¿e brakuje tu dokumentów w rodzaju 
+      Jak To Zrobiæ (HOWTO), dlatego musisz jak najlepiej wykorzystaæ
+      istniej±ce; ka¿da wersja &os; posiada dokumenty tekstowe 
+      dostêpne na stronie www &os;; znajdziesz tam dodatkowe 
+      informacje i <acronym>FAQ</acronym>.</para>
+
+    <note>
+      <title>Oryginalna dokumentacja</title>
+
+      <para>Serwis www &os; zawiera strony z dokumentacj± i HOWTO
+        zarówno ogólnymi, jak i specyficznymi dla konkretnej platformy. 
+        Informacje te s± dobrze napisane i zwykle ³atwe do zrozumienia;
+        mo¿esz tam m.in. znale¼æ dokumenty opisuj±ce, jak:</para>
+
+      <itemizedlist>
+        <listitem>
+	  <para>jak dostaæ siê do partycji DOS/Windows z poziomu &os;</para>
+      </listitem>
+
+        <listitem>
+          <para>jak uruchamiaæ &os; z bootloadera Windows NT</para>
+        </listitem>
+
+        <listitem>
+          <para>...</para>
+        </listitem>
+      </itemizedlist>
+    </note>
+
+    <para>Wszystkie wersje &os; zawieraj± nastêpuj±ce pliki:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term><filename>INSTALL.txt</filename>,
+          <filename>INSTALL.ps</filename>,
+          <filename>INSTALL.html</filename></term> 
+
+        <listitem>
+          <para>uwagi dotycz±ce instalacji.
+            Jest to najwa¿niejszy dokument i powiniene¶ go przeczytaæ 
+            (i przeczytaæ raz jeszcze) bardzo uwa¿nie. Zawiera on
+            opis systemu &os;, listê wspieranego sprzêtu i, co 
+            najistotniejsze, instrukcjê instalacji.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>Strona podrêcznika man &man.release.7;</term>
+        <listitem>
+          <para>opisuje strukturê &os; w wersji, któr± instalujesz.</para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>Na stronach www &os; mo¿na znale¼æ, miêdzy innymi, 
+      nastêpuj±ce dokumentacje:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>&os; FAQ</term>
+
+        <listitem>
+          <para>informacje ogólne i linki do innych      
+            <acronym>FAQ</acronym>.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>&os;/i386 FAQ</term>
+
+        <listitem>
+       	  <para><acronym>FAQ</acronym> specyficzne dla &os;/i386.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Podstawy sieci w &os;</term>
+
+        <listitem>
+          <para>Przewodnik po konfiguracji sieci i PPP.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-inst-layout">
+    <title>Struktura instalacji &os;</title>
+
+    <para>Struktura plików zainstalowanego &os; opisana 
+      jest we wspomnianym wcze¶niej plikach
+      <filename>INSTALL.*</filename>.
+      Przyk³adowo, dla platformy i386 binaria systemowe
+      znajduj± siê w katalogu 
+      <filename>i386/binary/sets</filename>, a pliki ¼ród³owe
+      w <filename>source/sets</filename>.
+      Katalog <filename>source/patches</filename> 
+      zawiera ³aty na podstawow± wersjê, które zazwyczaj 
+      poprawiaj± b³êdy lub problemy zwi±zane z bezpieczeñstwem 
+      odkryte po udostêpnieniu danej wersji &os;.</para>
+  </sect1>
+
+  <!-- ============================================================= -->
+
+  <sect1 id="chap-inst-install">
+    <title>Instalacja</title>
+
+    <para>The first thing to do before installing &os; is to read the release
+      information and installation notes in one of the
+      <filename>INSTALL.*</filename> 
+      files: this is the official description of the installation
+      procedure.
+    </para>
+
+    <para>Pierwsz± rzecz± do zrobienia przed instalacj± &os; 
+      jest zapoznanie siê z informacjami i uwagami znajduj±cymi 
+      siê w plikach <filename>INSTALL.*</filename>: jest to oficjalny
+      opis procedury instalacji. 
+    </para>
+
+    <para>
+      Nastêpnie powiniene¶ zdecydowaæ jakiego medium u¿yjesz do instalacji;
+      Mo¿esz wybieraæ pomiêdzy:</para> 
+
+    <itemizedlist>
+      <listitem>
+        <para>FTP</para>
+      </listitem>
+
+      <listitem>
+        <para>NFS</para>
+      </listitem>
+
+      <listitem>
+        <para>CD-ROM/DVD</para>
+      </listitem>
+
+      <listitem>
+        <para>instalacj± z dyskietki</para>
+      </listitem>
+
+      <listitem>
+        <para>instalacj± z niezamontowanego systemu plików</para>
+      </listitem>
+
+      <listitem>
+        <para>instalacj± z lokalnego katalogu</para>
+      </listitem>
+    </itemizedlist>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="sect-kbd">
+      <title>Klawiatura</title>
+
+      <para>The NetBSD install program
+        <application>sysinst</application> will allow you to change
+        the keyboard layout during the installation. If for some
+        reason this does not work for you, you can use
+        the map in the following table.</para>
+      <para>Program instalacyjny &os; <application>sysinst</application> 
+        pozwala na zmianê uk³adu klawiatury w czasie instalacji. Je¿eli z 
+        jakich¶ powodów to nie dzia³a mo¿esz u¿yæ map klawiatury z poni¿szej
+	tabeli.</para>
+
+      <!-- TODO - kill this section?  -->
+
+      <informaltable>
+	<tgroup cols="4">
+          <colspec align="center" colwidth="1in" />
+          <colspec align="center" colwidth="1in" />
+          <colspec align="center" colwidth="1in" />
+          <colspec align="center" colwidth="1in" />
+
+          <thead>
+            <row>
+              <entry>US</entry>		<!-- EN -->
+              <entry>IT</entry>		<!-- IT -->
+              <entry>DE</entry>		<!-- DE -->
+              <entry>FR</entry>		<!-- FR -->
+            </row>
+          </thead>
+
+          <tbody>
+	    <row>
+	      <entry>-</entry>		<!-- EN -->
+	      <entry>'</entry>		<!-- IT -->
+	      <entry>&szlig;</entry>	<!-- DE -->
+	      <entry>)</entry>		<!-- FR -->
+	    </row>
+
+	    <row>
+	      <entry>/</entry>		<!-- EN -->
+	      <entry>-</entry>		<!-- IT -->
+	      <entry>-</entry>		<!-- DE -->
+	      <entry>!</entry>		<!-- FR -->
+	    </row>
+
+	    <row>
+	      <entry>=</entry>		<!-- EN -->
+	      <entry>&igrave;</entry>	<!-- IT -->
+	      <entry>'</entry>		<!-- DE -->
+	      <entry>-</entry>		<!-- FR -->
+	    </row>
+
+	    <row>
+	      <entry>:</entry>		<!-- EN -->
+	      <entry>&ccedil;</entry>	<!-- IT -->
+	      <entry>&Ouml;</entry>	<!-- DE -->
+	      <entry>M</entry>		<!-- FR -->
+	    </row>
+
+	    <row>
+	      <entry>;</entry>		<!-- EN -->
+	      <entry>&ograve;</entry>	<!-- IT -->
+	      <entry>&ouml;</entry>	<!-- DE -->
+	      <entry>m</entry>		<!-- FR -->
+	    </row>
+
+	    <row>
+	      <entry>#</entry>		<!-- EN -->
+	      <entry>&pound;</entry>	<!-- IT -->
+	      <entry>&sect;</entry>	<!-- DE -->
+	      <entry>3</entry>		<!-- FR -->
+	    </row>
+
+	    <row>
+	      <entry>&quot;</entry>	<!-- EN -->
+	      <entry>&deg;</entry>	<!-- IT -->
+	      <entry>&Auml;</entry>	<!-- DE -->
+	      <entry>%</entry>		<!-- FR -->
+	    </row>
+
+	    <row>
+	      <entry>*</entry>		<!-- EN -->
+	      <entry>(</entry>		<!-- IT -->
+	      <entry>(</entry>		<!-- DE -->
+	      <entry>8</entry>		<!-- FR -->
+	    </row>
+
+	    <row>
+	      <entry>(</entry>		<!-- EN -->
+	      <entry>)</entry>		<!-- IT -->
+	      <entry>)</entry>		<!-- DE -->
+	      <entry>9</entry>		<!-- FR -->
+	    </row>
+
+	    <row>
+	      <entry>)</entry>		<!-- EN -->
+	      <entry>=</entry>		<!-- IT -->
+	      <entry>=</entry>		<!-- DE -->
+	      <entry>0</entry>		<!-- FR -->
+	    </row>
+
+	    <row>
+	      <entry>'</entry>		<!-- EN -->
+	      <entry>&agrave;</entry>	<!-- IT -->
+	      <entry>&auml;</entry>	<!-- DE -->
+	      <entry>&ugrave;</entry>	<!-- FR -->
+	    </row>
+
+	    <row>
+	      <entry>`</entry>		<!-- EN -->
+	      <entry>\</entry>		<!-- IT -->
+	      <entry>^</entry>		<!-- DE -->
+	      <entry>@</entry>		<!-- FR -->
+	    </row>
+
+	    <row>
+	      <entry>\</entry>		<!-- EN -->
+	      <entry>&ugrave;</entry>	<!-- IT -->
+	      <entry>#</entry>		<!-- DE -->
+	      <entry>`</entry>		<!-- FR -->
+	    </row>
+          </tbody>
+	</tgroup>
+      </informaltable>
+
+      <para>Je¶li nie u¿ywasz klawiatury US, jedn± z pierwszych
+        czynno¶ci po instalacji bêdzie zmiana jej uk³adu.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-inst-install-geometry">
+      <title>Geometrie dysku</title>
+
+      <para>Program instalacyjny wspomina o dwóch rodzajach 
+        geometrii dysku twardego. Powiniene¶ wiedzieæ, co one
+        oznaczaj±:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>geometria rzeczywista (fizyczna)</para>
+        </listitem>
+
+        <listitem>
+          <para>geometria widziana przez BIOS</para>
+        </listitem>
+      </itemizedlist>
+
+      <para><emphasis>geometria rzeczywista</emphasis> jest
+        fizyczn± geometri± dysku twardego, rozpoznan± przez system.
+        <emphasis>Geometria BIOS</emphasis> jest t± wykorzystywan±
+        przez BIOS i mo¿e ró¿niæ siê od rzeczywistej (np. BIOS
+        mo¿e przemapowaæ dysk korzystaj±c z LBA).</para>
+
+      <para>Dysk u¿ywany w przyk³adowej instalacji jest dyskiem IDE
+        o nastêpuj±cych geometriach:</para>
+
+      <screen>real:  6232 cyl,   16 heads,  63 sec
+BIOS:   779 cyl,  128 heads,  63 sec   (LBA)</screen>
+
+      <para>Jak zauwa¿y³e¶, BIOS przemapowa³ dysk u¿ywaj±c LBA, 
+        w efekcie redukuj±c liczbê cylindrów i zwiêkszaj±c ilo¶æ 
+        ¶cie¿ek (rezultat jest jednak ten sam: 
+        6232 * 16 = 779 * 128 = 99712).
+        Sektor ma 512 bajtów, co oznacza rozmiar dysku 
+        6232 * 16 * 63 * 512 = 3 GB.
+        &os; nie potrzebuje przemapowywania geometrii dysku 
+        (i faktycznie nie robi tego).
+        W procesie instalacji mo¿liwa jest rêczna zmiana geometrii 
+        w wypadku, gdyby <application>sysinst</application> 
+        rozpozna³ j± niew³a¶ciwie.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-inst-install-partition">
+      <title>Partycje</title>
+
+      <para>Terminologia stosowana przez &os; ró¿ni siê od
+        terminologii typowej dla DOS/Windows; w rzeczywisto¶ci 
+        s± to dwa rózne schematy partycjonowania.
+        &os; instaluje siê w jednej z czterech g³ównych (primary) 
+        partycji BIOS (partycji zdefiniowanych w tablicy partycji 
+        dysku).</para>
+
+      <para>W obrêbie swojej partycji BIOS (nazywanej tak¿e 
+        <emphasis>slice</emphasis>) &os; definiuje partycje
+        BSD u¿ywaj±c <emphasis>disklabel</emphasis>: 
+        te partycje widziane s± tylko przez &os; i s± 
+        identyfikowane przez ma³e litery, zaczynaj±c od 
+        <quote>a</quote>.
+        Na przyk³ad, wd0a odnosi siê do partycji 
+        <quote>a</quote> pierwszego dysku IDE (wd0), a 
+        sd0a odnosi siê do partycji <quote>a</quote> pierwszego 
+        dysku SCSI.
+        W <xref linkend="fig-part"/> s± dwie g³ówne (primary) 
+        partycje BIOS, jedna u¿ywana przez DOS i druga przez &os;.
+        &os; opisuje schemat dysku poprzez disklabel.</para>
+
+      <figure id="fig-part">
+	<title>Partycje</title>
+
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="&imagesdir;/part.gif" format="GIF" />
+          </imageobject>
+
+          <imageobject>
+            <imagedata fileref="&imagesdir;/part.eps" format="EPS" />
+          </imageobject>
+        </mediaobject>
+      </figure>
+
+      <note>
+        <para>Znaczenie partycji<quote>c</quote> i <quote>d</quote>
+          jest specyficzna dla platformy i386. Wersje dla innych
+          platform u¿ywaj± innych konwencji (np. <quote>c</quote> 
+          reprezentuje ca³y dysk.)</para>
+      </note>
+
+      <note>
+        <para>Je¶li &os; wspó³dzieli dysk z inym systemem operacyjnym
+          (jak w poprzednim przyk³adzie), bêdziesz prawdopodobnie musia³
+          zainstalowaæ <emphasis>boot managera</emphasis> - program 
+          umo¿liwiaj±cy wybór systemu operacyjnego w momencie startu
+          maszyny.
+          <application>sysinst</application> jest w stanie automatycznie 
+          zainstalowaæ i skonfigurowaæ prosty, lecz efektywny boot 
+          manager.</para>
+      </note>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-inst-install-disk-space-requirements">
+      <title>Wymagania dotycz±ce przestrzeni na dysku</title>
+
+      <para>Wielko¶æ przestrzeni dyskowej wymaganej przy instalacji
+        &os; zale¿y od przewidywanych zastosowañ (np. czy bêdzie to
+        serwer, czy stacja robocza).
+        Dla przyk³adu wyobra¼my sobie domowy komputer z dyskiem 420 MB 
+        (raczej ma³ym, jak na dzisiejsze standardy), z X, 
+        ¼ród³ami j±dra i paroma aplikacjami (Netscape, ...).
+        Partycja wymiany (swap) ma 32 MB.
+        <command>df</command> wy¶wietla nastêpuj±ce informacje:</para>
+
+      <screen>Filesystem  1K-blocks     Used    Avail Capacity  Mounted on
+/dev/wd1a       31887    16848    13444    56%    /
+/dev/wd1e      363507   173202   172129    50%    /usr</screen>
+
+      <para>Jak widaæ &os; zajmuje oko³o 225 MB i pozostawia 120 MB wolnej
+        przestrzeni na partycji <filename>/usr</filename> dla Ciebie i Twoich
+        u¿ytkowników.</para>
+    </sect2>
+
+    <!-- ........................................................... -->
+
+    <sect2 id="chap-inst-install-retry">
+      <title>Próbuj ponownie</title>
+
+      <para>Pierwsza instalacja systemu operacyjnego rzadko kiedy 
+        koñczy sie sukcesem; &os; nie jest tu wyj±tkiem.
+        Nawet je¶li wszystko posz³o dobrze, gdy ju¿ zaczniesz u¿ywaæ
+        systemu zazwyczaj stwierdzasz, ¿e na przyk³ad mog³e¶ wybraæ
+        lepszy uk³ad partycji.
+        Wa¿ne jest, by siê nie poddawaæ; gdy spróbujesz ponownie, 
+        zauwa¿ysz ¿e to, co by³o trudne za pierwszym razem stopniowo 
+        staje siê coraz bardziej oczywiste na skutek akumulacji
+        do¶wiadczenia i wielokrotnych lektur dokumentów 
+        <filename>INSTALL.*</filename>.</para>
+
+      <para>Podczas pierwszych instalacji nie od rzeczy jest 
+        akceptowaæ domy¶lne warto¶ci sugerowane przez 
+        <application>sysinst</application> i unikaæ zmieniania np.
+        etykiety dysku. 
+      </para>
+    </sect2>
+  </sect1>
+</chapter>
