@@ -5,15 +5,15 @@
 <chapter id="chap-cons">
   <title>Sterownik konsoli</title>
 
-  <para>W &os; wersjach przed 1.4 user mÃ³gÅ‚ wybraÄ‡ pomiÄ™dzy dwoma rÃ³Å¼nymi
+  <para>W &os; wersjach starszych ni¿ 1.4 u¿ytkownik móg³ wybraæ pomiêdzy dwoma ró¿nymi
   sterownikami dla ekranu i klawiatury,
     <application>pccons</application> (specyficznie dla i386) i
-    <application>pcvt</application>.  W NetBSD 1.4 nowy multiplatformowy
+    <application>pcvt</application>.  W NetBSD 1.4 pojawi³ siê nowy wieloplatformowy
     sterownik
-    <application>wscons</application> siÄ™ pojawiÅ‚, ktÃ³ry zastÄ…piÅ‚ poprzednie
-    sterowniki,
-    <application>pccons</application> jest dalej wspierany poniewaz zuÅ¼ywa mniej
-    zasobÃ³w systemowych.</para>
+    <application>wscons</application>, który zast±pi³ poprzednie
+    sterowniki.
+    <application>pccons</application> jest dalej wspierany poniewaz zu¿ywa mniej
+    zasobów systemowych.</para>
 
   <!-- ============================================================= -->
 
@@ -21,25 +21,25 @@
     <title>wscons</title>
 
     <para>Wscons jest &os; standardowym sterownikiem konsoli.  Oferuje wirtualne
-    terminale na i386, wspiera miÄ™dzynarodowe klawiatury, ustawienia myszek,
-    itp.  MoÅ¼liwoÅ›Ä‡i wscons sÄ… uzaleÅ¼nione od portu, wersja i386 jest
-    bardzo obfita w moÅ¼liwoÅ›Ä‡i.</para>
+    terminale na i386, wspiera miêdzynarodowe klawiatury, ustawienia myszek,
+    itp. Mo¿liwo¶ci wscons s± uzale¿nione od portu. Wersja i386 posiada
+    ich bardzo wiele.</para>
 
     <sect2 id="chap-cons-wscons-vt">
       <title>Wirtualne konsole</title>
 
-      <para> IloÅ›Ä‡ wirtualnych konsol jest kontrolowana przez nastepujacÄ… opcje
+      <para>Ilo¶æ wirtualnych konsol jest kontrolowana przez nastêpujac± opcjê
       </para>
 
       <programlisting>options     WSDISPLAY_DEFAULTSCREENS=4</programlisting>
 
-      <para>Inne konsole mogÄ… zostaÄ‡ dodane przez dodanie linii w pliku
+      <para>Inne konsole mog± zostaæ dodane przez dopisanie linii w pliku
         <filename>/etc/wscons.conf</filename> : znak komentarza (#) 
-	musi zostaÄ‡ usiniÄ™ty z lini, zaczynajÄ…c od <quote>screen x</quote>.
-	W przedstawionym przykÅ‚adzie piÄ…ta konsola jest dodana do wczesniejszych
-	czterech:</para>
+	musi zostaæ usiniêty ze wszystkich linii, zaczynaj±c od <quote>screen x</quote>.
+	W przedstawionym przyk³adzie do czterech obecnie istniej±cych konsol
+	dodajemy pi±t±:</para>
 
-      <programlisting># utworzenia konsol
+      <programlisting># Tworzenie konsol
 #       idx     screen  emul
 #screen 0       -       vt100
 screen 1        -       vt100
@@ -49,36 +49,36 @@ screen  4       -       -
 #screen 4       80x25bf vt100
 #screen 5       80x50   vt100</programlisting>
 
-      <para>Skrypt <filename>rc.wscons</filename> przetwarza kaÅ¼da
-      niezakomentowanÄ… linie w wywolaniu do <command>wsconscfg</command> komendy:
-       kolumny staja sie parametrami wywoÅ‚ania. Kolumna
-        <emphasis>idx</emphasis> staje siÄ™ parametrem <option>index'u</option>
-        , kolumna <emphasis>screen</emphasis> staje siÄ™ parametrem
-        <option>-t type</option> (ktÃ³ry definiuje typ konsoli:
-	rzÄ™dy i kolumny, liczba kolorÃ³w, ...) i kolumna
-        <emphasis>emul</emphasis> staje siÄ™ parametrem <option>-e emul</option>
-      , ktÃ³ry definiuje emulacje.  Na przykÅ‚ad:</para>
+      <para>Skrypt <filename>rc.wscons</filename> przetwarza ka¿d±
+      niezakomentowan± liniê w wywo³aniu do <command>wsconscfg</command> komendy:
+       kolumny staj± siê parametrami wywo³ania. Kolumna
+        <emphasis>idx</emphasis> staje siê parametrem <option>indexu</option>
+        , kolumna <emphasis>screen</emphasis> staje siê parametrem
+        <option>-t type</option> (który definiuje typ konsoli:
+	rzêdy i kolumny, liczbê kolorów, ...), a kolumna
+        <emphasis>emul</emphasis> staje siê parametrem <option>-e emul</option>
+      , który definiuje emulacjê. Na przyk³ad:</para>
 
       <programlisting>screen 3       -       vt100</programlisting>
 
-      <para>staje siÄ™ wywoÅ‚aniem:</para>
+      <para>staje siê wywo³aniem:</para>
 
       <programlisting>wsconscfg -e vt100 3</programlisting>
 
-      <para>ProszÄ™ zauwaÅ¼yÄ‡ Å¼e jest moÅ¼liwe Å¼eby mieÄ‡ konflikt pomiÄ™dzy
-      zaalokowanymi konsolami przez kernel i konsolami zaalokowanymi podczas
-      botowania przez <filename>/etc/wscons.conf</filename>.
-        JeÅ¼eli podczas bootowania, system prÃ³buje zaalokowac juÅ¼ zaalokowana
-	konsolÄ™, zostanie wyÅ›wietlona nastÄ™pujÄ…ca wiadomoÅ›Ä‡:</para>
+      <para>£atwo zauwa¿yæ, ¿e mo¿e pojawiæ siê konflikt pomiêdzy
+      konsolami zaalokowanymi przez kernel i konsolami zaalokowanymi podczas
+      uruchamiania przez <filename>/etc/wscons.conf</filename>.
+        Je¿eli podczas rozruchu system spróbuje zaalokowac ju¿ zaalokowan±
+	konsolê, zostanie wy¶wietlona nastêpuj±ca wiadomo¶æ:</para>
 
       <screen>wsconscfg: WSDISPLAYIO_ADDSCREEN: Device busy</screen>
 
-      <para>RozwiÄ…zaniem tego problemu jest zakomentowanie trefnych linii w 
-      <filename>/etc/wscons.conf</filename>.</para>
+      <para>Rozwi±zaniem tego problemu jest zakomentowanie b³êdnych linii w
+      pliku <filename>/etc/wscons.conf</filename>.</para>
 
-      <para>Wirtualne konsole muszÄ… byÄ‡ aktywne w 
-        <filename>/etc/ttys</filename>, aÅ¼eby &os; uruchomiÅ‚ program 
-        &man.getty.8; do zapytania o login.  Na przykÅ‚ad:</para>
+      <para>Wirtualne konsole musz± byæ aktywne w 
+        <filename>/etc/ttys</filename>, aby &os; uruchomi³ program 
+        &man.getty.8; do zapytania o login.  Na przyk³ad:</para>
 
       <programlisting>console "/usr/libexec/getty Pc"         pc3     off secure
 ttyE0   "/usr/libexec/getty Pc"         vt220   on secure
@@ -87,27 +87,27 @@ ttyE2   "/usr/libexec/getty Pc"         vt220   on secure
 ttyE3   "/usr/libexec/getty Pc"         vt220   off secure
 ...</programlisting>
 
-      <para>Uruchamiany X serwer bÄ™dzie patrzyÅ‚ za wirtualna konsolÄ… bez
-      uruchamiania programu &man.getty.8; , przykÅ‚ad jedna konsola powinna
-      zostaÄ‡ "wyÅ‚Ä…czona" w <filename>/etc/ttys</filename>. Linia</para>
+      <para>Uruchamiany serwer X bêdzie patrzy³ za wirtualn± konsol± bez
+      uruchamiania programu &man.getty.8; , na przyk³ad jedna konsola powinna
+      zostaæ "wy³±czona" w <filename>/etc/ttys</filename>. Linia</para>
 
       <programlisting>ttyE3   "/usr/libexec/getty Pc"         vt220   off secure</programlisting>
 
-      <para>w <filename>/etc/ttys</filename> jest uÅ¼ywana przez X serwer do tego
-      celu. Å»eby uÅ¼yÄ‡ innÄ… konsolÄ™ niÅ¼ numer 4, potrzebujemy podaÄ‡ parametr
-      formy vt <replaceable>n</replaceable> musi zostaÄ‡ podany do X serwera,
+      <para>w <filename>/etc/ttys</filename> jest u¿ywana przez serwer X do tego
+      celu. W celu u¿ycia innej konsoli ni¿ 4, nale¿y podaæ parametr
+      formy vt <replaceable>n</replaceable> serwera X,
       gdzie <replaceable>n</replaceable> jest numerem klucza funkcjonalnego
-      uÅ¼ywanego do aktywacji konsoli dla X.</para>
+      u¿ywanego do aktywacji konsoli dla X.</para>
 
-      <para>Na przykÅ‚ad, <quote>screen 7</quote> moÅ¼e zostaÄ‡ umoÅ¼liwiony w
-      <filename>/etc/wscons.conf</filename> i X moÅ¼e byÄ‡ wystartowany z
-        <quote>vt8</quote>.  JeÅ¼eli uÅ¼ywasz <application>xdm</application>
-	musisz wyedytowac <filename>/usr/X11R6/lib/X11/xdm/Xserver</filename>.
-	Na przykÅ‚ad:</para>
+      <para>Na przyk³ad, <quote>screen 7</quote> mo¿e zostaæ umo¿liwiony w
+      <filename>/etc/wscons.conf</filename> i X mo¿e byæ wystartowany z
+        <quote>vt8</quote>.  Je¿eli u¿ywasz <application>xdm</application>,
+	musisz wyedytowaæ <filename>/usr/X11R6/lib/X11/xdm/Xserver</filename>.
+	Na przyk³ad:</para>
 
       <programlisting>:0 local /usr/X11R6/bin/X +kb dpms -bpp 16 dpms vt8</programlisting>
 
-      <para>Dla <application>xdm3d</application> Å›cieÅ¼ka jest inna:
+      <para>Dla <application>xdm3d</application> ¶cie¿ka jest inna:
         <filename>/usr/X11R6/share/xdm3d/Xservers</filename>.</para>
     </sect2>
 
@@ -116,14 +116,14 @@ ttyE3   "/usr/libexec/getty Pc"         vt220   off secure
     <sect2 id="chap-cons-wscons-50lines">
       <title>50 liniowy tryb tekstowy z wscons</title>
 
-      <para>Tryb tekstowy z 50 liniami moÅ¼e zostaÄ‡ uÅ¼ywany do startowania z
-      wersjÄ… 1.4.1 &os;.  Ten tryb jest aktywowany w 
-        <filename>/etc/wscons.conf</filename>.  NastepujÄ…ce linie musza zostaÄ‡
+      <para>Tryb tekstowy z 50 liniami mo¿e zostaæ u¿ywany do startowania z
+      wersj± 1.4.1 &os;.  Ten tryb jest aktywowany w 
+        <filename>/etc/wscons.conf</filename>.  Nastepuj±ce linie musz± zostaæ
 	odkomentowane:</para>
 
       <programlisting>font ibm  -  8  ibm  /usr/share/pcvt/fonts/vt220l.808</programlisting>
 
-      <para>NastÄ™pujÄ…ce linie muszÄ… zostaÄ‡ zmodyfikowane:</para>
+      <para>Nastêpuj±ce linie musz± zostaæ zmodyfikowane:</para>
 
       <programlisting>#screen 0       80x50   vt100
 screen  1       80x50   vt100
@@ -134,12 +134,12 @@ screen  5       80x50   vt100
 screen  6       80x50   vt100
 screen  7       80x50   vt100</programlisting>
 
-      <para>Ta konfiguracja uruchamia osiem konsol, ktore sÄ… dostÄ™pne pod
-      kombinacja klawiszy Ctrl-Alt-F<emphasis>n</emphasis> (gdzie
+      <para>Ta konfiguracja uruchamia osiem konsol, które s± dostêpne dziêki
+      kombinacji klawiszy Ctrl-Alt-F<emphasis>n</emphasis> (gdzie
         <emphasis>n</emphasis> jest 1 do 8); 
-	odpowiadajÄ…cymi urzÄ…dzeniami sÄ… ttyE0..ttyE7.  
-	Å»eby je uruchomiÄ‡ i dostaÄ‡ zapytanie o login, plik
-        <filename>/etc/ttys</filename> musi zostaÄ‡ zmodyfikowany:</para>
+	odpowiadaj±cymi urz±dzeniami s± ttyE0..ttyE7.  
+	¯eby je uruchomiæ i dostaæ zapytanie o login, plik
+        <filename>/etc/ttys</filename> musi zostaæ zmodyfikowany:</para>
 
       <programlisting>ttyE0   "/usr/libexec/getty Pc"         vt220   on secure
 ttyE1   "/usr/libexec/getty Pc"         vt220   on secure
@@ -150,9 +150,9 @@ ttyE5   "/usr/libexec/getty Pc"         vt220   on secure
 ttyE6   "/usr/libexec/getty Pc"         vt220   on secure
 ttyE7   "/usr/libexec/getty Pc"         vt220   on secure</programlisting>
 
-      <para>Nie ma moÅ¼liwoÅ›ci Å¼eby zmieniÄ‡ ustawienia 80x25 na konsoli 0,
-      prawdopodobnie Å¼eby zagwarantowac Å¼e w razie problemÃ³w tam jest zawsze
-      dziaÅ‚ajÄ…ca konsola.</para>
+      <para>Nie ma mo¿liwo¶ci zmieny ustawienia 80x25 na konsoli 0,
+      prawdopodobnie ¿eby zagwarantowac ¿e w razie problemów tam jest zawsze
+      dzia³aj±ca konsola.</para>
 
     </sect2>
 
@@ -161,39 +161,39 @@ ttyE7   "/usr/libexec/getty Pc"         vt220   on secure</programlisting>
     <sect2 id="chap-cons-wscons-keymaps">
       <title>Mapowanie klawiatury</title>
 
-      <para>Wscons teÅ¼ pozwala na zmianÄ™ mapowania kalwiatury na narodowych
-      klawiaturach. Na przykÅ‚ad Å¼eby uÅ¼ywaÄ‡ mapowanie dla wÅ‚oskiej klawiatury,
-      uruchom:</para>
+      <para>Wscons pozwala równie¿ na zmianê mapowania klawiatury na narodowych
+      klawiaturach. Na przyk³ad, aby u¿ywaæ mapowanie dla w³oskiej klawiatury,
+      nale¿y wpisaæ:</para>
 
       <screen>&rprompt; <userinput>wsconsctl -k -w encoding=it</userinput>
 kodowanie -> it</screen>
 
-      <para>To ustawienie bÄ™dzie dziaÅ‚aÅ‚o do restartu komputera.
-       Å»eby ustawiÄ‡ to na staÅ‚e dodaj linie <quote>encoding</quote>do
-        <filename>/etc/wscons.conf</filename>: to bÄ™dzie automatycznie
-	uruchamiane nastÄ™pnego razu kiedy zrestartujesz komputer.</para>
+      <para>To ustawienie bêdzie dzia³a³o do ponownego uruchomienia komputera.
+       ¯eby ustawiæ to na sta³e dodaj linie <quote>encoding</quote>do
+        <filename>/etc/wscons.conf</filename>: to bêdzie automatycznie
+	uruchamiane nastêpnego razu kiedy zrestartujesz komputer.</para>
 
       <screen>
 &rprompt; <userinput>cp /etc/wscons.conf /etc/wscons.conf.orig</userinput>
 &rprompt; <userinput>echo encoding it &gt;&gt;/etc/wscons.conf</userinput></screen>
 
-      <para>Prosze bÄ…dÅº ostroÅ¼ny i wpisz dwa znaki <quote>&gt;</quote> .
-        Jezeli dodasz tylko jeden <quote>&gt;</quote>, to nadpiszesz ten plik
-	zamiast dodaÄ‡ liniÄ™. Dlatego zawsze robimy kopie plikÃ³w przed ich
-	modyfikacjÄ…!</para>
+      <para>Nale¿y byæ bardzo ostro¿nym i wpisaæ dok³adnie dwa znaki <quote>&gt;</quote> .
+        Je¿eli dodasz tylko jeden <quote>&gt;</quote>, nadpiszesz ten plik
+	zamiast dodaæ liniê. Miêdzy innymi dlatego zawsze robimy kopiê plików przed ich
+	modyfikacj±!</para>
 
-      <para>PeÅ‚nÄ… listÄ™ mapowaÅ„ klawiatury moÅ¼esz znaleÅºÄ‡ w
+      <para>Pe³n± listê mapowañ klawiatury mo¿esz znale¼æ w pliku
         <filename>/usr/src/sys/dev/wscons/wsksymdef.h</filename>:</para>
 
       <itemizedlist>
         <listitem><para>be - Belgijski</para></listitem>
         <listitem><para>de - Niemiecki</para></listitem>
-        <listitem><para>dk - DuÅ„ski</para></listitem>
+        <listitem><para>dk - Duñski</para></listitem>
         <listitem><para>es - Estonski</para></listitem>
         <listitem><para>fr - Francuski</para></listitem>
-        <listitem><para>hu - WÄ™gierski</para></listitem>
-        <listitem><para>it - WÅ‚oski</para></listitem>
-        <listitem><para>jp - JapoÅ„ski</para></listitem>
+        <listitem><para>hu - Wêgierski</para></listitem>
+        <listitem><para>it - W³oski</para></listitem>
+        <listitem><para>jp - Japoñski</para></listitem>
         <listitem><para>no - Norweski</para></listitem>
         <listitem><para>pl - Polski</para></listitem>
         <listitem><para>pt - Portugalski</para></listitem>
@@ -201,7 +201,7 @@ kodowanie -> it</screen>
         <listitem><para>sf - Szwajcarsko Francuski</para></listitem>
         <listitem><para>sg - Szwajcarsko Niemiecki</para></listitem>
         <listitem><para>sv - Szwajcarski</para></listitem>
-        <listitem><para>ua - UkraiÅ„ski</para></listitem>
+        <listitem><para>ua - Ukraiñski</para></listitem>
         <listitem><para>uk - UK-Angielski</para></listitem>
         <listitem><para>us - US-Angielski</para></listitem>
       </itemizedlist>
@@ -211,32 +211,33 @@ kodowanie -> it</screen>
     <!-- ........................................................... -->
 
     <sect2 id="chap-cons-wscons-wsmouse">
-      <title>Kopiowanie i wklejanie na konsoli uÅ¼ywajÄ…c wsmoused</title>
+      <title>Kopiowanie i wklejanie w konsoli za pomoc± wsmoused</title>
 
-      <para>Jest moÅ¼liwe Å¼eby uÅ¼yÄ‡ myszki na konsoli wscons do zaznaczenia (kopiowania)
-      tekstu uzywajac jednego przycisku myszy i wklejeniu go z powrotem innym
-      przyciskiem. Å»eby pozwoliÄ‡ na uÅ¼ywanie kopiowania i wklejania w wscons musisz
-      najpierw wbudowac obsÅ‚ugÄ™ do tego w kernelu, ktÃ³ra jest wyÅ‚Ä…czona
-      domyÅ›lnie. Å»eby to zrobiÄ‡, dodaj opcje:</para>
+      <para>Istnieje mo¿liwo¶æ korzystania z myszki w konsoli wscons do zaznaczenia (kopiowania)
+      tekstu za pomoc± jednego przycisku myszy i wklejenia go z powrotem innym
+      przyciskiem. Aby umo¿lowiæ korzystanie z kopiowania i wklejania w wscons, nale¿y
+      najpierw wbudowaæ obs³ugê tej mo¿liwo¶ci w kernelu. Domy¶lnie jest ona
+      wy³±czona. Aby to zrobiæ, nale¿y dodaæ nastêpuj±ce opcje:</para>
 
       <programlisting>options WSDISPLAY_CHARFUNCS             # mouse console support</programlisting>
 
-      <para><emphasis>Wystrzegaj siÄ™</emphasis> tego Å¼e ta opcja nie bÄ™dzie
-      dziaÅ‚aÄ‡ Å‚Ä…cznie z opcjÄ… <option>VGA_RASTERCONSOLE</option>.
-        Zobacz <xref linkend="chap-kernel" /> po wiÄ™cej informacji jak
-	kompilowaÄ‡ kernel.</para>
+      <para><emphasis>Wystrzegaj siê</emphasis> tego, ¿e ta opcja nie bêdzie
+      dzia³aæ ³±cznie z opcj± <option>VGA_RASTERCONSOLE</option>.
+        Wiêcej informacji na temat kompilacji kernela znajduje siê w <xref
+	linkend="chap-kernel" />.
+	</para>
 
-      <para>Jak juÄ‡ zbudujemy kernel, dodaj opcje "wsmoused" w 
-        <filename>/etc/rc.conf</filename>, i uruchom:</para>
+      <para>Po zbudowaniu kernela nale¿y dodaæ opcjê "wsmoused" w pliku
+        <filename>/etc/rc.conf</filename> i wpisaæ:</para>
 
       <screen>&rprompt; <userinput>echo wsmoused=yes &gt;&gt;/etc/rc.conf</userinput>
 &rprompt; <userinput>sh /etc/rc.d/wsmoused start</userinput> </screen>
 
-      <para>Po tym zabiegu powinieneÅ› byÄ‡ w stanie do uÅ¼ywania myszki i do
-      zaznaczanie tekstu lewym klawiszem myszy i wklejania go prawym. Zeby to
-      zmieniÄ‡ zachowanie &man.wsmoused.8; zobacz podrÄ™cznik manuala, ktÃ³ry tez
-      opisuje format pliku konfiguracyjnego &man.wsmoused.conf.5; , przykÅ‚ad
-      moze zostac znaleziony w 
+      <para>Po tym zabiegu powinno byæ mo¿liwe 
+      zaznaczanie tekstu lewym klawiszem myszy i wklejania go prawym. Aby 
+      zmieniæ to zachowanie &man.wsmoused.8; nale¿e zapoznaæ siê ze stron±
+      podrêcznika man opisuj±c± format pliku konfiguracyjnego
+      &man.wsmoused.conf.5;. Przyk³adowy plik to 
         <filename>/usr/share/examples/wsmoused</filename>.</para>
     </sect2>
 
@@ -245,17 +246,16 @@ kodowanie -> it</screen>
     <sect2 id="chap-cons-wscons-scrolling">
       <title>Uruchamianie scrollback w konsoli</title>
 
-      <para>MoÅ¼esz uruchomic scrollback na konsolach wscons przez wkompilowanie
-      opcji <option>WSDISPLAY_SCROLLSUPPORT</option> do twojego 
-        kernela. Miej pewnoÅ›Ä‡ Å¼e nie masz opcji
-        <option>VGA_RASTERCONSOLE</option> w tym samym czasie! Zobacz <xref linkend="chap-kernel" /> 
-	po instrukcje jak kompilowaÄ‡ kernel.</para>
+      <para>Mo¿esz uruchomiæ scrollback na konsolach wscons przez wkompilowanie
+      opcji <option>WSDISPLAY_SCROLLSUPPORT</option> do 
+        kernela. Nale¿y siê upewnie, ¿e nie jest jednocze¶nie w³±czona opcja
+        <option>VGA_RASTERCONSOLE</option>! Instrukcje dotycz±ce kompilacji
+	kernela znajduj± siê w <xref linkend="chap-kernel" />.</para>
 
-      <para>Kiedy masz juÅ¼ dziaÅ‚ajÄ…cy kernel z opcja
-        <option>WSDISPLAY_SCROLLSUPPORT</option> , 
-	moÅ¼esz scrollowac na konsoli przez uÅ¼ycie LEFT SHIFT plus PAGE
-        UP/DOWN. Prosze zauwyaÅ¼yÄ‡ Å¼e to moze nie dzialaÄ‡ na twojej konsoli
-	systemowej (ttyE0)!</para>
+      <para>Kiedy masz ju¿ dzia³aj±cy kernel z opcj±
+        <option>WSDISPLAY_SCROLLSUPPORT</option>, 
+	mo¿esz przewijaæ na konsolê za pomoc± klawiszy LEFT SHIFT i PAGE
+        UP/DOWN. Zauwa¿, ¿e to mo¿e nie dzia³aæ na konsoli systemowej (ttyE0)!</para>
     </sect2>
   </sect1>
 
@@ -264,17 +264,17 @@ kodowanie -> it</screen>
   <sect1 id="chap-cons-pccons">
     <title>pccons</title>
 
-    <para>Ten sterwonik konsoli nie oferuje konsÃ³l wirtualnych i programu
-    narzÄ™diowego do konfiguracji. Pccons
-    moÅ¼na znaleÅ¼Ä‡ na instalacyjnej dyskietce i386.</para>
+    <para>Ten sterownik konsoli nie oferuje konsol wirtualnych i programu
+    narzêdziowego do ich konfiguracji. Pccons
+    mo¿na znale¿æ na instalacyjnej dyskietce i386.</para>
 
-    <para>Å»eby uruchomiÄ‡ ten sterownik, dodaj nastÄ™pujacÄ… liniÄ™ do pliku konfiguracyjnego
+    <para>¯eby uruchomiæ ten sterownik, dodajemy nastêpujace liniê do pliku konfiguracyjnego
     kernela:</para>
 
     <programlisting>pc0 at isa? port 0x60 irq 1 # pccons generic PC console driver</programlisting>
 
-    <para>MoÅ¼esz teÅ¼ ustawiÄ‡ jednÄ… z kilkunastu opcji do kompilacji w
-    nie-angielskim mapowaniu klawiatury:</para>
+    <para>Mo¿na te¿ ustawiæ jedn± z kilkunastu opcji do kompilacji w
+    innym ni¿ angielskie mapowaniu klawiatury:</para>
 
     <programlisting># Ustawienia klawiatury dla pccons
 #options        FRENCH_KBD
@@ -282,10 +282,10 @@ kodowanie -> it</screen>
 #options        GERMAN_KBD
 #options        NORWEGIAN_KBD</programlisting>
 
-    <para>UsuÅ„ komentarze z linii do odpowiadajacego ci mapowania i postepuj
-    wedÅ‚ug instrukcji w  <xref
-      linkend="chap-kernel" /> do przebudowania twojego kernela.</para>
+    <para>Usuñ komentarze z linii do odpowiedniego mapowania i postepuj
+    wed³ug instrukcji w <xref
+      linkend="chap-kernel" /> w celu przebudowania kernela.</para>
 
-    <para>W praktyce nie bedziesz potrzebowal pccons, wscons powinno wystarczyÄ‡ do twoich potrzeb.</para>
+    <para>W praktyce nie pccons nie bêdzie potrzebne, wscons powinno wystarczyæ do wiêkszo¶ci potrzeb.</para>
   </sect1>
 </chapter>
